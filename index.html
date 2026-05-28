@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valora — Avaliação Imobiliária Premium</title>
-<meta name="description" content="Avalie seu apartamento com precisão. Dados reais de mercado para mais de 150 cidades brasileiras.">
+<meta name="description" content="Avalie seu apartamento com precisão. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -294,6 +294,39 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 
 footer{text-align:center;padding:2rem 1.5rem;border-top:1px solid var(--gborder);font-size:.72rem;color:var(--text3)}
 footer strong{color:var(--text2)}
+
+/* ── BCB LIVE INDICATORS ── */
+.live-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.65rem;font-weight:600;color:#4ade80;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.85rem}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:livepulse 2s ease-in-out infinite}
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.ind-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.75rem}
+@media(min-width:440px){.ind-grid{grid-template-columns:repeat(4,1fr)}}
+.ind-item{background:var(--bg3);border-radius:var(--rsm);padding:.85rem}
+.ind-item .il{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.28rem}
+.ind-item .iv{font-size:1.05rem;font-weight:700}
+.ind-item .is{font-size:.68rem;color:var(--text2);margin-top:.08rem}
+.ind-skel{background:var(--bg3);border-radius:var(--rsm);padding:.85rem;animation:skelshine 1.5s ease-in-out infinite}
+@keyframes skelshine{0%,100%{opacity:.35}50%{opacity:.7}}
+.ind-skel .sk-line{height:.6rem;border-radius:4px;background:var(--gborder2);margin-bottom:.4rem;width:70%}
+.ind-skel .sk-val{height:.95rem;border-radius:4px;background:var(--gborder2);width:50%}
+.api-src{font-size:.63rem;color:var(--text3);text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:.3rem;margin-top:.5rem}
+
+/* ── FINANCING CALCULATOR ── */
+.fin-controls{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.fin-ctrl{background:var(--bg3);border-radius:var(--rsm);padding:.75rem .9rem}
+.fin-ctrl .fc-lbl{font-size:.67rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem}
+.fin-ctrl select{width:100%;background:transparent;border:none;font-family:var(--fn);font-size:.9rem;font-weight:600;color:var(--text);outline:none;cursor:pointer;appearance:none}
+.fin-scens{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.75rem}
+.fin-scen{background:var(--bg3);border-radius:var(--rsm);padding:1rem;border:1px solid var(--gborder);transition:border-color .2s}
+.fin-scen.rec{background:rgba(200,160,60,.07);border-color:rgba(200,160,60,.22)}
+.fin-scen-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem}
+.fin-scen-nm{font-size:.79rem;font-weight:600}
+.fin-scen-rt{font-size:.74rem;font-weight:700;color:var(--gold2)}
+.fin-rec-tag{font-size:.61rem;background:rgba(200,160,60,.15);color:var(--gold2);border-radius:99px;padding:.1rem .55rem;font-weight:600}
+.fin-scen-g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem}
+.fsi-lbl{font-size:.62rem;color:var(--text3);margin-bottom:.1rem}
+.fsi-val{font-size:.83rem;font-weight:600}
+.fin-note{font-size:.67rem;color:var(--text3);line-height:1.65;border-top:1px solid var(--gborder);padding-top:.75rem;margin-top:.35rem}
 </style>
 </head>
 <body>
@@ -314,7 +347,7 @@ footer strong{color:var(--text2)}
 <div class="page on" id="pg-home">
   <section class="hero">
     <div class="hero-eyebrow">Avaliação Imobiliária com IA</div>
-    <div class="v-badge">✓ v3.1 · 27 estados · 150+ cidades · Previsão de venda</div>
+    <div class="v-badge">✓ v3.2 · API Banco Central ao vivo · 27 estados · 150+ cidades</div>
     <h1>Descubra o valor <span class="grad">real</span><br>do seu apartamento</h1>
     <p class="hero-sub">Estimativa precisa com dados calibrados por cidade, bairro e padrão. Com previsão de tempo de venda baseada em comparáveis reais.</p>
     <button class="hero-cta" onclick="goTo('calc')">
@@ -547,6 +580,51 @@ footer strong{color:var(--text2)}
     <div class="mc"><div class="mc-l">Yield bruto</div><div class="mc-v" id="r-yield">—</div><div class="mc-s">ver nota abaixo</div></div>
   </div>
 
+  <!-- ══ BCB LIVE INDICATORS ══ -->
+  <div class="box" id="bcb-card">
+    <div class="box-title">Indicadores econômicos ao vivo</div>
+    <div class="live-badge"><div class="live-dot"></div>Tempo real — Banco Central do Brasil</div>
+    <div class="ind-grid" id="ind-grid">
+      <div class="ind-skel"><div class="sk-line"></div><div class="sk-val"></div></div>
+      <div class="ind-skel"><div class="sk-line"></div><div class="sk-val"></div></div>
+      <div class="ind-skel"><div class="sk-line"></div><div class="sk-val"></div></div>
+      <div class="ind-skel"><div class="sk-line"></div><div class="sk-val"></div></div>
+    </div>
+    <div class="api-src">⚡ api.bcb.gov.br · séries SGS 432, 433, 189 · atualizado automaticamente</div>
+  </div>
+
+  <!-- ══ FINANCIAMENTO ══ -->
+  <div class="box" id="fin-card" style="display:none">
+    <div class="box-title">Simulação de financiamento</div>
+    <div class="fin-controls">
+      <div class="fin-ctrl">
+        <div class="fc-lbl">Entrada</div>
+        <select id="fin-entrada" onchange="recalcFin()">
+          <option value="0.10">10%</option>
+          <option value="0.20" selected>20%</option>
+          <option value="0.30">30%</option>
+          <option value="0.40">40%</option>
+          <option value="0.50">50%</option>
+        </select>
+      </div>
+      <div class="fin-ctrl">
+        <div class="fc-lbl">Prazo</div>
+        <select id="fin-prazo" onchange="recalcFin()">
+          <option value="180">15 anos</option>
+          <option value="240">20 anos</option>
+          <option value="300">25 anos</option>
+          <option value="360" selected>30 anos</option>
+        </select>
+      </div>
+    </div>
+    <div class="fin-scens" id="fin-scens"></div>
+    <div class="fin-note">
+      ⚠ Simulação pelo Sistema Price (parcela fixa). SAC tem parcela inicial maior porém total de juros menor.
+      Não inclui seguros MIP/DFI obrigatórios. Taxa de mercado estimada com base na Selic atual via API do Banco Central.
+      Consulte sua instituição financeira para proposta formal.
+    </div>
+  </div>
+
   <!-- ══ MÓDULO PREVISÃO DE VENDA ══ -->
   <div class="venda-card" id="venda-card">
     <div class="box-title">Previsão de venda</div>
@@ -605,7 +683,7 @@ footer strong{color:var(--text2)}
 </div>
 
 <footer>
-  <strong>Valora 3.1</strong> · 150+ cidades brasileiras · Dados FIPE/ZAP/SECOVI 2024–2025 · Não substitui laudo técnico (NBR 14653)
+  <strong>Valora 3.2</strong> · API Banco Central do Brasil (SGS) + FIPE/ZAP/SECOVI 2024–2025 · Não substitui laudo técnico (NBR 14653)
 </footer>
 
 <script>
@@ -1020,6 +1098,7 @@ function calcular(){
 
     const m2    = Math.round(precoBase*mPad*mAnd*mCon*mIda*mVag*mSui*mBan*mTier*mAmen);
     const total = m2*area;
+    finTotal = total; // expose for financing calculator
     const faixa = FAIXA[padrao]||.12;
     const low   = Math.round(total*(1-faixa));
     const high  = Math.round(total*(1+faixa));
@@ -1195,6 +1274,9 @@ function calcular(){
 
     /* SALVA RESULTADO PARA REVISITA DO NAV */
     lastResult=true;
+    /* SHOW FINANCING + RECALC WITH REAL SELIC */
+    document.getElementById('fin-card').style.display='block';
+    recalcFin();
 
     document.querySelectorAll('.nav-step').forEach(s=>s.classList.remove('on'));
     document.getElementById('ns-result').classList.add('on');
@@ -1202,6 +1284,144 @@ function calcular(){
     window.scrollTo({top:0,behavior:'smooth'});
   },2700);
 }
+
+/* ── BCB + FINANCING API ── */
+let BCB = {selic:null, ipca:null, igpm:null, loaded:false};
+let finTotal = 0;
+
+async function fetchBCB(){
+  try {
+    const [r1,r2,r3] = await Promise.all([
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json'),
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/12?formato=json'),
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.189/dados/ultimos/12?formato=json'),
+    ]);
+    if(!r1.ok||!r2.ok||!r3.ok) throw new Error('BCB API error');
+    const [d1,d2,d3] = await Promise.all([r1.json(), r2.json(), r3.json()]);
+
+    BCB.selic = parseFloat(d1[0].valor.replace(',','.'));
+
+    // Accumulated IPCA from 12 monthly values
+    const ipcaAcc = d2.reduce((a,m)=>a*(1+parseFloat(m.valor.replace(',','.'))/100),1);
+    BCB.ipca = ((ipcaAcc-1)*100).toFixed(2);
+
+    // Accumulated IGP-M from 12 monthly values
+    const igpmAcc = d3.reduce((a,m)=>a*(1+parseFloat(m.valor.replace(',','.'))/100),1);
+    BCB.igpm = ((igpmAcc-1)*100).toFixed(2);
+
+    BCB.loaded = true;
+    renderIndicators();
+    if(finTotal>0) recalcFin();
+  } catch(e){
+    renderIndicatorsFallback();
+  }
+}
+
+function renderIndicators(){
+  if(!BCB.loaded) return;
+  // Housing credit estimate: SBPE/CEF rates are independent of Selic but correlated
+  // Formula: max(9.5, min(14.5, Selic*0.55 + 5.8))
+  const txImobi = Math.min(14.5, Math.max(9.5, BCB.selic*0.55+5.8)).toFixed(2);
+  document.getElementById('ind-grid').innerHTML=`
+    <div class="ind-item">
+      <div class="il">Selic Meta</div>
+      <div class="iv gold-txt">${BCB.selic.toFixed(2)}% a.a.</div>
+      <div class="is">taxa básica de juros</div>
+    </div>
+    <div class="ind-item">
+      <div class="il">IPCA 12 meses</div>
+      <div class="iv">${BCB.ipca}%</div>
+      <div class="is">inflação acumulada</div>
+    </div>
+    <div class="ind-item">
+      <div class="il">IGP-M 12 meses</div>
+      <div class="iv">${BCB.igpm}%</div>
+      <div class="is">reajuste de aluguéis</div>
+    </div>
+    <div class="ind-item">
+      <div class="il">Crédito Imobiliário</div>
+      <div class="iv">~${txImobi}% a.a.</div>
+      <div class="is">estimativa mercado</div>
+    </div>`;
+}
+
+function renderIndicatorsFallback(){
+  document.getElementById('ind-grid').innerHTML=`
+    <div style="grid-column:1/-1;font-size:.75rem;color:var(--text3);text-align:center;padding:.75rem 0">
+      ⚠ Dados indisponíveis no momento. Verifique sua conexão.
+    </div>`;
+}
+
+function recalcFin(){
+  if(finTotal<=0) return;
+  const entrada = parseFloat(document.getElementById('fin-entrada').value);
+  const meses   = parseInt(document.getElementById('fin-prazo').value);
+  const P       = finTotal*(1-entrada); // valor financiado
+
+  // Rates: FGTS fixed, CEF SBPE fixed, market based on Selic
+  const selicRate = BCB.selic||14.75;
+  const txMercado = parseFloat(Math.min(14.5, Math.max(10.5, selicRate*0.55+5.8)).toFixed(2));
+
+  const scenarios = [
+    {nm:'FGTS / Habitação',      taxa:8.16,       rec:false},
+    {nm:'Caixa Econômica (SBPE)',taxa:10.5,        rec:true},
+    {nm:'Banco privado',         taxa:txMercado,  rec:false},
+  ];
+
+  document.getElementById('fin-scens').innerHTML = scenarios.map(s=>{
+    const r  = s.taxa/100/12;
+    const fac = Math.pow(1+r, meses);
+    // PRICE: M = P * r * (1+r)^n / ((1+r)^n - 1)
+    const price = P*(r*fac)/(fac-1);
+    const total = price*meses;
+    const juros = total-P;
+    // SAC: 1st installment = P/n + P*r
+    const sac1  = P/meses + P*r;
+
+    return `<div class="fin-scen${s.rec?' rec':''}">
+      <div class="fin-scen-hd">
+        <span class="fin-scen-nm">${s.nm}</span>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span class="fin-scen-rt">${s.taxa.toFixed(2)}% a.a.</span>
+          ${s.rec?'<span class="fin-rec-tag">mais comum</span>':''}
+        </div>
+      </div>
+      <div class="fin-scen-g">
+        <div>
+          <div class="fsi-lbl">Parcela Price</div>
+          <div class="fsi-val ${s.rec?'gold-txt':''}">${fmtMes(price)}</div>
+        </div>
+        <div>
+          <div class="fsi-lbl">1ª parcela SAC</div>
+          <div class="fsi-val">${fmtMes(sac1)}</div>
+        </div>
+        <div>
+          <div class="fsi-lbl">Total de juros</div>
+          <div class="fsi-val">${fmtK(juros)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Update selic note if loaded
+  if(BCB.loaded){
+    const note=document.querySelector('.fin-note');
+    if(note) note.innerHTML=note.innerHTML.replace(
+      /Taxa de mercado estimada.*/,
+      `Taxa de mercado calculada com Selic atual de <strong>${BCB.selic.toFixed(2)}% a.a.</strong> via API do Banco Central. Consulte sua instituição financeira para proposta formal.`
+    );
+  }
+}
+
+function fmtMes(v){return fmt(Math.round(v))+'/mês'}
+function fmtK(v){
+  if(v>=1000000) return 'R$'+(v/1000000).toFixed(2)+'M';
+  if(v>=1000)    return 'R$'+(v/1000).toFixed(1)+'k';
+  return fmt(Math.round(v));
+}
+
+/* Inicializa BCB ao carregar */
+window.addEventListener('load', fetchBCB);
 
 /* ── HELPERS ── */
 function fmt(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0})}
