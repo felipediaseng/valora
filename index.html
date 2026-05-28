@@ -295,6 +295,79 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 footer{text-align:center;padding:2rem 1.5rem;border-top:1px solid var(--gborder);font-size:.72rem;color:var(--text3)}
 footer strong{color:var(--text2)}
 
+/* ── LEAD CAPTURE ── */
+.lead-card{background:linear-gradient(135deg,rgba(200,160,60,.1),rgba(200,160,60,.04));border:1px solid rgba(200,160,60,.25);border-radius:var(--r);padding:1.5rem;margin-bottom:.75rem;position:relative;overflow:hidden}
+.lead-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-g)}
+.lead-eyebrow{font-size:.67rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--gold2);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.lead-eyebrow::before{content:'◆';font-size:.45rem}
+.lead-card h3{font-family:var(--fd);font-size:1.35rem;font-weight:400;margin-bottom:.5rem;line-height:1.2}
+.lead-card p{font-size:.8rem;color:var(--text2);margin-bottom:1.1rem;line-height:1.65}
+.lead-form{display:flex;flex-direction:column;gap:.6rem}
+.lead-input{background:var(--bg3);border:1px solid var(--gborder2);border-radius:var(--rxs);padding:.7rem .95rem;font-family:var(--fn);font-size:.87rem;color:var(--text);outline:none;transition:border .2s}
+.lead-input:focus{border-color:var(--gold2)}
+.lead-submit{background:var(--gold-g);color:#120e04;border:none;border-radius:99px;padding:.85rem;font-family:var(--fn);font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 3px 14px var(--gold-glow)}
+.lead-submit:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(200,160,60,.35)}
+.lead-success{display:none;text-align:center;padding:.5rem 0}
+.lead-success .ls-icon{font-size:2rem;margin-bottom:.5rem}
+.lead-success h4{font-size:.95rem;font-weight:600;margin-bottom:.3rem}
+.lead-success p{font-size:.78rem;color:var(--text2)}
+.lead-privacy{font-size:.65rem;color:var(--text3);text-align:center;margin-top:.5rem}
+
+/* ── PLANS PAGE ── */
+.plans-hero{max-width:680px;margin:0 auto;text-align:center;padding:3.5rem 1.5rem 2rem}
+.plans-hero h1{font-family:var(--fd);font-size:2.5rem;font-weight:400;letter-spacing:-.02em;margin-bottom:.75rem;line-height:1.1}
+.plans-hero p{font-size:.9rem;color:var(--text2);max-width:360px;margin:0 auto 2rem}
+.plan-tabs{display:flex;gap:.5rem;justify-content:center;margin-bottom:2rem;background:var(--glass);border:1px solid var(--gborder);border-radius:99px;padding:.3rem;max-width:340px;margin-left:auto;margin-right:auto}
+.ptab{flex:1;padding:.5rem 1rem;border-radius:99px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;color:var(--text2)}
+.ptab.on{background:var(--gold-g);color:#120e04}
+.plans-grid{max-width:680px;margin:0 auto;padding:0 1.5rem 1rem;display:grid;gap:.75rem}
+@media(min-width:580px){.plans-grid{grid-template-columns:repeat(3,1fr)}}
+.plan-card{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.4rem;position:relative;transition:border-color .2s,transform .2s;display:flex;flex-direction:column}
+.plan-card.featured{border-color:rgba(200,160,60,.35);background:rgba(200,160,60,.05)}
+.plan-card:hover{border-color:var(--gborder2);transform:translateY(-3px)}
+.plan-card.featured:hover{border-color:rgba(200,160,60,.5)}
+.plan-badge{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--gold-g);color:#120e04;font-size:.62rem;font-weight:700;padding:.22rem .8rem;border-radius:0 0 8px 8px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.plan-name{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.5rem;margin-top:.3rem}
+.plan-price{font-family:var(--fd);font-size:2rem;font-style:italic;line-height:1;margin-bottom:.2rem}
+.plan-price.grad{background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.plan-period{font-size:.72rem;color:var(--text2);margin-bottom:.9rem}
+.plan-desc{font-size:.78rem;color:var(--text2);margin-bottom:1rem;line-height:1.6;flex:1}
+.plan-feats{list-style:none;display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem}
+.plan-feats li{font-size:.76rem;color:var(--text2);padding-left:1.1rem;position:relative;line-height:1.45}
+.plan-feats li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:600;font-size:.7rem}
+.plan-feats li.no{color:var(--text3)}
+.plan-feats li.no::before{content:'—';color:var(--text3)}
+.plan-cta{width:100%;background:var(--glass);border:1px solid var(--gborder2);border-radius:99px;padding:.75rem;font-family:var(--fn);font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s;text-align:center}
+.plan-cta:hover{border-color:var(--gold2);color:var(--gold2)}
+.plan-card.featured .plan-cta{background:var(--gold-g);color:#120e04;border-color:transparent;box-shadow:0 3px 14px var(--gold-glow)}
+.plan-card.featured .plan-cta:hover{transform:scale(1.02)}
+
+/* PARTNER REGISTER FORM */
+.partner-form-wrap{max-width:520px;margin:0 auto;padding:0 1.5rem 3rem}
+.partner-form{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.5rem;backdrop-filter:blur(12px)}
+.pf-title{font-family:var(--fd);font-size:1.3rem;font-weight:400;margin-bottom:.3rem}
+.pf-sub{font-size:.78rem;color:var(--text2);margin-bottom:1.2rem}
+.pf-grid{display:grid;gap:.6rem}
+.pf-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.pf-field{display:flex;flex-direction:column;gap:.3rem}
+.pf-field label{font-size:.72rem;font-weight:500;color:var(--text2)}
+.pf-field input,.pf-field select{background:var(--bg3);border:1px solid var(--gborder);border-radius:var(--rxs);padding:.65rem .85rem;font-family:var(--fn);font-size:.85rem;color:var(--text);outline:none;transition:border .2s;appearance:none}
+.pf-field input:focus,.pf-field select:focus{border-color:var(--gold2)}
+.pf-submit{width:100%;background:var(--gold-g);color:#120e04;border:none;border-radius:99px;padding:.9rem;font-family:var(--fn);font-size:.9rem;font-weight:700;cursor:pointer;margin-top:.4rem;transition:transform .15s;box-shadow:0 3px 14px var(--gold-glow)}
+.pf-submit:hover{transform:translateY(-1px)}
+.pf-privacy{font-size:.64rem;color:var(--text3);text-align:center;margin-top:.65rem;line-height:1.55}
+.partner-success{display:none;text-align:center;padding:2rem 1.5rem}
+.ps-icon{font-size:2.5rem;margin-bottom:.75rem}
+.partner-benefits{max-width:680px;margin:0 auto;padding:0 1.5rem 2rem;display:grid;gap:.65rem}
+@media(min-width:580px){.partner-benefits{grid-template-columns:repeat(3,1fr)}}
+.pb-card{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.1rem}
+.pb-icon{font-size:1.2rem;margin-bottom:.6rem}
+.pb-title{font-size:.85rem;font-weight:600;margin-bottom:.25rem}
+.pb-desc{font-size:.76rem;color:var(--text2);line-height:1.55}
+
+/* PLAN PANEL visibility */
+.plan-panel{display:none}.plan-panel.on{display:block;animation:fadeUp .3s ease both}
+
 /* ── BCB LIVE INDICATORS ── */
 .live-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.65rem;font-weight:600;color:#4ade80;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.85rem}
 .live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:livepulse 2s ease-in-out infinite}
@@ -338,6 +411,7 @@ footer strong{color:var(--text2)}
 <div class="topbar">
   <div class="logo">valora</div>
   <div class="topbar-r">
+    <button class="btn-ghost" onclick="goTo('planos')">Planos</button>
     <button class="btn-ghost" onclick="toggleTheme()">◐ Tema</button>
     <button class="btn-gold" onclick="goTo('calc')">Avaliar grátis</button>
   </div>
@@ -672,14 +746,250 @@ footer strong{color:var(--text2)}
     • Valorização baseada no histórico regional FIPE/ZAP — não é garantia de rendimento futuro.
   </div>
 
+  <!-- ══ LEAD CAPTURE ══ -->
+  <div class="lead-card" id="lead-card">
+    <div class="lead-eyebrow">Quer vender este imóvel?</div>
+    <h3>Conecte com um corretor<br>parceiro Valora</h3>
+    <p>Corretores verificados recebem seu laudo completo e entram em contato em até 2h — sem compromisso.</p>
+    <div class="lead-form" id="lead-form">
+      <input class="lead-input" type="text" id="lead-nome" placeholder="Seu nome completo">
+      <input class="lead-input" type="tel" id="lead-tel" placeholder="WhatsApp com DDD (ex: 11 99999-0000)">
+      <input class="lead-input" type="email" id="lead-email" placeholder="E-mail (opcional)">
+      <button class="lead-submit" onclick="enviarLead()">Quero ser contatado por um corretor →</button>
+      <div class="lead-privacy">🔒 Seus dados são usados apenas para esta finalidade. Sem spam.</div>
+    </div>
+    <div class="lead-success" id="lead-success">
+      <div class="ls-icon">✅</div>
+      <h4>Solicitação enviada!</h4>
+      <p>Um corretor parceiro verificado entrará em contato pelo WhatsApp em até 2 horas.</p>
+    </div>
+  </div>
+
   <button class="reset-btn" onclick="resetForm()">← Nova avaliação</button>
 </div>
 
 <!-- NAV -->
 <div class="nav-bar">
   <div class="nav-step on" id="ns-home" onclick="goTo('home')"><div class="ndot"></div>Início</div>
-  <div class="nav-step" id="ns-calc" onclick="goTo('calc')"><div class="ndot"></div>Avaliação</div>
+  <div class="nav-step" id="ns-calc" onclick="goTo('calc')"><div class="ndot"></div>Avaliar</div>
+  <div class="nav-step" id="ns-planos" onclick="goTo('planos')"><div class="ndot"></div>Planos</div>
   <div class="nav-step" id="ns-result" onclick="showResult()"><div class="ndot"></div>Resultado</div>
+</div>
+
+<!-- ═══════════════ PLANOS ═══════════════ -->
+<div class="page" id="pg-planos">
+  <div class="plans-hero">
+    <div class="hero-eyebrow">Monetize com a Valora</div>
+    <h1>Planos para profissionais<br>e imobiliárias</h1>
+    <p>Do corretor autônomo à grande imobiliária — escolha o plano certo para o seu negócio.</p>
+  </div>
+
+  <!-- TABS -->
+  <div style="display:flex;justify-content:center;margin-bottom:1.5rem">
+    <div class="plan-tabs">
+      <div class="ptab on" id="ptab-corretor" onclick="switchPlanTab('corretor')">Para Corretores</div>
+      <div class="ptab" id="ptab-imob" onclick="switchPlanTab('imob')">Para Imobiliárias</div>
+    </div>
+  </div>
+
+  <!-- CORRETORES -->
+  <div class="plan-panel on" id="pp-corretor">
+    <div class="plans-grid">
+
+      <div class="plan-card">
+        <div class="plan-name">Parceiro</div>
+        <div class="plan-price">Grátis</div>
+        <div class="plan-period">para sempre</div>
+        <div class="plan-desc">Ideal para corretores que querem começar a receber leads qualificados sem custo fixo.</div>
+        <ul class="plan-feats">
+          <li>Recebe leads da plataforma</li>
+          <li>Acesso ao laudo do imóvel</li>
+          <li>Perfil público na Valora</li>
+          <li>Badge "Parceiro Verificado"</li>
+          <li class="no">Leads prioritários</li>
+          <li class="no">Relatórios de performance</li>
+          <li class="no">Suporte dedicado</li>
+        </ul>
+        <div style="font-size:.7rem;color:var(--gold2);margin-bottom:.8rem;font-weight:600">✦ 8% sobre venda fechada</div>
+        <button class="plan-cta" onclick="goToPartnerForm('parceiro')">Quero me cadastrar</button>
+      </div>
+
+      <div class="plan-card featured">
+        <div class="plan-badge">MAIS POPULAR</div>
+        <div class="plan-name">Verificado</div>
+        <div class="plan-price grad">R$89</div>
+        <div class="plan-period">por mês · sem fidelidade</div>
+        <div class="plan-desc">Para corretores ativos que querem leads exclusivos e visibilidade premium na plataforma.</div>
+        <ul class="plan-feats">
+          <li>Tudo do Plano Parceiro</li>
+          <li>Leads prioritários na sua região</li>
+          <li>Destaque no perfil de busca</li>
+          <li>Relatórios mensais de leads</li>
+          <li>Integração CRECI verificado</li>
+          <li>Suporte por WhatsApp</li>
+          <li class="no">API de leads</li>
+        </ul>
+        <div style="font-size:.7rem;color:var(--gold2);margin-bottom:.8rem;font-weight:600">✦ 5% sobre venda fechada</div>
+        <button class="plan-cta" onclick="goToPartnerForm('verificado')">Assinar agora</button>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Premium</div>
+        <div class="plan-price">R$229</div>
+        <div class="plan-period">por mês · sem fidelidade</div>
+        <div class="plan-desc">Para corretores de alta performance que precisam de exclusividade e ferramentas avançadas.</div>
+        <ul class="plan-feats">
+          <li>Tudo do Plano Verificado</li>
+          <li>Leads exclusivos por bairro</li>
+          <li>Dashboard de performance</li>
+          <li>API de leads (webhook)</li>
+          <li>Consultoria de precificação</li>
+          <li>Gerente de conta dedicado</li>
+          <li>Suporte prioritário 24h</li>
+        </ul>
+        <div style="font-size:.7rem;color:var(--gold2);margin-bottom:.8rem;font-weight:600">✦ 3% sobre venda fechada</div>
+        <button class="plan-cta" onclick="goToPartnerForm('premium')">Assinar agora</button>
+      </div>
+
+    </div>
+
+    <!-- BENEFITS CORRETORES -->
+    <div style="text-align:center;padding:2rem 1.5rem .75rem;max-width:680px;margin:0 auto">
+      <div class="section-label">Por que ser parceiro Valora?</div>
+    </div>
+    <div class="partner-benefits">
+      <div class="pb-card"><div class="pb-icon">🎯</div><div class="pb-title">Leads qualificados</div><div class="pb-desc">Receba contatos de pessoas que já avaliaram o imóvel e estão prontas para negociar.</div></div>
+      <div class="pb-card"><div class="pb-icon">📋</div><div class="pb-title">Laudo completo</div><div class="pb-desc">Acesso ao score, preço estimado, tempo de venda e perfil do imóvel antes de ligar.</div></div>
+      <div class="pb-card"><div class="pb-icon">⚡</div><div class="pb-title">Contato em 2h</div><div class="pb-desc">Sistema de distribuição inteligente que prioriza o corretor mais próximo e disponível.</div></div>
+    </div>
+
+    <!-- CTA CADASTRO -->
+    <div style="text-align:center;padding:1rem 1.5rem 2.5rem">
+      <button class="hero-cta" onclick="goToPartnerForm('parceiro')">
+        Cadastrar como parceiro gratuitamente
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- IMOBILIÁRIAS -->
+  <div class="plan-panel" id="pp-imob">
+    <div class="plans-grid">
+
+      <div class="plan-card">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">R$349</div>
+        <div class="plan-period">por mês · até 5 usuários</div>
+        <div class="plan-desc">Para imobiliárias pequenas que querem avaliar imóveis com precisão e capturar leads.</div>
+        <ul class="plan-feats">
+          <li>200 avaliações/mês</li>
+          <li>5 corretores cadastrados</li>
+          <li>Widget para o seu site</li>
+          <li>Painel de leads unificado</li>
+          <li>Dados de mercado por cidade</li>
+          <li class="no">API de integração</li>
+          <li class="no">White-label</li>
+        </ul>
+        <button class="plan-cta" onclick="solicitarDemo('starter')">Começar agora</button>
+      </div>
+
+      <div class="plan-card featured">
+        <div class="plan-badge">RECOMENDADO</div>
+        <div class="plan-name">Business</div>
+        <div class="plan-price grad">R$799</div>
+        <div class="plan-period">por mês · até 25 usuários</div>
+        <div class="plan-desc">Para imobiliárias em crescimento que precisam de escalabilidade e integração com sistemas próprios.</div>
+        <ul class="plan-feats">
+          <li>Avaliações ilimitadas</li>
+          <li>25 corretores cadastrados</li>
+          <li>API REST completa</li>
+          <li>White-label parcial (logo + cores)</li>
+          <li>Relatórios avançados</li>
+          <li>Integração CRM (Salesforce, RD)</li>
+          <li>Suporte prioritário</li>
+        </ul>
+        <button class="plan-cta" onclick="solicitarDemo('business')">Solicitar demo</button>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price" style="font-size:1.5rem">Sob consulta</div>
+        <div class="plan-period">usuários ilimitados · SLA garantido</div>
+        <div class="plan-desc">Para grandes imobiliárias e redes que precisam de solução completa, customizada e escalável.</div>
+        <ul class="plan-feats">
+          <li>Tudo do Business</li>
+          <li>White-label completo</li>
+          <li>Dados customizados por região</li>
+          <li>Integração com portais (ZAP, OLX)</li>
+          <li>SLA 99.9% de uptime</li>
+          <li>Gerente de conta dedicado</li>
+          <li>Treinamento da equipe</li>
+        </ul>
+        <button class="plan-cta" onclick="solicitarDemo('enterprise')">Falar com consultor</button>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;padding:1rem 1.5rem 2.5rem">
+      <p style="font-size:.8rem;color:var(--text2);margin-bottom:1.25rem">Todas as imobiliárias têm 14 dias de teste gratuito sem cartão de crédito.</p>
+      <button class="hero-cta" onclick="solicitarDemo('business')">
+        Agendar demonstração gratuita
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CADASTRO PARCEIRO ═══════════════ -->
+<div class="page" id="pg-parceiro">
+  <div class="form-page-hd">
+    <h2>Cadastro de parceiro</h2>
+    <p>Preencha os dados para começar a receber leads</p>
+  </div>
+  <div class="partner-form-wrap">
+    <div class="partner-form" id="pf-form-wrap">
+      <div class="pf-title" id="pf-plan-title">Plano Parceiro (Gratuito)</div>
+      <div class="pf-sub">Cadastro rápido — você começa a receber leads imediatamente após verificação do CRECI.</div>
+      <div class="pf-grid">
+        <div class="pf-row">
+          <div class="pf-field"><label>Nome completo</label><input type="text" id="pf-nome" placeholder="João Silva"></div>
+          <div class="pf-field"><label>CRECI</label><input type="text" id="pf-creci" placeholder="ex: 12345-F"></div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field"><label>WhatsApp profissional</label><input type="tel" id="pf-tel" placeholder="11 99999-0000"></div>
+          <div class="pf-field"><label>E-mail</label><input type="email" id="pf-email" placeholder="joao@email.com"></div>
+        </div>
+        <div class="pf-field"><label>Estado de atuação</label>
+          <select id="pf-estado">
+            <option value="">Selecione</option>
+            <option>São Paulo</option><option>Rio de Janeiro</option><option>Minas Gerais</option>
+            <option>Paraná</option><option>Santa Catarina</option><option>Rio Grande do Sul</option>
+            <option>Bahia</option><option>Goiás</option><option>Ceará</option><option>Pernambuco</option>
+            <option>Espírito Santo</option><option>Mato Grosso do Sul</option><option>Outro</option>
+          </select>
+        </div>
+        <div class="pf-field"><label>Cidade principal de atuação</label><input type="text" id="pf-cidade" placeholder="ex: São Paulo, Curitiba, Florianópolis…"></div>
+        <div class="pf-field"><label>Especialidade</label>
+          <select id="pf-especialidade">
+            <option>Residencial — apartamentos</option>
+            <option>Residencial — casas e terrenos</option>
+            <option>Comercial</option>
+            <option>Lançamentos e imóveis novos</option>
+            <option>Imóveis de luxo e alto padrão</option>
+            <option>Todas as categorias</option>
+          </select>
+        </div>
+      </div>
+      <button class="pf-submit" onclick="enviarCadastro()">Enviar cadastro e começar a receber leads →</button>
+      <div class="pf-privacy">🔒 Seus dados são protegidos e usados apenas para o programa de parceiros Valora. Você pode cancelar a qualquer momento.</div>
+    </div>
+    <div class="partner-success" id="pf-success">
+      <div class="ps-icon">🎉</div>
+      <h3 style="font-family:var(--fd);font-size:1.4rem;font-weight:400;margin-bottom:.5rem">Cadastro enviado!</h3>
+      <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.5rem">Nossa equipe vai verificar seu CRECI e ativar seu perfil em até 24h. Você receberá uma confirmação no WhatsApp.</p>
+      <button class="btn-gold" onclick="goTo('home')">Voltar ao início</button>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -1476,6 +1786,127 @@ function toggleTheme(){
   const isL=document.documentElement.getAttribute('data-theme')==='light';
   document.documentElement.setAttribute('data-theme',isL?'':'light');
   document.querySelector('.btn-ghost').textContent=isL?'◐ Tema':'● Tema';
+}
+
+/* ── LEAD CAPTURE ── */
+function enviarLead(){
+  const nome  = document.getElementById('lead-nome').value.trim();
+  const tel   = document.getElementById('lead-tel').value.trim();
+  const email = document.getElementById('lead-email').value.trim();
+
+  if(!nome||!tel){
+    document.getElementById('lead-nome').style.borderColor = nome ? '' : 'var(--red)';
+    document.getElementById('lead-tel').style.borderColor  = tel  ? '' : 'var(--red)';
+    return;
+  }
+
+  // Monta mensagem para o WhatsApp do proprietário do site
+  // INSTRUÇÃO: substitua o número abaixo pelo seu WhatsApp comercial (com DDI)
+  const numeroWhatsApp = '5511999999999'; // ← SUBSTITUA PELO SEU NÚMERO
+  const cidade  = cidadeKey  || 'não informada';
+  const estado  = estadoKey  || '';
+  const valor   = document.getElementById('r-val')?.textContent || 'não calculado';
+  const score   = document.getElementById('r-score')?.textContent || '-';
+
+  const msg = encodeURIComponent(
+    `*Novo Lead — Valora*\n\n`+
+    `👤 Nome: ${nome}\n`+
+    `📱 WhatsApp: ${tel}\n`+
+    `📧 E-mail: ${email||'não informado'}\n\n`+
+    `🏠 *Imóvel avaliado*\n`+
+    `📍 ${cidade}${estado?' / '+estado:''}\n`+
+    `💰 Valor estimado: ${valor}\n`+
+    `⭐ Score Valora: ${score}/100\n\n`+
+    `Interessado em contato com corretor parceiro.`
+  );
+
+  // Abre WhatsApp em nova aba
+  window.open(`https://wa.me/${numeroWhatsApp}?text=${msg}`,'_blank');
+
+  // Mostra tela de sucesso
+  document.getElementById('lead-form').style.display    = 'none';
+  document.getElementById('lead-success').style.display = 'block';
+}
+
+/* ── PLANS PAGE ── */
+function switchPlanTab(tab){
+  ['corretor','imob'].forEach(t=>{
+    document.getElementById('ptab-'+t).classList.toggle('on',t===tab);
+    document.getElementById('pp-'+t).classList.toggle('on',t===tab);
+  });
+}
+
+function goToPartnerForm(plano){
+  const titles={
+    parceiro:'Plano Parceiro — Gratuito',
+    verificado:'Plano Verificado — R$ 89/mês',
+    premium:'Plano Premium — R$ 229/mês',
+  };
+  document.getElementById('pf-plan-title').textContent = titles[plano] || 'Cadastro de Parceiro';
+  document.getElementById('pf-form-wrap').style.display  = 'block';
+  document.getElementById('pf-success').style.display    = 'none';
+  goTo('parceiro');
+}
+
+function solicitarDemo(plano){
+  // Monta mensagem para WhatsApp comercial Valora
+  const numeroWhatsApp = '5511999999999'; // ← SUBSTITUA PELO SEU NÚMERO
+  const planos = {
+    starter:'Starter (R$349/mês)',
+    business:'Business (R$799/mês)',
+    enterprise:'Enterprise (sob consulta)',
+  };
+  const msg = encodeURIComponent(
+    `*Solicitação de Demo — Valora para Imobiliárias*\n\n`+
+    `Tenho interesse no plano: *${planos[plano]||plano}*\n\n`+
+    `Poderia agendar uma demonstração?`
+  );
+  window.open(`https://wa.me/${numeroWhatsApp}?text=${msg}`,'_blank');
+}
+
+/* ── PARTNER REGISTRATION ── */
+function enviarCadastro(){
+  const nome   = document.getElementById('pf-nome').value.trim();
+  const creci  = document.getElementById('pf-creci').value.trim();
+  const tel    = document.getElementById('pf-tel').value.trim();
+  const email  = document.getElementById('pf-email').value.trim();
+  const estado = document.getElementById('pf-estado').value;
+  const cidade = document.getElementById('pf-cidade').value.trim();
+  const espec  = document.getElementById('pf-especialidade').value;
+  const plano  = document.getElementById('pf-plan-title').textContent;
+
+  // Validação básica
+  const campos = [
+    {el:'pf-nome',  ok:nome},
+    {el:'pf-creci', ok:creci},
+    {el:'pf-tel',   ok:tel},
+    {el:'pf-cidade',ok:cidade},
+  ];
+  let valido = true;
+  campos.forEach(c=>{
+    document.getElementById(c.el).style.borderColor = c.ok ? '' : 'var(--red)';
+    if(!c.ok) valido = false;
+  });
+  if(!valido) return;
+
+  // Envia via WhatsApp
+  const numeroWhatsApp = '5511999999999'; // ← SUBSTITUA PELO SEU NÚMERO
+  const msg = encodeURIComponent(
+    `*Novo Cadastro de Parceiro — Valora*\n\n`+
+    `📋 Plano: ${plano}\n\n`+
+    `👤 Nome: ${nome}\n`+
+    `🪪 CRECI: ${creci}\n`+
+    `📱 WhatsApp: ${tel}\n`+
+    `📧 E-mail: ${email||'não informado'}\n\n`+
+    `📍 Estado: ${estado||'não informado'}\n`+
+    `🏙 Cidade: ${cidade}\n`+
+    `🏠 Especialidade: ${espec}`
+  );
+  window.open(`https://wa.me/${numeroWhatsApp}?text=${msg}`,'_blank');
+
+  // Mostra sucesso
+  document.getElementById('pf-form-wrap').style.display = 'none';
+  document.getElementById('pf-success').style.display   = 'block';
 }
 </script>
 </body>
