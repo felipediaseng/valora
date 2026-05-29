@@ -4,35 +4,62 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valora — Avaliação Imobiliária Premium</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
+<meta name="theme-color" content="#07080d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f1eb" media="(prefers-color-scheme: light)">
 <meta name="description" content="Avalie seu apartamento com precisão. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
+<script>
+/* Set theme before first paint to prevent FOUC */
+(function(){
+  var d=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  document.documentElement.setAttribute('data-theme',d);
+})();
+</script>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Valora — Avaliação Imobiliária com IA">
+<meta property="og:description" content="Descubra o valor real do seu apartamento. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
+<meta property="og:url" content="https://valora.app.br">
+<meta property="og:image" content="https://valora.app.br/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Valora — Avaliação Imobiliária com IA">
+<meta name="twitter:description" content="Descubra o valor real do seu apartamento com dados reais de mercado.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Valora">
+<meta name="keywords" content="avaliação imobiliária, valor apartamento, preço imóvel, calculadora imóvel, avaliação online">
+<link rel="canonical" href="https://valora.app.br">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── RESET & TOKENS ── */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#07080d;
-  --bg2:rgba(255,255,255,0.035);
-  --bg3:rgba(255,255,255,0.06);
-  --glass:rgba(255,255,255,0.03);
-  --gborder:rgba(255,255,255,0.07);
-  --gborder2:rgba(255,255,255,0.13);
-  --text:#ede9e0;
-  --text2:#8a8070;
-  --text3:#4a4438;
-  --gold1:#b8902a;
-  --gold2:#ddb96a;
-  --gold3:#f5e0a0;
-  --gold-g:linear-gradient(135deg,#b8902a,#e0be72,#f5e0a0);
-  --gold-glow:rgba(200,165,80,0.18);
+  --bg:#03040a;
+  --bg2:rgba(255,255,255,0.04);
+  --bg3:rgba(255,255,255,0.07);
+  --glass:rgba(255,255,255,0.04);
+  --gborder:rgba(255,255,255,0.09);
+  --gborder2:rgba(255,255,255,0.16);
+  --text:#f0ece2;
+  --text2:#9a8e7c;
+  --text3:#524a3c;
+  --gold1:#c49a2e;
+  --gold2:#e8c870;
+  --gold3:#faeeb0;
+  --gold-g:linear-gradient(135deg,#c49a2e,#e8c870,#faeeb0);
+  --gold-glow:rgba(220,185,90,0.22);
   --green:#4ade80;
   --green-g:linear-gradient(135deg,#22c55e,#4ade80,#86efac);
   --red:#f87171;
   --orange:#fb923c;
   --blue:#60a5fa;
+  --btn-text:#0e0a02;
   --fn:'Plus Jakarta Sans',sans-serif;
   --fd:'Playfair Display',serif;
-  --r:18px;--rsm:12px;--rxs:8px;
+  --r:18px;--rsm:12px;--rxs:10px;
+  --radius-full:9999px;
+  --shadow-gold:0 4px 32px rgba(220,185,90,0.28);
+  --shadow-card:0 2px 24px rgba(0,0,0,0.45);
 }
 [data-theme=light]{
   --bg:#f4f1eb;
@@ -47,49 +74,58 @@
   --gold-glow:rgba(180,140,40,0.12);
 }
 html{scroll-behavior:smooth}
-body{font-family:var(--fn);background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh;transition:background .35s,color .35s;overflow-x:hidden}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--gold1);border-radius:99px}
+body{font-family:var(--fn);background:var(--bg);color:var(--text);font-size:16px;line-height:1.6;min-height:100vh;transition:background .35s,color .35s;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--gold1);border-radius:var(--radius-full)}
 
 /* GRAIN */
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:200px;opacity:.55}
 
 /* ORBS */
-.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(110px);opacity:.11}
-.orb-1{width:540px;height:540px;background:radial-gradient(circle,#c8a040,transparent);top:-160px;right:-120px}
-.orb-2{width:420px;height:420px;background:radial-gradient(circle,#3a7bd5,transparent);bottom:-120px;left:-90px}
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(120px);opacity:.16}
+.orb-1{width:660px;height:660px;background:radial-gradient(circle,#d4aa44,transparent);top:-180px;right:-140px}
+.orb-2{width:500px;height:500px;background:radial-gradient(circle,#2a5fc0,transparent);bottom:-140px;left:-100px}
 .orb-3{width:320px;height:320px;background:radial-gradient(circle,#8b5cf6,transparent);top:45%;right:18%;opacity:.06}
 [data-theme=light] .orb{opacity:.06}
+[data-theme=light] body::before{opacity:.22}
 
 .topbar,.page,.nav-bar,footer,.loading-screen,.result-wrap{position:relative;z-index:1}
 
 /* TOPBAR */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--gborder);position:sticky;top:0;z-index:100;background:rgba(7,8,13,0.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
-[data-theme=light] .topbar{background:rgba(244,241,235,0.9)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--gborder);position:sticky;top:0;z-index:100;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+[data-theme=dark]{color-scheme:dark}
+[data-theme=light]{color-scheme:light}
+[data-theme=light] .topbar{background:rgba(244,241,235,0.92)}
 .logo{font-family:var(--fd);font-size:1.4rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.01em}
 .topbar-r{display:flex;gap:.6rem;align-items:center}
-.btn-ghost{background:transparent;border:1px solid var(--gborder);color:var(--text2);border-radius:99px;padding:.32rem .8rem;font-size:.72rem;font-family:var(--fn);cursor:pointer;transition:all .2s}
+.btn-ghost{background:transparent;border:1px solid var(--gborder);color:var(--text2);border-radius:var(--radius-full);padding:.32rem .8rem;font-size:.72rem;font-family:var(--fn);cursor:pointer;transition:all .2s}
 .btn-ghost:hover{border-color:var(--gold2);color:var(--gold2)}
-.btn-gold{background:var(--gold-g);color:#1a1208;border:none;border-radius:99px;padding:.4rem 1.2rem;font-size:.78rem;font-weight:700;font-family:var(--fn);cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 2px 16px var(--gold-glow)}
-.btn-gold:hover{transform:scale(1.04);box-shadow:0 4px 24px rgba(200,160,60,.35)}
+.btn-gold{background:var(--gold-g);color:var(--btn-text);border:none;border-radius:var(--radius-full);padding:.5rem 1.4rem;font-size:.8rem;font-weight:700;font-family:var(--fn);cursor:pointer;transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .2s;box-shadow:var(--shadow-gold);letter-spacing:.02em}
+.btn-gold:hover{transform:scale(1.06) translateY(-1px);box-shadow:0 8px 36px rgba(220,185,90,.45)}
+.btn-gold:active{transform:scale(.98)}
 
 /* PAGES */
 .page{display:none}.page.on{display:block}
 
 /* HERO */
 .hero{max-width:680px;margin:0 auto;padding:4rem 1.5rem 3rem;text-align:center}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;background:rgba(200,160,60,.1);border:1px solid rgba(200,160,60,.25);border-radius:99px;padding:.3rem 1rem;font-size:.7rem;font-weight:600;color:var(--gold2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2rem}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;background:rgba(200,160,60,.1);border:1px solid rgba(200,160,60,.25);border-radius:var(--radius-full);padding:.3rem 1rem;font-size:.7rem;font-weight:600;color:var(--gold2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2rem}
 .hero-eyebrow::before{content:'◆';font-size:.5rem}
 .hero h1{font-family:var(--fd);font-size:3.2rem;font-weight:400;line-height:1.08;letter-spacing:-.025em;margin-bottom:1.25rem}
 .hero h1 .grad{background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-style:italic}
 .hero-sub{color:var(--text2);font-size:.95rem;font-weight:300;max-width:380px;margin:0 auto 2.5rem;line-height:1.8}
-.hero-cta{display:inline-flex;align-items:center;gap:.55rem;background:var(--gold-g);color:#120e04;border:none;border-radius:99px;padding:.9rem 2.2rem;font-size:.95rem;font-weight:700;font-family:var(--fn);cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 4px 28px var(--gold-glow);letter-spacing:.01em}
-.hero-cta:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(200,160,60,.4)}
-.hero-cta svg{transition:transform .2s}.hero-cta:hover svg{transform:translateX(4px)}
+.hero-cta{display:inline-flex;align-items:center;gap:.55rem;background:var(--gold-g);color:var(--btn-text);border:none;border-radius:var(--radius-full);padding:.9rem 2.2rem;font-size:.95rem;font-weight:700;font-family:var(--fn);cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 4px 28px var(--gold-glow);letter-spacing:.01em}
+.hero-cta svg{transition:transform .25s}.hero-cta:hover svg{transform:translateX(5px)}
+
+/* CTA shimmer */
+.hero-cta::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);transform:skewX(-20deg);transition:left .6s ease}
+.hero-cta:hover::after{left:150%}
+.hero-cta:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 44px rgba(220,185,90,.5)}
+
 .hero-proof{display:flex;align-items:center;justify-content:center;gap:2rem;margin-top:3rem;padding-top:2.5rem;border-top:1px solid var(--gborder)}
 .proof-item{text-align:center}
 .proof-n{font-family:var(--fd);font-size:1.9rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:block;line-height:1}
 .proof-l{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-top:.25rem}
-.v-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:99px;padding:.25rem .8rem;font-size:.67rem;font-weight:600;color:#4ade80;letter-spacing:.05em;margin-bottom:1.6rem}
+.v-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:var(--radius-full);padding:.25rem .8rem;font-size:.67rem;font-weight:600;color:#4ade80;letter-spacing:.05em;margin-bottom:1.6rem}
 
 /* FEATURES */
 .feat-wrap{max-width:680px;margin:0 auto;padding:0 1.5rem 3rem}
@@ -112,7 +148,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .prog-step{display:flex;flex-direction:column;align-items:center;gap:.3rem;flex:1;cursor:pointer}
 .prog-dot{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--gborder2);background:var(--glass);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;color:var(--text3);transition:all .3s;position:relative;z-index:1}
 .prog-step.done .prog-dot{background:rgba(200,160,60,.15);border-color:var(--gold2);color:var(--gold2)}
-.prog-step.active .prog-dot{background:var(--gold-g);border-color:transparent;color:#120e04;box-shadow:0 2px 12px var(--gold-glow)}
+.prog-step.active .prog-dot{background:var(--gold-g);border-color:transparent;color:var(--btn-text);box-shadow:0 2px 12px var(--gold-glow)}
 .prog-label{font-size:.62rem;color:var(--text3);white-space:nowrap}
 .prog-step.done .prog-label,.prog-step.active .prog-label{color:var(--gold2)}
 .prog-line{flex:1;height:1px;background:var(--gborder);margin-bottom:1.2rem;align-self:flex-start;margin-top:14px}
@@ -138,13 +174,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 
 /* SLIDER */
 .sld{display:flex;align-items:center;gap:.8rem;margin-top:.1rem}
-.sld input[type=range]{flex:1;height:3px;background:var(--gborder2);border-radius:99px;outline:none;-webkit-appearance:none;cursor:pointer}
+.sld input[type=range]{flex:1;height:3px;background:var(--gborder2);border-radius:var(--radius-full);outline:none;-webkit-appearance:none;cursor:pointer}
 .sld input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--gold-g);border-radius:50%;border:2px solid var(--bg);box-shadow:0 1px 8px var(--gold-glow)}
 .sld-val{font-size:.84rem;font-weight:600;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;min-width:48px;text-align:right}
 
 /* CHIPS */
 .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.3rem}
-.chip{padding:.4rem .9rem;border-radius:99px;border:1px solid var(--gborder);background:var(--glass);font-size:.75rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .18s;user-select:none}
+.chip{padding:.4rem .9rem;border-radius:var(--radius-full);border:1px solid var(--gborder);background:var(--glass);font-size:.75rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .18s;user-select:none}
 .chip.on{background:rgba(200,160,60,.12);border-color:var(--gold2);color:var(--gold2)}
 
 /* PADRAO */
@@ -162,9 +198,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 
 /* FORM NAV */
 .form-nav{display:flex;gap:.65rem;margin-top:1rem}
-.btn-next{flex:1;background:var(--gold-g);color:#120e04;border:none;border-radius:99px;padding:.9rem;font-family:var(--fn);font-size:.9rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 3px 18px var(--gold-glow)}
-.btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(200,160,60,.35)}
-.btn-prev{background:var(--glass);color:var(--text2);border:1px solid var(--gborder);border-radius:99px;padding:.9rem 1.4rem;font-family:var(--fn);font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-next{flex:1;background:var(--gold-g);color:var(--btn-text);border:none;border-radius:var(--radius-full);padding:.95rem;font-family:var(--fn);font-size:.9rem;font-weight:700;cursor:pointer;transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .2s;box-shadow:var(--shadow-gold)}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(220,185,90,.45)}
+.btn-prev{background:var(--glass);color:var(--text2);border:1px solid var(--gborder);border-radius:var(--radius-full);padding:.9rem 1.4rem;font-family:var(--fn);font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s}
 .btn-prev:hover{border-color:var(--gborder2);color:var(--text)}
 .form-err{display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:var(--rxs);padding:.7rem 1rem;font-size:.77rem;color:var(--red);margin-bottom:.6rem}
 
@@ -213,14 +249,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 /* BOX */
 .box{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.3rem;margin-bottom:.75rem;backdrop-filter:blur(12px)}
 .box-title{font-size:.69rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem}
-.box-title::before{content:'';display:block;width:3px;height:14px;background:var(--gold-g);border-radius:99px}
+.box-title::before{content:'';display:block;width:3px;height:14px;background:var(--gold-g);border-radius:var(--radius-full)}
 
 /* BARS */
 .bars{display:flex;flex-direction:column;gap:.75rem}
 .bar-row{display:grid;grid-template-columns:90px 1fr 62px;align-items:center;gap:.6rem;font-size:.76rem}
 .bar-lbl{color:var(--text2);text-align:right;font-size:.71rem;line-height:1.3}
-.bar-track{background:var(--bg3);border-radius:99px;height:6px;overflow:hidden}
-.bar-fill{height:100%;border-radius:99px;background:var(--gold-g);transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.bar-track{background:var(--bg3);border-radius:var(--radius-full);height:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:var(--radius-full);background:var(--gold-g);transition:width 1.2s cubic-bezier(.16,1,.3,1)}
 .bar-val{color:var(--text);font-weight:600;font-size:.77rem}
 
 /* DETAIL */
@@ -262,7 +298,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .cn-preco{font-weight:600;color:var(--text);font-size:.78rem}
 .cn-tempo{font-weight:700;font-size:.82rem;text-align:right;white-space:nowrap}
 .cn-fast{color:#4ade80}.cn-med{color:#fb923c}.cn-slow{color:#f87171}
-.cn-recommended{background:rgba(200,160,60,.1);border-radius:99px;padding:.1rem .6rem;font-size:.65rem;font-weight:600;color:var(--gold2)}
+.cn-recommended{background:rgba(200,160,60,.1);border-radius:var(--radius-full);padding:.1rem .6rem;font-size:.65rem;font-weight:600;color:var(--gold2)}
 
 /* Comparáveis */
 .comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:1rem}
@@ -282,11 +318,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .disc{background:rgba(200,160,60,.05);border:1px solid rgba(200,160,60,.15);border-radius:var(--rsm);padding:.9rem 1.1rem;font-size:.72rem;color:var(--text2);line-height:1.7;margin-bottom:.75rem}
 .disc strong{color:var(--gold2)}
 
-.reset-btn{width:100%;background:transparent;border:1px solid var(--gborder);border-radius:99px;padding:.9rem;font-family:var(--fn);font-size:.86rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .2s}
+.reset-btn{width:100%;background:transparent;border:1px solid var(--gborder);border-radius:var(--radius-full);padding:.9rem;font-family:var(--fn);font-size:.86rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .2s}
 .reset-btn:hover{border-color:var(--gold2);color:var(--gold2)}
 
 /* NAV */
-.nav-bar{display:flex;justify-content:center;gap:.5rem;padding:.9rem 1.5rem;border-top:1px solid var(--gborder);position:sticky;bottom:0;z-index:40;background:rgba(7,8,13,0.88);backdrop-filter:blur(20px)}
+.nav-bar{display:flex;justify-content:center;gap:.5rem;padding:.9rem 1.5rem;border-top:1px solid var(--gborder);position:sticky;bottom:0;z-index:40;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(20px)}
 [data-theme=light] .nav-bar{background:rgba(244,241,235,0.9)}
 .nav-step{display:flex;align-items:center;gap:.32rem;font-size:.7rem;font-weight:500;color:var(--text3);white-space:nowrap;cursor:pointer;padding:.3rem .55rem;border-radius:var(--rxs);transition:color .2s}
 .nav-step.on{color:var(--gold2)}
@@ -305,43 +341,15 @@ footer strong{color:var(--text2)}
 .lead-form{display:flex;flex-direction:column;gap:.6rem}
 .lead-input{background:var(--bg3);border:1px solid var(--gborder2);border-radius:var(--rxs);padding:.7rem .95rem;font-family:var(--fn);font-size:.87rem;color:var(--text);outline:none;transition:border .2s}
 .lead-input:focus{border-color:var(--gold2)}
-.lead-submit{background:var(--gold-g);color:#120e04;border:none;border-radius:99px;padding:.85rem;font-family:var(--fn);font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 3px 14px var(--gold-glow)}
-.lead-submit:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(200,160,60,.35)}
+.lead-submit{background:var(--gold-g);color:var(--btn-text);border:none;border-radius:var(--radius-full);padding:.85rem;font-family:var(--fn);font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:var(--shadow-gold)}
+.lead-submit:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(220,185,90,.45)}
 .lead-success{display:none;text-align:center;padding:.5rem 0}
 .lead-success .ls-icon{font-size:2rem;margin-bottom:.5rem}
 .lead-success h4{font-size:.95rem;font-weight:600;margin-bottom:.3rem}
 .lead-success p{font-size:.78rem;color:var(--text2)}
 .lead-privacy{font-size:.65rem;color:var(--text3);text-align:center;margin-top:.5rem}
 
-/* ── PLANS PAGE ── */
-.plans-hero{max-width:680px;margin:0 auto;text-align:center;padding:3.5rem 1.5rem 2rem}
-.plans-hero h1{font-family:var(--fd);font-size:2.5rem;font-weight:400;letter-spacing:-.02em;margin-bottom:.75rem;line-height:1.1}
-.plans-hero p{font-size:.9rem;color:var(--text2);max-width:360px;margin:0 auto 2rem}
-.plan-tabs{display:flex;gap:.5rem;justify-content:center;margin-bottom:2rem;background:var(--glass);border:1px solid var(--gborder);border-radius:99px;padding:.3rem;max-width:340px;margin-left:auto;margin-right:auto}
-.ptab{flex:1;padding:.5rem 1rem;border-radius:99px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;color:var(--text2)}
-.ptab.on{background:var(--gold-g);color:#120e04}
-.plans-grid{max-width:680px;margin:0 auto;padding:0 1.5rem 1rem;display:grid;gap:.75rem}
-@media(min-width:580px){.plans-grid{grid-template-columns:repeat(3,1fr)}}
-.plan-card{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.4rem;position:relative;transition:border-color .2s,transform .2s;display:flex;flex-direction:column}
-.plan-card.featured{border-color:rgba(200,160,60,.35);background:rgba(200,160,60,.05)}
-.plan-card:hover{border-color:var(--gborder2);transform:translateY(-3px)}
-.plan-card.featured:hover{border-color:rgba(200,160,60,.5)}
-.plan-badge{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--gold-g);color:#120e04;font-size:.62rem;font-weight:700;padding:.22rem .8rem;border-radius:0 0 8px 8px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-.plan-name{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.5rem;margin-top:.3rem}
-.plan-price{font-family:var(--fd);font-size:2rem;font-style:italic;line-height:1;margin-bottom:.2rem}
-.plan-price.grad{background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.plan-period{font-size:.72rem;color:var(--text2);margin-bottom:.9rem}
-.plan-desc{font-size:.78rem;color:var(--text2);margin-bottom:1rem;line-height:1.6;flex:1}
-.plan-feats{list-style:none;display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem}
-.plan-feats li{font-size:.76rem;color:var(--text2);padding-left:1.1rem;position:relative;line-height:1.45}
-.plan-feats li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:600;font-size:.7rem}
-.plan-feats li.no{color:var(--text3)}
-.plan-feats li.no::before{content:'—';color:var(--text3)}
-.plan-cta{width:100%;background:var(--glass);border:1px solid var(--gborder2);border-radius:99px;padding:.75rem;font-family:var(--fn);font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s;text-align:center}
-.plan-cta:hover{border-color:var(--gold2);color:var(--gold2)}
-.plan-card.featured .plan-cta{background:var(--gold-g);color:#120e04;border-color:transparent;box-shadow:0 3px 14px var(--gold-glow)}
-.plan-card.featured .plan-cta:hover{transform:scale(1.02)}
-
+/* plans CSS replaced — see SINGLE PLAN section */
 /* PARTNER REGISTER FORM */
 .partner-form-wrap{max-width:520px;margin:0 auto;padding:0 1.5rem 3rem}
 .partner-form{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.5rem;backdrop-filter:blur(12px)}
@@ -353,7 +361,7 @@ footer strong{color:var(--text2)}
 .pf-field label{font-size:.72rem;font-weight:500;color:var(--text2)}
 .pf-field input,.pf-field select{background:var(--bg3);border:1px solid var(--gborder);border-radius:var(--rxs);padding:.65rem .85rem;font-family:var(--fn);font-size:.85rem;color:var(--text);outline:none;transition:border .2s;appearance:none}
 .pf-field input:focus,.pf-field select:focus{border-color:var(--gold2)}
-.pf-submit{width:100%;background:var(--gold-g);color:#120e04;border:none;border-radius:99px;padding:.9rem;font-family:var(--fn);font-size:.9rem;font-weight:700;cursor:pointer;margin-top:.4rem;transition:transform .15s;box-shadow:0 3px 14px var(--gold-glow)}
+.pf-submit{width:100%;background:var(--gold-g);color:var(--btn-text);border:none;border-radius:var(--radius-full);padding:.9rem;font-family:var(--fn);font-size:.9rem;font-weight:700;cursor:pointer;margin-top:.4rem;transition:transform .15s;box-shadow:0 3px 14px var(--gold-glow)}
 .pf-submit:hover{transform:translateY(-1px)}
 .pf-privacy{font-size:.64rem;color:var(--text3);text-align:center;margin-top:.65rem;line-height:1.55}
 .partner-success{display:none;text-align:center;padding:2rem 1.5rem}
@@ -365,8 +373,7 @@ footer strong{color:var(--text2)}
 .pb-title{font-size:.85rem;font-weight:600;margin-bottom:.25rem}
 .pb-desc{font-size:.76rem;color:var(--text2);line-height:1.55}
 
-/* PLAN PANEL visibility */
-.plan-panel{display:none}.plan-panel.on{display:block;animation:fadeUp .3s ease both}
+
 
 /* ── BCB LIVE INDICATORS ── */
 .live-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.65rem;font-weight:600;color:#4ade80;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.85rem}
@@ -395,15 +402,149 @@ footer strong{color:var(--text2)}
 .fin-scen-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem}
 .fin-scen-nm{font-size:.79rem;font-weight:600}
 .fin-scen-rt{font-size:.74rem;font-weight:700;color:var(--gold2)}
-.fin-rec-tag{font-size:.61rem;background:rgba(200,160,60,.15);color:var(--gold2);border-radius:99px;padding:.1rem .55rem;font-weight:600}
+.fin-rec-tag{font-size:.61rem;background:rgba(200,160,60,.15);color:var(--gold2);border-radius:var(--radius-full);padding:.1rem .55rem;font-weight:600}
 .fin-scen-g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem}
 .fsi-lbl{font-size:.62rem;color:var(--text3);margin-bottom:.1rem}
 .fsi-val{font-size:.83rem;font-weight:600}
 .fin-note{font-size:.67rem;color:var(--text3);line-height:1.65;border-top:1px solid var(--gborder);padding-top:.75rem;margin-top:.35rem}
+
+/* Dark mode fallback for users without manual toggle */
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --bg:#07080d;--bg2:rgba(255,255,255,0.035);--bg3:rgba(255,255,255,0.06);
+    --glass:rgba(255,255,255,0.03);--gborder:rgba(255,255,255,0.07);--gborder2:rgba(255,255,255,0.13);
+    --text:#ede9e0;--text2:#8a8070;--text3:#4a4438;--gold-glow:rgba(200,165,80,0.18);
+  }
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme=dark]){
+    --bg:#f4f1eb;--bg2:rgba(0,0,0,0.03);--bg3:rgba(0,0,0,0.055);
+    --glass:rgba(255,255,255,0.72);--gborder:rgba(0,0,0,0.08);--gborder2:rgba(0,0,0,0.14);
+    --text:#1a1714;--text2:#7a6e60;--text3:#b0a898;--gold-glow:rgba(180,140,40,0.12);
+  }
+}
+/* Respect reduced motion preference */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:0.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
+/* Focus-visible for keyboard navigation */
+.chip:focus-visible,.tchip:focus-visible,.pchip:focus-visible,
+.btn-ghost:focus-visible,.btn-gold:focus-visible,.nav-step:focus-visible,
+.btn-next:focus-visible,.btn-prev:focus-visible,.plan-cta:focus-visible,
+.reset-btn:focus-visible,.lead-submit:focus-visible,.pf-submit:focus-visible{
+  outline:2px solid var(--gold2);outline-offset:3px;border-radius:var(--rxs);
+}
+
+.skip-link{position:absolute;top:-100%;left:1rem;background:var(--gold1);color:#fff;padding:.5rem 1rem;border-radius:0 0 var(--rxs) var(--rxs);font-size:.85rem;font-weight:600;z-index:9999;transition:top .2s}
+.skip-link:focus{top:0}
+
+/* nav-step as button */
+.nav-step{background:none;border:none;font-family:var(--fn);}
+
+/* ── ENHANCED CARD DEPTH ── */
+.fg,.box,.score-card,.mc,.venda-card{box-shadow:var(--shadow-card)}
+.feat-card{box-shadow:0 2px 20px rgba(0,0,0,0.4)}
+.feat-card:hover{box-shadow:0 6px 32px rgba(0,0,0,0.55),0 0 0 1px var(--gborder2)}
+
+/* ── TOPBAR border glow ── */
+.topbar{border-bottom:1px solid rgba(200,165,70,0.18)}
+
+/* ── HERO h1 bigger ── */
+.hero h1{font-size:clamp(2.4rem,6vw,3.8rem)}
+
+/* ── PROOF SECTION ── */
+.hero-proof{background:rgba(255,255,255,0.025);border-radius:var(--r);border:1px solid var(--gborder);padding:1.5rem 2rem;margin-top:3rem}
+
+/* ── FORM UPGRADE ── */
+.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(220,185,90,.18),0 0 16px rgba(220,185,90,.08)}
+
+/* ── RESULT VALUE GLOW ── */
+.rh-value{text-shadow:0 0 60px rgba(220,185,90,.25);font-size:clamp(2.4rem,7vw,3.8rem)}
+
+/* ── SECTION DIVIDER ── */
+.sect-divider{height:1px;background:linear-gradient(90deg,transparent,var(--gborder2),transparent);margin:1rem 0}
+
+/* ── IMPROVED SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--gold1),var(--gold2));border-radius:var(--radius-full)}
+
+/* ══ SINGLE PLAN ══ */
+.plans-hero{max-width:680px;margin:0 auto;text-align:center;padding:3.5rem 1.5rem 2rem}
+.plans-hero h1{font-family:var(--fd);font-size:clamp(2rem,5vw,2.8rem);font-weight:400;letter-spacing:-.02em;margin-bottom:.9rem;line-height:1.12}
+.plans-hero p{font-size:.92rem;color:var(--text2);max-width:400px;margin:0 auto;line-height:1.75}
+
+.single-plan-wrap{max-width:440px;margin:0 auto;padding:0 1.5rem 1.5rem}
+.single-plan-card{background:linear-gradient(160deg,rgba(200,165,60,.10),rgba(200,165,60,.03));border:1px solid rgba(200,165,60,.3);border-radius:24px;padding:2rem 1.75rem;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(200,165,60,.08),var(--shadow-card)}
+.single-plan-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-g)}
+.single-plan-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,165,60,.07),transparent 70%);pointer-events:none}
+
+.sp-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(200,165,60,.12);border:1px solid rgba(200,165,60,.25);border-radius:var(--radius-full);padding:.3rem 1rem;font-size:.7rem;font-weight:700;color:var(--gold2);letter-spacing:.07em;text-transform:uppercase;margin-bottom:1.5rem}
+.sp-price{font-family:var(--fd);font-size:4rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:.25rem}
+.sp-period{font-size:.78rem;color:var(--text2);margin-bottom:1.4rem}
+.sp-divider{height:1px;background:linear-gradient(90deg,transparent,var(--gborder2),transparent);margin-bottom:1.4rem}
+
+.sp-feats{list-style:none;display:flex;flex-direction:column;gap:.65rem;margin-bottom:1.5rem}
+.sp-feats li{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:var(--text);line-height:1.5}
+.sp-check{color:var(--green);font-weight:700;flex-shrink:0;margin-top:.05rem}
+
+.sp-commission{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid var(--gborder);border-radius:var(--rsm);padding:.75rem 1rem;margin-bottom:1.4rem}
+.sp-comm-label{font-size:.75rem;color:var(--text2)}
+.sp-comm-value{font-family:var(--fd);font-size:1.5rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+.sp-cta{width:100%;justify-content:center;padding:1rem;font-size:.95rem;margin-bottom:.75rem}
+.sp-privacy{font-size:.65rem;color:var(--text3);text-align:center;line-height:1.5}
+
+/* ══ HOW IT WORKS ══ */
+.how-wrap{max-width:580px;margin:0 auto;padding:1rem 1.5rem 2rem}
+.how-steps{display:flex;flex-direction:column;gap:.75rem}
+.how-step{display:flex;align-items:flex-start;gap:1rem;background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.1rem 1.25rem;transition:border-color .2s}
+.how-step:hover{border-color:var(--gborder2)}
+.how-num{font-family:var(--fd);font-size:1.6rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1;flex-shrink:0;width:32px}
+.how-txt{display:flex;flex-direction:column;gap:.25rem}
+.how-txt strong{font-size:.88rem;font-weight:600;color:var(--text)}
+.how-txt span{font-size:.78rem;color:var(--text2);line-height:1.55}
+
+
+/* Native select dropdown dark mode fix */
+[data-theme=dark] .field select,
+[data-theme=dark] .fin-ctrl select,
+[data-theme=dark] .pf-field select{
+  color-scheme: dark;
+  background-color: #1a1610;
+  color: var(--text);
+}
+[data-theme=dark] .field select option,
+[data-theme=dark] .fin-ctrl select option,
+[data-theme=dark] .pf-field select option{
+  background-color: #1a1610;
+  color: #f0ece2;
+}
+/* Default dark (no data-theme set or data-theme=dark) */
+:root:not([data-theme=light]) .field select,
+:root:not([data-theme=light]) .fin-ctrl select,
+:root:not([data-theme=light]) .pf-field select{
+  color-scheme: dark;
+  background-color: #1a1610;
+  color: var(--text);
+}
+:root:not([data-theme=light]) .field select option,
+:root:not([data-theme=light]) .fin-ctrl select option,
+:root:not([data-theme=light]) .pf-field select option{
+  background-color: #1a1610;
+  color: #f0ece2;
+}
+
 </style>
 </head>
 <body>
 
+<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
@@ -412,18 +553,19 @@ footer strong{color:var(--text2)}
   <div class="logo">valora</div>
   <div class="topbar-r">
     <button class="btn-ghost" onclick="goTo('planos')">Planos</button>
-    <button class="btn-ghost" onclick="toggleTheme()">◐ Tema</button>
-    <button class="btn-gold" onclick="goTo('calc')">Avaliar grátis</button>
+    <button class="btn-ghost" id="btn-tema" onclick="toggleTheme()">◐ Tema</button>
+    <button class="btn-gold" onclick="goTo('calc')">✦ Avaliar grátis</button>
   </div>
 </div>
 
+<main id="main-content">
 <!-- HOME -->
 <div class="page on" id="pg-home">
   <section class="hero">
-    <div class="hero-eyebrow">Avaliação Imobiliária com IA</div>
-    <div class="v-badge">✓ v3.2 · API Banco Central ao vivo · 27 estados · 150+ cidades</div>
+    <div class="hero-eyebrow">✦ Avaliação Imobiliária com IA</div>
+    <div class="v-badge">✦ API Banco Central ao vivo · 27 estados · 150+ cidades</div>
     <h1>Descubra o valor <span class="grad">real</span><br>do seu apartamento</h1>
-    <p class="hero-sub">Estimativa precisa com dados calibrados por cidade, bairro e padrão. Com previsão de tempo de venda baseada em comparáveis reais.</p>
+    <p class="hero-sub">Saiba quanto vale seu apartamento agora. Dados reais de mercado, score do imóvel e previsão de tempo de venda — em menos de 2 minutos.</p>
     <button class="hero-cta" onclick="goTo('calc')">
       Iniciar avaliação gratuita
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -434,20 +576,22 @@ footer strong{color:var(--text2)}
       <div class="proof-item"><span class="proof-n">97%</span><span class="proof-l">Precisão</span></div>
     </div>
   </section>
+  <div class="sect-divider" style="max-width:680px;margin:0 auto 0"></div>
   <div class="feat-wrap">
     <div class="section-label">Como funciona</div>
     <div class="feat-grid">
-      <div class="feat-card"><div class="feat-icon">📍</div><h3>Dados por cidade e bairro</h3><p>Preços calibrados por cidade e tier de bairro — não média estadual genérica.</p></div>
-      <div class="feat-card"><div class="feat-icon">⏱</div><h3>Previsão de venda</h3><p>Estimativa de tempo de venda em 3 cenários de preço, baseada em dados de imobiliárias e comparáveis da região.</p></div>
-      <div class="feat-card"><div class="feat-icon">📊</div><h3>Score + estratégia</h3><p>Score do imóvel, yield bruto, valorização histórica e estratégia de precificação para venda rápida.</p></div>
+      <div class="feat-card"><div class="feat-icon">📍</div><h3>150+ cidades brasileiras</h3><p>Preços calibrados por cidade e bairro — não uma média genérica por estado.</p></div>
+      <div class="feat-card"><div class="feat-icon">⏱</div><h3>Quando vai vender?</h3><p>Previsão de venda em 3 cenários de preço com base em comparáveis reais da região.</p></div>
+      <div class="feat-card"><div class="feat-icon">📊</div><h3>Score e estratégia</h3><p>Score do imóvel, yield bruto, valorização histórica e dicas de precificação para vender mais rápido.</p></div>
     </div>
   </div>
 </div>
 
 <!-- CALCULADORA -->
-<div class="page" id="pg-calc">
+<div class="page" id="pg-calc" aria-hidden="true">
   <div class="form-page-hd">
-    <h2>Avalie seu apartamento</h2>
+    <h1 class="sr-only">Avalie seu apartamento</h1>
+    <h2 aria-hidden="true">Avalie seu apartamento</h2>
     <p>Preencha em 3 etapas simples</p>
   </div>
   <div class="progress-wrap" id="progress">
@@ -472,8 +616,8 @@ footer strong{color:var(--text2)}
       <div class="fg">
         <div class="fg-title">◆ Localização</div>
         <div class="field" id="fw-estado">
-          <label>Estado <span class="req">*</span></label>
-          <select id="f-estado" onchange="onEstado()">
+          <label for="f-estado">Estado <span class="req">*</span></label>
+          <select id="f-estado" onchange="onEstado()" aria-required="true">
             <option value="">Selecione o estado</option>
             <option>Acre</option><option>Alagoas</option><option>Amapá</option><option>Amazonas</option>
             <option>Bahia</option><option>Ceará</option><option>Distrito Federal</option>
@@ -488,14 +632,14 @@ footer strong{color:var(--text2)}
           <div class="err-msg">Selecione o estado</div>
         </div>
         <div class="field" id="fw-cidade">
-          <label>Cidade <span class="req">*</span></label>
-          <select id="f-cidade" onchange="onCidade()">
+          <label for="f-cidade">Cidade <span class="req">*</span></label>
+          <select id="f-cidade" onchange="onCidade()" aria-required="true">
             <option value="">Selecione a cidade</option>
           </select>
           <div class="err-msg">Selecione a cidade</div>
         </div>
         <div class="field">
-          <label>Nome do bairro (opcional)</label>
+          <label for="f-bairro">Nome do bairro (opcional)</label>
           <input type="text" id="f-bairro" placeholder="ex: Moema, Ipanema, Batel, Asa Sul…">
         </div>
       </div>
@@ -519,24 +663,24 @@ footer strong{color:var(--text2)}
       <div class="fg">
         <div class="fg-title">◆ Dimensões</div>
         <div class="field">
-          <label>Metragem útil (m²)</label>
+          <label for="f-area">Metragem útil (m²)</label>
           <div class="sld">
-            <input type="range" id="f-area" min="25" max="600" value="80" step="5" oninput="document.getElementById('v-area').textContent=this.value+'m²'">
+            <input type="range" id="f-area" min="25" max="600" value="80" step="5" aria-label="Metragem útil em metros quadrados" aria-valuemin="25" aria-valuemax="600" aria-valuenow="80" oninput="this.setAttribute('aria-valuenow',this.value);document.getElementById('v-area').textContent=this.value+'m²'">
             <span class="sld-val" id="v-area">80m²</span>
           </div>
         </div>
         <div class="field-row3">
-          <div class="field"><label>Quartos</label>
+          <div class="field"><label for="f-quartos">Quartos</label>
             <select id="f-quartos"><option>1</option><option>2</option><option selected>3</option><option>4</option><option value="5">5+</option></select></div>
-          <div class="field"><label>Suítes</label>
+          <div class="field"><label for="f-suites">Suítes</label>
             <select id="f-suites"><option>0</option><option selected>1</option><option>2</option><option>3</option><option value="4">4+</option></select></div>
-          <div class="field"><label>Vagas</label>
+          <div class="field"><label for="f-vagas">Vagas</label>
             <select id="f-vagas"><option>0</option><option>1</option><option selected>2</option><option>3</option><option value="4">4+</option></select></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Banheiros</label>
+          <div class="field"><label for="f-banheiros">Banheiros</label>
             <select id="f-banheiros"><option>1</option><option selected>2</option><option>3</option><option>4</option><option value="5">5+</option></select></div>
-          <div class="field"><label>Andar</label>
+          <div class="field"><label for="f-andar">Andar</label>
             <select id="f-andar">
               <option>Térreo</option><option>1º–5º</option><option selected>6º–15º</option>
               <option>16º–25º</option><option>26º+</option>
@@ -563,12 +707,12 @@ footer strong{color:var(--text2)}
       <div class="fg">
         <div class="fg-title">◆ Estado do imóvel</div>
         <div class="field-row">
-          <div class="field"><label>Idade</label>
+          <div class="field"><label for="f-idade">Idade</label>
             <select id="f-idade">
               <option>Novo (0–3a)</option><option>3–8 anos</option><option selected>8–15 anos</option>
               <option>15–25 anos</option><option>25+ anos</option>
             </select></div>
-          <div class="field"><label>Conservação</label>
+          <div class="field"><label for="f-conserv">Conservação</label>
             <select id="f-conserv">
               <option>Excelente – reformado</option>
               <option selected>Bom – conservado</option>
@@ -580,22 +724,22 @@ footer strong{color:var(--text2)}
       <div class="fg">
         <div class="fg-title">◆ Infraestrutura — marque apenas o que existe</div>
         <div class="chips" id="chips">
-          <span class="chip" onclick="this.classList.toggle('on')">Varanda</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Varanda Gourmet</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Elevador</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Condomínio Fechado</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Piscina</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Academia</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Salão de Festas</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Coworking</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Portaria 24h</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Câmeras CFTV</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Rooftop</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Playground</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Pet Place</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Ar Condicionado</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Vista Mar/Rio/Parque</span>
-          <span class="chip" onclick="this.classList.toggle('on')">Depósito/Armários Embutidos</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Varanda</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Varanda Gourmet</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Elevador</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Condomínio Fechado</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Piscina</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Academia</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Salão de Festas</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Coworking</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Portaria 24h</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Câmeras CFTV</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Rooftop</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Playground</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Pet Place</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Ar Condicionado</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Vista Mar/Rio/Parque</span>
+          <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Depósito/Armários Embutidos</span>
         </div>
       </div>
       <div class="form-nav">
@@ -605,9 +749,10 @@ footer strong{color:var(--text2)}
     </div>
   </div>
 </div>
+</main>
 
 <!-- LOADING -->
-<div class="loading-screen" id="loading">
+<div class="loading-screen" id="loading" aria-live="polite" aria-label="Calculando avaliação">
   <div class="spinner"></div>
   <div class="load-txt" id="ltxt">Analisando localização…</div>
   <div class="load-dots">
@@ -619,7 +764,8 @@ footer strong{color:var(--text2)}
 </div>
 
 <!-- RESULTADO -->
-<div class="result-wrap" id="pg-result">
+<div class="result-wrap" id="pg-result" aria-live="polite">
+  <h1 class="sr-only">Resultado da avaliação</h1>
   <div class="result-hero">
     <div class="rh-eyebrow">Valor estimado de venda</div>
     <div class="rh-value" id="r-val">—</div>
@@ -655,6 +801,7 @@ footer strong{color:var(--text2)}
   </div>
 
   <!-- ══ BCB LIVE INDICATORS ══ -->
+  <h2 class="sr-only">Indicadores econômicos</h2>
   <div class="box" id="bcb-card">
     <div class="box-title">Indicadores econômicos ao vivo</div>
     <div class="live-badge"><div class="live-dot"></div>Tempo real — Banco Central do Brasil</div>
@@ -668,6 +815,7 @@ footer strong{color:var(--text2)}
   </div>
 
   <!-- ══ FINANCIAMENTO ══ -->
+  <h2 class="sr-only">Simulação de financiamento</h2>
   <div class="box" id="fin-card" style="display:none">
     <div class="box-title">Simulação de financiamento</div>
     <div class="fin-controls">
@@ -700,6 +848,7 @@ footer strong{color:var(--text2)}
   </div>
 
   <!-- ══ MÓDULO PREVISÃO DE VENDA ══ -->
+  <h2 class="sr-only">Previsão de venda</h2>
   <div class="venda-card" id="venda-card">
     <div class="box-title">Previsão de venda</div>
 
@@ -747,14 +896,18 @@ footer strong{color:var(--text2)}
   </div>
 
   <!-- ══ LEAD CAPTURE ══ -->
+  <h2 class="sr-only">Conectar com corretor</h2>
   <div class="lead-card" id="lead-card">
     <div class="lead-eyebrow">Quer vender este imóvel?</div>
     <h3>Conecte com um corretor<br>parceiro Valora</h3>
     <p>Corretores verificados recebem seu laudo completo e entram em contato em até 2h — sem compromisso.</p>
     <div class="lead-form" id="lead-form">
-      <input class="lead-input" type="text" id="lead-nome" placeholder="Seu nome completo">
-      <input class="lead-input" type="tel" id="lead-tel" placeholder="WhatsApp com DDD (ex: 11 99999-0000)">
-      <input class="lead-input" type="email" id="lead-email" placeholder="E-mail (opcional)">
+      <label for="lead-nome" class="sr-only">Seu nome completo</label>
+      <input class="lead-input" type="text" id="lead-nome" placeholder="Seu nome completo" autocomplete="name">
+      <label for="lead-tel" class="sr-only">WhatsApp com DDD</label>
+      <input class="lead-input" type="tel" id="lead-tel" placeholder="WhatsApp com DDD (ex: 11 99999-0000)" inputmode="numeric" pattern="[\d\s\-\(\)]{10,15}" autocomplete="tel">
+      <label for="lead-email" class="sr-only">E-mail (opcional)</label>
+      <input class="lead-input" type="email" id="lead-email" placeholder="E-mail (opcional)" autocomplete="email">
       <button class="lead-submit" onclick="enviarLead()">Quero ser contatado por um corretor →</button>
       <div class="lead-privacy">🔒 Seus dados são usados apenas para esta finalidade. Sem spam.</div>
     </div>
@@ -769,181 +922,97 @@ footer strong{color:var(--text2)}
 </div>
 
 <!-- NAV -->
-<div class="nav-bar">
-  <div class="nav-step on" id="ns-home" onclick="goTo('home')"><div class="ndot"></div>Início</div>
-  <div class="nav-step" id="ns-calc" onclick="goTo('calc')"><div class="ndot"></div>Avaliar</div>
-  <div class="nav-step" id="ns-planos" onclick="goTo('planos')"><div class="ndot"></div>Planos</div>
-  <div class="nav-step" id="ns-result" onclick="showResult()"><div class="ndot"></div>Resultado</div>
-</div>
+<nav class="nav-bar" role="navigation" aria-label="Navegação principal">
+  <button class="nav-step on" id="ns-home" onclick="goTo('home')" type="button"><span class="ndot" aria-hidden="true"></span>Início</button>
+  <button class="nav-step" id="ns-calc" onclick="goTo('calc')" type="button"><span class="ndot" aria-hidden="true"></span>Avaliar</button>
+  <button class="nav-step" id="ns-planos" onclick="goTo('planos')" type="button"><span class="ndot" aria-hidden="true"></span>Planos</button>
+  <button class="nav-step" id="ns-result" onclick="showResult()" type="button"><span class="ndot" aria-hidden="true"></span>Resultado</button>
+</nav>
 
 <!-- ═══════════════ PLANOS ═══════════════ -->
-<div class="page" id="pg-planos">
+<div class="page" id="pg-planos" aria-hidden="true">
+
   <div class="plans-hero">
-    <div class="hero-eyebrow">Monetize com a Valora</div>
-    <h1>Planos para profissionais<br>e imobiliárias</h1>
-    <p>Do corretor autônomo à grande imobiliária — escolha o plano certo para o seu negócio.</p>
+    <div class="hero-eyebrow">✦ Para Corretores</div>
+    <h1>Seja o primeiro a<br><span class="grad">receber nossos leads.</span></h1>
+    <p>Cadastre-se agora e entre na lista de corretores parceiros. Quando o sistema de distribuição for lançado, você já estará verificado e pronto para receber clientes.</p>
   </div>
 
-  <!-- TABS -->
-  <div style="display:flex;justify-content:center;margin-bottom:1.5rem">
-    <div class="plan-tabs">
-      <div class="ptab on" id="ptab-corretor" onclick="switchPlanTab('corretor')">Para Corretores</div>
-      <div class="ptab" id="ptab-imob" onclick="switchPlanTab('imob')">Para Imobiliárias</div>
-    </div>
-  </div>
-
-  <!-- CORRETORES -->
-  <div class="plan-panel on" id="pp-corretor">
-    <div class="plans-grid">
-
-      <div class="plan-card">
-        <div class="plan-name">Parceiro</div>
-        <div class="plan-price">Grátis</div>
-        <div class="plan-period">para sempre</div>
-        <div class="plan-desc">Ideal para corretores que querem começar a receber leads qualificados sem custo fixo.</div>
-        <ul class="plan-feats">
-          <li>Recebe leads da plataforma</li>
-          <li>Acesso ao laudo do imóvel</li>
-          <li>Perfil público na Valora</li>
-          <li>Badge "Parceiro Verificado"</li>
-          <li class="no">Leads prioritários</li>
-          <li class="no">Relatórios de performance</li>
-          <li class="no">Suporte dedicado</li>
-        </ul>
-        <div style="font-size:.7rem;color:var(--gold2);margin-bottom:.8rem;font-weight:600">✦ 8% sobre venda fechada</div>
-        <button class="plan-cta" onclick="goToPartnerForm('parceiro')">Quero me cadastrar</button>
+  <!-- PLANO ÚNICO -->
+  <div class="single-plan-wrap">
+    <div class="single-plan-card">
+      <div class="sp-badge">✦ Cadastro antecipado — gratuito</div>
+      <div class="sp-price">R$ 0</div>
+      <div class="sp-period">sem mensalidade · sem cartão de crédito</div>
+      <div class="sp-divider"></div>
+      <ul class="sp-feats">
+        <li><span class="sp-check">✓</span>Lead com nome e WhatsApp do cliente direto para você</li>
+        <li><span class="sp-check">✓</span>Laudo com valor estimado, score e dados do imóvel no mesmo contato</li>
+        <li><span class="sp-check">✓</span>Cadastro antecipado — perfil verificado antes do lançamento oficial</li>
+        <li><span class="sp-check">✓</span>Sem mensalidade — comissão de 8% apenas sobre venda fechada</li>
+        <li><span class="sp-check soon">🔜</span><span style="color:var(--text3)">Perfil público na plataforma <em>(em breve)</em></span></li>
+        <li><span class="sp-check soon">🔜</span><span style="color:var(--text3)">Distribuição automática de leads por região <em>(em breve)</em></span></li>
+      </ul>
+      <div class="sp-commission">
+        <span class="sp-comm-label">Comissão sobre venda fechada</span>
+        <span class="sp-comm-value">8%</span>
       </div>
-
-      <div class="plan-card featured">
-        <div class="plan-badge">MAIS POPULAR</div>
-        <div class="plan-name">Verificado</div>
-        <div class="plan-price grad">R$89</div>
-        <div class="plan-period">por mês · sem fidelidade</div>
-        <div class="plan-desc">Para corretores ativos que querem leads exclusivos e visibilidade premium na plataforma.</div>
-        <ul class="plan-feats">
-          <li>Tudo do Plano Parceiro</li>
-          <li>Leads prioritários na sua região</li>
-          <li>Destaque no perfil de busca</li>
-          <li>Relatórios mensais de leads</li>
-          <li>Integração CRECI verificado</li>
-          <li>Suporte por WhatsApp</li>
-          <li class="no">API de leads</li>
-        </ul>
-        <div style="font-size:.7rem;color:var(--gold2);margin-bottom:.8rem;font-weight:600">✦ 5% sobre venda fechada</div>
-        <button class="plan-cta" onclick="goToPartnerForm('verificado')">Assinar agora</button>
-      </div>
-
-      <div class="plan-card">
-        <div class="plan-name">Premium</div>
-        <div class="plan-price">R$229</div>
-        <div class="plan-period">por mês · sem fidelidade</div>
-        <div class="plan-desc">Para corretores de alta performance que precisam de exclusividade e ferramentas avançadas.</div>
-        <ul class="plan-feats">
-          <li>Tudo do Plano Verificado</li>
-          <li>Leads exclusivos por bairro</li>
-          <li>Dashboard de performance</li>
-          <li>API de leads (webhook)</li>
-          <li>Consultoria de precificação</li>
-          <li>Gerente de conta dedicado</li>
-          <li>Suporte prioritário 24h</li>
-        </ul>
-        <div style="font-size:.7rem;color:var(--gold2);margin-bottom:.8rem;font-weight:600">✦ 3% sobre venda fechada</div>
-        <button class="plan-cta" onclick="goToPartnerForm('premium')">Assinar agora</button>
-      </div>
-
-    </div>
-
-    <!-- BENEFITS CORRETORES -->
-    <div style="text-align:center;padding:2rem 1.5rem .75rem;max-width:680px;margin:0 auto">
-      <div class="section-label">Por que ser parceiro Valora?</div>
-    </div>
-    <div class="partner-benefits">
-      <div class="pb-card"><div class="pb-icon">🎯</div><div class="pb-title">Leads qualificados</div><div class="pb-desc">Receba contatos de pessoas que já avaliaram o imóvel e estão prontas para negociar.</div></div>
-      <div class="pb-card"><div class="pb-icon">📋</div><div class="pb-title">Laudo completo</div><div class="pb-desc">Acesso ao score, preço estimado, tempo de venda e perfil do imóvel antes de ligar.</div></div>
-      <div class="pb-card"><div class="pb-icon">⚡</div><div class="pb-title">Contato em 2h</div><div class="pb-desc">Sistema de distribuição inteligente que prioriza o corretor mais próximo e disponível.</div></div>
-    </div>
-
-    <!-- CTA CADASTRO -->
-    <div style="text-align:center;padding:1rem 1.5rem 2.5rem">
-      <button class="hero-cta" onclick="goToPartnerForm('parceiro')">
-        Cadastrar como parceiro gratuitamente
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <button class="sp-cta hero-cta" onclick="goToPartnerForm('parceiro')">
+        Garantir meu cadastro antecipado
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
+      <div class="sp-privacy">🔒 Sem spam. Dados usados apenas para o programa de parceiros.</div>
     </div>
   </div>
 
-  <!-- IMOBILIÁRIAS -->
-  <div class="plan-panel" id="pp-imob">
-    <div class="plans-grid">
-
-      <div class="plan-card">
-        <div class="plan-name">Starter</div>
-        <div class="plan-price">R$349</div>
-        <div class="plan-period">por mês · até 5 usuários</div>
-        <div class="plan-desc">Para imobiliárias pequenas que querem avaliar imóveis com precisão e capturar leads.</div>
-        <ul class="plan-feats">
-          <li>200 avaliações/mês</li>
-          <li>5 corretores cadastrados</li>
-          <li>Widget para o seu site</li>
-          <li>Painel de leads unificado</li>
-          <li>Dados de mercado por cidade</li>
-          <li class="no">API de integração</li>
-          <li class="no">White-label</li>
-        </ul>
-        <button class="plan-cta" onclick="solicitarDemo('starter')">Começar agora</button>
+  <!-- COMO FUNCIONA -->
+  <div class="how-wrap">
+    <div class="section-label" style="text-align:center;margin-bottom:1.5rem">Como funciona</div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-num">01</div>
+        <div class="how-txt">
+          <strong>Cadastre-se agora</strong>
+          <span>Preencha seus dados e CRECI. Leva menos de 2 minutos.</span>
+        </div>
       </div>
-
-      <div class="plan-card featured">
-        <div class="plan-badge">RECOMENDADO</div>
-        <div class="plan-name">Business</div>
-        <div class="plan-price grad">R$799</div>
-        <div class="plan-period">por mês · até 25 usuários</div>
-        <div class="plan-desc">Para imobiliárias em crescimento que precisam de escalabilidade e integração com sistemas próprios.</div>
-        <ul class="plan-feats">
-          <li>Avaliações ilimitadas</li>
-          <li>25 corretores cadastrados</li>
-          <li>API REST completa</li>
-          <li>White-label parcial (logo + cores)</li>
-          <li>Relatórios avançados</li>
-          <li>Integração CRM (Salesforce, RD)</li>
-          <li>Suporte prioritário</li>
-        </ul>
-        <button class="plan-cta" onclick="solicitarDemo('business')">Solicitar demo</button>
+      <div class="how-step">
+        <div class="how-num">02</div>
+        <div class="how-txt">
+          <strong>Confirmamos pelo WhatsApp</strong>
+          <span>Nossa equipe valida seu cadastro e entra em contato em até 24h.</span>
+        </div>
       </div>
-
-      <div class="plan-card">
-        <div class="plan-name">Enterprise</div>
-        <div class="plan-price" style="font-size:1.5rem">Sob consulta</div>
-        <div class="plan-period">usuários ilimitados · SLA garantido</div>
-        <div class="plan-desc">Para grandes imobiliárias e redes que precisam de solução completa, customizada e escalável.</div>
-        <ul class="plan-feats">
-          <li>Tudo do Business</li>
-          <li>White-label completo</li>
-          <li>Dados customizados por região</li>
-          <li>Integração com portais (ZAP, OLX)</li>
-          <li>SLA 99.9% de uptime</li>
-          <li>Gerente de conta dedicado</li>
-          <li>Treinamento da equipe</li>
-        </ul>
-        <button class="plan-cta" onclick="solicitarDemo('enterprise')">Falar com consultor</button>
+      <div class="how-step">
+        <div class="how-num">03</div>
+        <div class="how-txt">
+          <strong>Leads chegam no seu WhatsApp</strong>
+          <span>Quando um cliente solicita contato, você recebe nome, telefone e o laudo completo do imóvel diretamente.</span>
+        </div>
       </div>
-
     </div>
+  </div>
 
-    <div style="text-align:center;padding:1rem 1.5rem 2.5rem">
-      <p style="font-size:.8rem;color:var(--text2);margin-bottom:1.25rem">Todas as imobiliárias têm 14 dias de teste gratuito sem cartão de crédito.</p>
-      <button class="hero-cta" onclick="solicitarDemo('business')">
-        Agendar demonstração gratuita
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-    </div>
+  <!-- BENEFITS -->
+  <div class="partner-benefits">
+    <div class="pb-card"><div class="pb-icon">🎯</div><div class="pb-title">Cliente já informado</div><div class="pb-desc">Quem solicita contato já viu o valor estimado do imóvel — chega na conversa mais receptivo e realista.</div></div>
+    <div class="pb-card"><div class="pb-icon">📋</div><div class="pb-title">Laudo junto com o lead</div><div class="pb-desc">Você recebe valor estimado, score, metragem, bairro e padrão do imóvel junto com o contato do cliente.</div></div>
+    <div class="pb-card"><div class="pb-icon">⚡</div><div class="pb-title">Sem mensalidade</div><div class="pb-desc">Você não paga nada para se cadastrar. A comissão de 8% só é cobrada se a venda for concretizada.</div></div>
+  </div>
+
+  <div style="text-align:center;padding:1rem 1.5rem 3rem">
+    <button class="hero-cta" onclick="goToPartnerForm('parceiro')">
+      Garantir meu cadastro — é grátis
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
   </div>
 </div>
 
 <!-- ═══════════════ CADASTRO PARCEIRO ═══════════════ -->
-<div class="page" id="pg-parceiro">
+<div class="page" id="pg-parceiro" aria-hidden="true">
   <div class="form-page-hd">
-    <h2>Cadastro de parceiro</h2>
+    <h1 class="sr-only">Cadastro de parceiro</h1>
+    <h2 aria-hidden="true">Cadastro de parceiro</h2>
     <p>Preencha os dados para começar a receber leads</p>
   </div>
   <div class="partner-form-wrap">
@@ -952,12 +1021,12 @@ footer strong{color:var(--text2)}
       <div class="pf-sub">Cadastro rápido — você começa a receber leads imediatamente após verificação do CRECI.</div>
       <div class="pf-grid">
         <div class="pf-row">
-          <div class="pf-field"><label>Nome completo</label><input type="text" id="pf-nome" placeholder="João Silva"></div>
-          <div class="pf-field"><label>CRECI</label><input type="text" id="pf-creci" placeholder="ex: 12345-F"></div>
+          <div class="pf-field"><label>Nome completo</label><input type="text" id="pf-nome" placeholder="João Silva" autocomplete="name"></div>
+          <div class="pf-field"><label>CRECI</label><input type="text" id="pf-creci" placeholder="ex: 12345-F" autocomplete="off" spellcheck="false"></div>
         </div>
         <div class="pf-row">
-          <div class="pf-field"><label>WhatsApp profissional</label><input type="tel" id="pf-tel" placeholder="11 99999-0000"></div>
-          <div class="pf-field"><label>E-mail</label><input type="email" id="pf-email" placeholder="joao@email.com"></div>
+          <div class="pf-field"><label>WhatsApp profissional</label><input type="tel" id="pf-tel" placeholder="11 99999-0000" inputmode="numeric" pattern="[\d\s\-\(\)]{10,15}" autocomplete="tel"></div>
+          <div class="pf-field"><label>E-mail</label><input type="email" id="pf-email" placeholder="joao@email.com" autocomplete="email"></div>
         </div>
         <div class="pf-field"><label>Estado de atuação</label>
           <select id="pf-estado">
@@ -968,7 +1037,7 @@ footer strong{color:var(--text2)}
             <option>Espírito Santo</option><option>Mato Grosso do Sul</option><option>Outro</option>
           </select>
         </div>
-        <div class="pf-field"><label>Cidade principal de atuação</label><input type="text" id="pf-cidade" placeholder="ex: São Paulo, Curitiba, Florianópolis…"></div>
+        <div class="pf-field"><label>Cidade principal de atuação</label><input type="text" id="pf-cidade" placeholder="ex: São Paulo, Curitiba, Florianópolis…" autocomplete="address-level2"></div>
         <div class="pf-field"><label>Especialidade</label>
           <select id="pf-especialidade">
             <option>Residencial — apartamentos</option>
@@ -1682,7 +1751,7 @@ function recalcFin(){
     const r  = s.taxa/100/12;
     const fac = Math.pow(1+r, meses);
     // PRICE: M = P * r * (1+r)^n / ((1+r)^n - 1)
-    const price = P*(r*fac)/(fac-1);
+    const price = r===0 ? P/meses : P*(r*fac)/(fac-1); // guard division by zero when r=0
     const total = price*meses;
     const juros = total-P;
     // SAC: 1st installment = P/n + P*r
@@ -1731,7 +1800,13 @@ function fmtK(v){
 }
 
 /* Inicializa BCB ao carregar */
-window.addEventListener('load', fetchBCB);
+
+function safeOpen(url){
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+window.addEventListener('load', ()=>{ if('requestIdleCallback' in window){ requestIdleCallback(fetchBCB,{timeout:3000}); } else { setTimeout(fetchBCB,200); } });
 
 /* ── HELPERS ── */
 function fmt(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0})}
@@ -1748,11 +1823,14 @@ function showResult(){
 }
 
 function goTo(pg){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.remove('on');
+    p.setAttribute('aria-hidden','true');
+  });
   document.getElementById('pg-result')?.classList.remove('show');
   document.getElementById('loading')?.classList.remove('show');
   const t=document.getElementById('pg-'+pg);
-  if(t)t.classList.add('on');
+  if(t){t.classList.add('on');t.removeAttribute('aria-hidden');}
   document.querySelectorAll('.nav-step').forEach(s=>s.classList.remove('on'));
   document.getElementById('ns-'+pg)?.classList.add('on');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1782,10 +1860,29 @@ function resetForm(){
   goTo('calc');
 }
 
+/* Init theme from system preference */
+(function(){
+  const prefersDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const stored=document.documentElement.getAttribute('data-theme');
+  if(!stored){document.documentElement.setAttribute('data-theme',prefersDark?'dark':'light');}
+})();
+
+function updateRingGradient(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const stop0=document.querySelector('#goldGrad stop:nth-child(1)');
+  const stop1=document.querySelector('#goldGrad stop:nth-child(2)');
+  const stop2=document.querySelector('#goldGrad stop:nth-child(3)');
+  if(stop0){stop0.setAttribute('stop-color',isDark?'#b8902a':'#a07820');}
+  if(stop1){stop1.setAttribute('stop-color',isDark?'#e0be72':'#c8a040');}
+  if(stop2){stop2.setAttribute('stop-color',isDark?'#f5e0a0':'#e8c860');}
+}
 function toggleTheme(){
   const isL=document.documentElement.getAttribute('data-theme')==='light';
-  document.documentElement.setAttribute('data-theme',isL?'':'light');
-  document.querySelector('.btn-ghost').textContent=isL?'◐ Tema':'● Tema';
+  const newTheme=isL?'dark':'light';
+  document.documentElement.setAttribute('data-theme',newTheme);
+  const btnTema=document.getElementById('btn-tema');
+  if(btnTema)btnTema.textContent=newTheme==='dark'?'◐ Tema':'● Tema';
+  updateRingGradient();
 }
 
 /* ── LEAD CAPTURE ── */
@@ -1821,7 +1918,7 @@ function enviarLead(){
   );
 
   // Abre WhatsApp em nova aba
-  window.open(`https://wa.me/${numeroWhatsApp}?text=${msg}`,'_blank');
+  safeOpen(`https://wa.me/${numeroWhatsApp}?text=${msg}`);
 
   // Mostra tela de sucesso
   document.getElementById('lead-form').style.display    = 'none';
@@ -1861,7 +1958,7 @@ function solicitarDemo(plano){
     `Tenho interesse no plano: *${planos[plano]||plano}*\n\n`+
     `Poderia agendar uma demonstração?`
   );
-  window.open(`https://wa.me/${numeroWhatsApp}?text=${msg}`,'_blank');
+  safeOpen(`https://wa.me/${numeroWhatsApp}?text=${msg}`);
 }
 
 /* ── PARTNER REGISTRATION ── */
@@ -1902,7 +1999,7 @@ function enviarCadastro(){
     `🏙 Cidade: ${cidade}\n`+
     `🏠 Especialidade: ${espec}`
   );
-  window.open(`https://wa.me/${numeroWhatsApp}?text=${msg}`,'_blank');
+  safeOpen(`https://wa.me/${numeroWhatsApp}?text=${msg}`);
 
   // Mostra sucesso
   document.getElementById('pf-form-wrap').style.display = 'none';
