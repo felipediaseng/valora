@@ -639,8 +639,9 @@ footer strong{color:var(--text2)}
           <div class="err-msg">Selecione a cidade</div>
         </div>
         <div class="field">
-          <label for="f-bairro">Nome do bairro (opcional)</label>
-          <input type="text" id="f-bairro" placeholder="ex: Moema, Ipanema, Batel, Asa Sul…">
+          <label for="f-bairro">Nome do bairro <span style="font-size:.65rem;color:var(--text3)">(opcional — detectamos o padrão automaticamente)</span></label>
+          <input type="text" id="f-bairro" placeholder="ex: Moema, Ipanema, Batel, Asa Sul…" autocomplete="off" oninput="onBairro(this.value)">
+          <div id="bairro-sugestao" style="display:none;margin-top:.4rem;background:rgba(200,165,60,.1);border:1px solid rgba(200,165,60,.25);border-radius:var(--rxs);padding:.45rem .75rem;font-size:.74rem;color:var(--gold2);display:flex;align-items:center;justify-content:space-between;gap:.5rem"><span id="bairro-sugestao-txt"></span><button type="button" onclick="aplicarSugestao()" style="background:rgba(200,165,60,.2);border:1px solid rgba(200,165,60,.3);border-radius:var(--radius-full);padding:.2rem .65rem;font-size:.68rem;font-weight:700;color:var(--gold2);cursor:pointer;font-family:var(--fn)">Aplicar</button></div>
         </div>
       </div>
       <div class="fg">
@@ -1363,6 +1364,95 @@ let padrao='medio', tier='medio', step=1;
 let cidadeKey=null, estadoKey=null;
 let lastResult=null;
 
+
+/* ══ BAIRRO → TIER DICTIONARY ══ */
+const BAIRRO_TIER = {
+  /* ── SÃO PAULO ── */
+  'itaim bibi':'premium','jardins':'premium','jardim paulista':'premium','vila nova conceição':'premium',
+  'moema':'nobre','vila olímpia':'nobre','pinheiros':'nobre','perdizes':'nobre','higienópolis':'premium',
+  'brooklin':'nobre','campo belo':'nobre','morumbi':'nobre','butantã':'medio','lapa':'medio',
+  'vila madalena':'nobre','consolação':'nobre','bela vista':'medio','liberdade':'medio',
+  'ipiranga':'medio','saúde':'medio','jabaquara':'popular','santo amaro':'medio',
+  'santana':'medio','tucuruvi':'popular','penha':'popular','vila guilherme':'popular',
+  'guarulhos':'popular','taboão da serra':'popular','osasco':'popular','capão redondo':'periferico',
+  'paraisópolis':'periferico','heliópolis':'periferico','cidade tiradentes':'periferico',
+  'campo limpo':'popular','pedreira':'periferico','itaquera':'popular','são mateus':'popular',
+
+  /* ── RIO DE JANEIRO ── */
+  'ipanema':'premium','leblon':'premium','são conrado':'premium','joá':'premium',
+  'barra da tijuca':'nobre','recreio':'nobre','botafogo':'nobre','flamengo':'nobre',
+  'laranjeiras':'nobre','cosme velho':'nobre','gávea':'premium','lagoa':'premium',
+  'urca':'premium','leme':'nobre','copacabana':'nobre','tijuca':'medio',
+  'vila isabel':'medio','grajaú':'medio','andaraí':'medio','maracanã':'medio',
+  'méier':'popular','engenho novo':'popular','ramos':'popular','penha':'popular',
+  'campo grande':'popular','santa cruz':'periferico','cosmos':'periferico','realengo':'popular',
+  'padre miguel':'periferico','pavuna':'periferico','acari':'periferico','complexo do alemão':'periferico',
+
+  /* ── CURITIBA ── */
+  'batel':'premium','bigorrilho':'nobre','água verde':'nobre','mercês':'nobre',
+  'alto da glória':'nobre','juvevê':'nobre','cabral':'nobre','hugo lange':'nobre',
+  'centro':'medio','são francisco':'medio','bom retiro':'medio','ahú':'nobre',
+  'portão':'medio','santa quitéria':'medio','seminário':'nobre','champagnat':'premium',
+  'ecoville':'nobre','mossunguê':'nobre','santa felicidade':'medio','boa vista':'medio',
+  'cajuru':'popular','sítio cercado':'periferico','tatuquara':'periferico','pinheirinho':'popular',
+  'cidade industrial':'popular','bairro alto':'popular','uberaba':'medio',
+
+  /* ── FLORIANÓPOLIS ── */
+  'jurerê internacional':'premium','jurerê':'nobre','daniela':'nobre','cacupé':'nobre',
+  'centro':'medio','agronômica':'nobre','trindade':'medio','pantanal':'medio',
+  'itacorubi':'nobre','santa mônica':'medio','córrego grande':'medio','joão paulo':'nobre',
+  'saco grande':'medio','canasvieiras':'nobre','ingleses':'nobre','santinho':'nobre',
+  'lagoa da conceição':'nobre','barra da lagoa':'nobre','campeche':'nobre',
+  'rio tavares':'medio','ribeirão da ilha':'medio','carianos':'popular',
+  'tapera':'popular','morro das pedras':'medio','armação':'medio',
+  'coqueiros':'nobre','estreito':'medio','capoeiras':'popular','coloninha':'popular',
+  'balneário':'medio','itaguaçu':'medio','abraão':'medio',
+
+  /* ── JOINVILLE ── */
+  'centro':'medio','costa e silva':'nobre','atiradores':'nobre','boa vista':'nobre',
+  'glória':'nobre','bucarein':'medio','anita garibaldi':'medio','saguaçu':'medio',
+  'vila nova':'medio','comasa':'popular','cubatão':'popular','paranaguamirim':'popular',
+  'profipo':'popular','fátima':'popular','nova brasília':'popular','guanabara':'medio',
+  'pirabeiraba':'popular','jardim paraíso':'medio','iririú':'popular',
+  'itinga':'periferico','jardim sofia':'periferico','bom retiro':'popular',
+  'jardim iririú':'popular','aventureiro':'popular','jardim america':'popular',
+  'vila nova':'medio','rio bonito':'periferico',
+
+  /* ── BELO HORIZONTE ── */
+  'savassi':'premium','lourdes':'premium','funcionários':'premium','belvedere':'premium',
+  'mangabeiras':'nobre','sion':'nobre','santo agostinho':'nobre','buritis':'nobre',
+  'gutierrez':'nobre','serra':'nobre','anchieta':'nobre','santa efigênia':'medio',
+  'centro':'medio','floresta':'medio','cidade nova':'medio','carlos prates':'medio',
+  'pampulha':'nobre','caiçara':'medio','barreiro':'popular','betim':'popular',
+  'contagem':'popular','ribeirão das neves':'periferico','venda nova':'popular',
+  'taquaril':'periferico','pedreira prado lopes':'periferico','morro das pedras':'periferico',
+
+  /* ── PORTO ALEGRE ── */
+  'moinhos de vento':'premium','bela vista':'nobre','petrópolis':'nobre','auxiliadora':'nobre',
+  'mont serrat':'nobre','três figueiras':'premium','boa vista':'nobre','rio branco':'nobre',
+  'centro histórico':'medio','cidade baixa':'medio','santa maria goretti':'medio',
+  'passo d'areia':'medio','sarandi':'popular','restinga':'periferico','rubem berta':'popular',
+  'lomba do pinheiro':'periferico','belém novo':'popular','cavalhada':'medio',
+  'ipanema':'nobre','tristeza':'nobre','teresópolis':'medio','cristal':'medio',
+};
+
+function sugerirTierPorBairro(nomeBairro){
+  if(!nomeBairro||nomeBairro.length<3) return null;
+  const key = nomeBairro.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // remove acentos
+  // exact match first
+  for(const [b,t] of Object.entries(BAIRRO_TIER)){
+    const bNorm = b.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(bNorm === key) return t;
+  }
+  // partial match (bairro digitado contém o nome do dict ou vice-versa)
+  for(const [b,t] of Object.entries(BAIRRO_TIER)){
+    const bNorm = b.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(bNorm.includes(key) || key.includes(bNorm)) return t;
+  }
+  return null;
+}
+
 /* ── FORM ── */
 function onEstado(){
   estadoKey=document.getElementById('f-estado').value;
@@ -1381,6 +1471,30 @@ function onCidade(){
   document.getElementById('fw-cidade').classList.remove('error');
   document.getElementById('form-err').style.display='none';
 }
+
+let _sugestaoTier = null;
+
+function onBairro(val){
+  const tier = sugerirTierPorBairro(val);
+  const box = document.getElementById('bairro-sugestao');
+  const txt = document.getElementById('bairro-sugestao-txt');
+  const tierLabels = {periferico:'Periférico',popular:'Popular',medio:'Médio',nobre:'Nobre',premium:'Premium'};
+  if(tier){
+    _sugestaoTier = tier;
+    txt.textContent = '📍 Bairro reconhecido — padrão sugerido: ' + tierLabels[tier];
+    box.style.display = 'flex';
+  } else {
+    _sugestaoTier = null;
+    box.style.display = 'none';
+  }
+}
+
+function aplicarSugestao(){
+  if(!_sugestaoTier) return;
+  selTier(_sugestaoTier);
+  document.getElementById('bairro-sugestao').style.display = 'none';
+}
+
 function selPadrao(p){
   padrao=p;
   ['simples','medio','alto','luxo'].forEach(x=>document.getElementById('pc-'+x).classList.toggle('on',x===p));
