@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Valora — Avaliação Imobiliária Premium</title>
+<title>Valora — Avaliar apartamento online grátis com dados FIPEZAP e Banco Central</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
 <meta name="theme-color" content="#07080d" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f4f1eb" media="(prefers-color-scheme: light)">
-<meta name="description" content="Avalie seu apartamento com precisão. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
+<meta name="description" content="Descubra quanto vale seu apartamento em minutos. Avaliação imobiliária online grátis, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">>
 <script>
 /* Set theme before first paint to prevent FOUC */
 (function(){
@@ -540,6 +540,42 @@ footer strong{color:var(--text2)}
   color: #f0ece2;
 }
 
+
+/* ── BLOG / GUIAS ── */
+.blog{max-width:860px;margin:0 auto;padding:3rem 1.5rem 4rem}
+.blog-hd{text-align:center;margin-bottom:2.5rem}
+.blog-hd h2{font-size:1.6rem;margin:.6rem 0 0}
+.blog-sub{font-size:.9rem;color:var(--text2);max-width:520px;margin:.6rem auto 0;line-height:1.7}
+.blog-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1.5rem}
+.blog-post{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.4rem 1.5rem;box-shadow:var(--shadow-card)}
+.blog-post h3{font-size:1rem;margin-bottom:.6rem}
+.blog-post p{font-size:.85rem;color:var(--text2);line-height:1.7;margin-bottom:.3rem}
+@media(min-width:960px){.blog-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+
+/* ── FAQ VISUAL ── */
+.faq{max-width:860px;margin:0 auto;padding:3rem 1.5rem 2.5rem}
+.faq-hd{text-align:center;margin-bottom:2rem}
+.faq-hd h2{font-size:1.5rem;margin:.5rem 0 0}
+.faq-sub{font-size:.9rem;color:var(--text2);max-width:520px;margin:.6rem auto 0;line-height:1.7}
+.faq-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
+.faq-card{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--rsm);padding:1rem 1.1rem;box-shadow:var(--shadow-card)}
+.faq-card h3{font-size:.95rem;margin-bottom:.4rem}
+.faq-card p{font-size:.8rem;color:var(--text2);line-height:1.6}
+
+@media(min-width:960px){
+  .faq-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+
+/* ── WHY VALORA ── */
+.why-valora{max-width:960px;margin:0 auto;padding:1rem 1.5rem 3rem}
+.why-wrap>h2{text-align:center;font-size:1.4rem;margin-bottom:1.5rem}
+.why-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
+.why-card{background:var(--bg3);border:1px solid var(--gborder);border-radius:var(--rsm);padding:1rem 1.2rem;box-shadow:var(--shadow-card)}
+.why-card h3{font-size:.95rem;margin-bottom:.4rem}
+.why-card p{font-size:.8rem;color:var(--text2);line-height:1.6}
+@media(min-width:960px){
+  .why-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+}
 </style>
 </head>
 <body>
@@ -565,7 +601,7 @@ footer strong{color:var(--text2)}
     <div class="hero-eyebrow">✦ Avaliação Imobiliária com IA</div>
     <div class="v-badge">✦ API Banco Central ao vivo · Dados FipeZAP Dez/2025 · 27 estados · 150+ cidades</div>
     <h1>Descubra o valor <span class="grad">real</span><br>do seu apartamento</h1>
-    <p class="hero-sub">Saiba quanto vale seu apartamento agora. Dados reais de mercado, score do imóvel e previsão de tempo de venda — em menos de 2 minutos.</p>
+    <p class="hero-sub">Avalie seu apartamento online e grátis em minutos. Usamos dados FIPEZAP, Banco Central e comparáveis reais para estimar preço e tempo de venda com mais precisão.</p>
     <button class="hero-cta" onclick="goTo('calc')">
       Iniciar avaliação gratuita
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -582,7 +618,7 @@ footer strong{color:var(--text2)}
     <div class="feat-grid">
       <div class="feat-card"><div class="feat-icon">📍</div><h3>150+ cidades brasileiras</h3><p>Preços calibrados por cidade e bairro — não uma média genérica por estado.</p></div>
       <div class="feat-card"><div class="feat-icon">⏱</div><h3>Quando vai vender?</h3><p>Previsão de venda em 3 cenários de preço com base em comparáveis reais da região.</p></div>
-      <div class="feat-card"><div class="feat-icon">📊</div><h3>Score e estratégia</h3><p>Score do imóvel, yield bruto, valorização histórica e dicas de precificação para vender mais rápido.</p></div>
+      <div class="feat-card"><div class="feat-icon">📊</div><h3>Score e estratégia</h3><p>Score do imóvel, yield bruto, valorização histórica e estratégia de preço com base em dados FIPEZAP e Banco Central.</p></div>
     </div>
   </div>
 </div>
@@ -926,9 +962,84 @@ footer strong{color:var(--text2)}
 <nav class="nav-bar" role="navigation" aria-label="Navegação principal">
   <button class="nav-step on" id="ns-home" onclick="goTo('home')" type="button"><span class="ndot" aria-hidden="true"></span>Início</button>
   <button class="nav-step" id="ns-calc" onclick="goTo('calc')" type="button"><span class="ndot" aria-hidden="true"></span>Avaliar</button>
+  <button class="nav-step" id="ns-faq" onclick="document.getElementById('faq')?.scrollIntoView({behavior:'smooth'});" type="button"><span class="ndot" aria-hidden="true"></span>FAQ</button>
   <button class="nav-step" id="ns-planos" onclick="goTo('planos')" type="button"><span class="ndot" aria-hidden="true"></span>Planos</button>
   <button class="nav-step" id="ns-result" onclick="showResult()" type="button"><span class="ndot" aria-hidden="true"></span>Resultado</button>
 </nav>
+
+  
+  </section>
+
+  
+  <!-- ═══════════════ PERGUNTAS RÁPIDAS ═══════════════ -->
+  <section class="faq" id="faq">
+    <div class="faq-wrap">
+      <header class="faq-hd">
+        <p class="hero-eyebrow">Dúvidas rápidas</p>
+        <h2>Perguntas que todo proprietário faz</h2>
+        <p class="faq-sub">Respostas diretas, em poucas linhas, para você decidir se vale a pena ir para o próximo passo.</p>
+      </header>
+
+      <div class="faq-grid">
+        <article class="faq-card">
+          <h3>Quanto vale meu apartamento?</h3>
+          <p>A Valora estima uma faixa de preço com base em FIPEZAP, Banco Central e características do seu imóvel. Você vê valor mínimo, médio e máximo para decidir como anunciar.</p>
+        </article>
+
+        <article class="faq-card">
+          <h3>A avaliação online é confiável?</h3>
+          <p>Ela é ótima para ter uma referência rápida e comparar cenários de preço. Para laudo judicial ou negociações complexas, um corretor ou perito ainda é necessário.</p>
+        </article>
+
+        <article class="faq-card">
+          <h3>De onde vêm os dados da Valora?</h3>
+          <p>Usamos preços médios do FIPEZAP, taxas do Banco Central e ajustes por cidade, padrão de bairro e perfil do imóvel. Nada de “chute” baseado em um único anúncio.</p>
+        </article>
+
+        <article class="faq-card">
+          <h3>Em quanto tempo meu apê pode vender?</h3>
+          <p>O resultado mostra previsão de tempo de venda em três cenários de preço: mais agressivo, de mercado e conservador, com base em demanda da região.</p>
+        </article>
+
+        <article class="faq-card">
+          <h3>Preciso falar com corretor para usar a Valora?</h3>
+          <p>Não. Você pode usar a ferramenta de forma 100% online e gratuita. Se quiser avançar, aí sim pode se conectar com um corretor parceiro.</p>
+        </article>
+
+        <article class="faq-card">
+          <h3>A Valora serve para qualquer cidade?</h3>
+          <p>Hoje focamos em 150+ cidades com dados sólidos de mercado. Isso garante estimativas mais consistentes. Estamos expandindo a base com o tempo.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ POR QUE USAR A VALORA ═══════════════ -->
+  <section class="why-valora" id="why-valora">
+    <div class="why-wrap">
+      <h2>Por que começar pela Valora?</h2>
+      <div class="why-grid">
+        <div class="why-card">
+          <h3>Veja uma faixa de preço realista</h3>
+          <p>Nada de um número mágico solto. Você vê mínimo, médio e máximo sugeridos para o seu apartamento.</p>
+        </div>
+        <div class="why-card">
+          <h3>Entenda o tempo provável de venda</h3>
+          <p>Três cenários de preço com estimativa de tempo de venda ajudam você a equilibrar valor e velocidade.</p>
+        </div>
+        <div class="why-card">
+          <h3>Use dados, não só opinião</h3>
+          <p>FIPEZAP, Banco Central e comparáveis reais entram na conta para evitar “achismo” na hora de precificar.</p>
+        </div>
+        <div class="why-card">
+          <h3>Ligue o dado à ação</h3>
+          <p>Se fizer sentido, você já pode falar com um corretor parceiro e transformar o resultado em um plano de venda.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<!-- ═══════════════ PLANOS
 
 <!-- ═══════════════ PLANOS ═══════════════ -->
 <div class="page" id="pg-planos" aria-hidden="true">
