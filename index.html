@@ -94,7 +94,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--gborder);position:sticky;top:0;z-index:100;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
 [data-theme=dark]{color-scheme:dark}
 [data-theme=light]{color-scheme:light}
-[data-theme=light] .topbar{background:rgba(244,241,235,0.92)}
+[data-theme=light] [data-theme=light] .topbar{background:rgba(244,241,235,0.92)}
 .logo{font-family:var(--fd);font-size:1.4rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.01em}
 .topbar-r{display:flex;gap:.6rem;align-items:center}
 .btn-ghost{background:transparent;border:1px solid var(--gborder);color:var(--text2);border-radius:var(--radius-full);padding:.32rem .8rem;font-size:.72rem;font-family:var(--fn);cursor:pointer;transition:all .2s}
@@ -121,7 +121,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .hero-cta:hover::after{left:150%}
 .hero-cta:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 44px rgba(220,185,90,.5)}
 
-.hero-proof{display:flex;align-items:center;justify-content:center;gap:2rem;margin-top:3rem;padding-top:2.5rem;border-top:1px solid var(--gborder)}
+.hero-proof{display:flex;align-items:center;justify-content:center;gap:2rem;margin-top:3rem;padding:1.5rem 2rem;border-radius:var(--r);border:1px solid var(--gborder);background:rgba(255,255,255,0.025)}
 .proof-item{text-align:center}
 .proof-n{font-family:var(--fd);font-size:1.9rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:block;line-height:1}
 .proof-l{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-top:.25rem}
@@ -323,7 +323,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 
 /* NAV */
 .nav-bar{display:flex;justify-content:center;gap:.5rem;padding:.9rem 1.5rem;border-top:1px solid var(--gborder);position:sticky;bottom:0;z-index:40;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(20px)}
-[data-theme=light] .nav-bar{background:rgba(244,241,235,0.9)}
+[data-theme=light] [data-theme=light] .nav-bar{background:rgba(244,241,235,0.9)}
 .nav-step{display:flex;align-items:center;gap:.32rem;font-size:.7rem;font-weight:500;color:var(--text3);white-space:nowrap;cursor:pointer;padding:.3rem .55rem;border-radius:var(--rxs);transition:color .2s}
 .nav-step.on{color:var(--gold2)}
 .ndot{width:5px;height:5px;background:currentColor;border-radius:50%;flex-shrink:0}
@@ -458,7 +458,7 @@ footer strong{color:var(--text2)}
 .hero h1{font-size:clamp(2.4rem,6vw,3.8rem)}
 
 /* ── PROOF SECTION ── */
-.hero-proof{background:rgba(255,255,255,0.025);border-radius:var(--r);border:1px solid var(--gborder);padding:1.5rem 2rem;margin-top:3rem}
+
 
 /* ── FORM UPGRADE ── */
 .field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(220,185,90,.18),0 0 16px rgba(220,185,90,.08)}
@@ -563,7 +563,7 @@ footer strong{color:var(--text2)}
 <div class="page on" id="pg-home">
   <section class="hero">
     <div class="hero-eyebrow">✦ Avaliação Imobiliária com IA</div>
-    <div class="v-badge">✦ API Banco Central ao vivo · 27 estados · 150+ cidades</div>
+    <div class="v-badge">✦ API Banco Central ao vivo · Dados FipeZAP Dez/2025 · 27 estados · 150+ cidades</div>
     <h1>Descubra o valor <span class="grad">real</span><br>do seu apartamento</h1>
     <p class="hero-sub">Saiba quanto vale seu apartamento agora. Dados reais de mercado, score do imóvel e previsão de tempo de venda — em menos de 2 minutos.</p>
     <button class="hero-cta" onclick="goTo('calc')">
@@ -909,7 +909,7 @@ footer strong{color:var(--text2)}
       <input class="lead-input" type="tel" id="lead-tel" placeholder="WhatsApp com DDD (ex: 11 99999-0000)" inputmode="numeric" pattern="[\d\s\-\(\)]{10,15}" autocomplete="tel">
       <label for="lead-email" class="sr-only">E-mail (opcional)</label>
       <input class="lead-input" type="email" id="lead-email" placeholder="E-mail (opcional)" autocomplete="email">
-      <button class="lead-submit" onclick="enviarLead()">Quero ser contatado por um corretor →</button>
+      <button class="lead-submit" type="button" onclick="enviarLead()">Quero ser contatado por um corretor →</button>
       <div class="lead-privacy">🔒 Seus dados são usados apenas para esta finalidade. Sem spam.</div>
     </div>
     <div class="lead-success" id="lead-success">
@@ -1050,7 +1050,7 @@ footer strong{color:var(--text2)}
           </select>
         </div>
       </div>
-      <button class="pf-submit" onclick="enviarCadastro()">Enviar cadastro e começar a receber leads →</button>
+      <button class="pf-submit" type="button" onclick="enviarCadastro()">Enviar cadastro e começar a receber leads →</button>
       <div class="pf-privacy">🔒 Seus dados são protegidos e usados apenas para o programa de parceiros Valora. Você pode cancelar a qualquer momento.</div>
     </div>
     <div class="partner-success" id="pf-success">
@@ -1074,249 +1074,249 @@ footer strong{color:var(--text2)}
 ══════════════════════════════════════════════ */
 const DB = {
   'Acre':{cidades:{
-    'Rio Branco':{p:3900,v:2.8,d:3},
-    'Cruzeiro do Sul':{p:2900,v:2.1,d:2},
+    'Rio Branco':{p:4200,v:4.0,d:5},
+    'Cruzeiro do Sul':{p:3000,v:3.2,d:3},
   }},
   'Alagoas':{cidades:{
-    'Maceió':{p:5000,v:3.5,d:5},
-    'Arapiraca':{p:3100,v:2.4,d:3},
-    'Rio Largo':{p:2800,v:2.0,d:2},
+    'Maceió':{p:9908,v:8.0,d:7},
+    'Arapiraca':{p:4000,v:4.0,d:5},
+    'Rio Largo':{p:3200,v:3.5,d:4},
   }},
   'Amapá':{cidades:{
-    'Macapá':{p:3700,v:2.5,d:3},
+    'Macapá':{p:3800,v:4.0,d:5},
   }},
   'Amazonas':{cidades:{
-    'Manaus':{p:5200,v:3.2,d:5},
-    'Parintins':{p:2700,v:1.9,d:2},
-    'Itacoatiara':{p:2600,v:1.8,d:2},
+    'Manaus':{p:5500,v:4.5,d:6},
+    'Parintins':{p:2800,v:3.0,d:3},
+    'Itacoatiara':{p:2900,v:3.0,d:3},
   }},
   'Bahia':{cidades:{
-    'Salvador':{p:6200,v:3.8,d:6},
-    'Lauro de Freitas':{p:5800,v:4.2,d:6},
-    'Camaçari':{p:4200,v:3.5,d:5},
-    'Porto Seguro':{p:6500,v:5.5,d:7},
-    'Feira de Santana':{p:3800,v:3.0,d:4},
-    'Vitória da Conquista':{p:3500,v:2.8,d:3},
-    'Ilhéus':{p:4000,v:3.2,d:4},
-    'Itabuna':{p:3200,v:2.6,d:3},
-    'Barreiras':{p:3000,v:2.4,d:3},
+    'Salvador':{p:8385,v:16.2,d:8},
+    'Lauro de Freitas':{p:6000,v:7.0,d:7},
+    'Camaçari':{p:4500,v:5.5,d:6},
+    'Porto Seguro':{p:6800,v:6.0,d:7},
+    'Feira de Santana':{p:4200,v:5.0,d:6},
+    'Vitória da Conquista':{p:3800,v:4.0,d:5},
+    'Ilhéus':{p:4500,v:5.0,d:5},
+    'Itabuna':{p:3500,v:3.8,d:4},
+    'Barreiras':{p:3500,v:3.5,d:4},
     'Jequié':{p:2800,v:2.1,d:2},
   }},
   'Ceará':{cidades:{
-    'Fortaleza':{p:6000,v:4.2,d:7},
+    'Fortaleza':{p:9350,v:12.6,d:8},
     'Eusébio':{p:5800,v:4.5,d:7},
     'Aquiraz':{p:5000,v:4.0,d:6},
-    'Caucaia':{p:4200,v:3.2,d:4},
-    'Maracanaú':{p:3500,v:2.6,d:3},
-    'Sobral':{p:3800,v:2.8,d:3},
-    'Juazeiro do Norte':{p:3500,v:2.6,d:3},
-    'Crato':{p:3200,v:2.4,d:3},
-    'Iguatu':{p:2800,v:2.2,d:2},
+    'Caucaia':{p:4800,v:6.0,d:6},
+    'Maracanaú':{p:4200,v:5.0,d:5},
+    'Sobral':{p:3600,v:4.0,d:5},
+    'Juazeiro do Norte':{p:3800,v:4.0,d:5},
+    'Crato':{p:3200,v:3.5,d:4},
+    'Iguatu':{p:2900,v:3.2,d:4},
   }},
   'Distrito Federal':{cidades:{
-    'Brasília (Lago Sul/Norte)':{p:16000,v:6.2,d:8},
-    'Brasília (Asa Sul/Norte)':{p:13000,v:5.8,d:8},
-    'Brasília (Plano Piloto)':{p:12000,v:5.5,d:7},
-    'Brasília (Águas Claras)':{p:9000,v:5.2,d:8},
-    'Brasília (Sobradinho)':{p:6000,v:4.0,d:5},
-    'Brasília (Taguatinga)':{p:7500,v:4.2,d:6},
-    'Brasília (Gama)':{p:5200,v:3.6,d:4},
-    'Brasília (Ceilândia)':{p:5000,v:3.5,d:5},
-    'Brasília (Samambaia)':{p:4500,v:3.2,d:4},
+    'Brasília (Lago Sul/Norte)':{p:16000,v:4.0,d:8},
+    'Brasília (Asa Sul/Norte)':{p:13800,v:4.1,d:8},
+    'Brasília (Plano Piloto)':{p:12500,v:4.0,d:7},
+    'Brasília (Águas Claras)':{p:9754,v:4.0,d:8},
+    'Brasília (Sobradinho)':{p:7000,v:3.8,d:6},
+    'Brasília (Taguatinga)':{p:8000,v:4.0,d:7},
+    'Brasília (Gama)':{p:6000,v:3.8,d:6},
+    'Brasília (Ceilândia)':{p:6000,v:3.5,d:6},
+    'Brasília (Samambaia)':{p:5500,v:3.5,d:5},
   }},
   'Espírito Santo':{cidades:{
-    'Vitória':{p:8500,v:4.8,d:7},
-    'Vila Velha':{p:7500,v:4.5,d:7},
-    'Serra':{p:5800,v:3.8,d:5},
+    'Vitória':{p:14818,v:15.1,d:9},
+    'Vila Velha':{p:9500,v:10.0,d:8},
+    'Serra':{p:7200,v:7.5,d:7},
     'Guarapari':{p:6500,v:5.2,d:7},
-    'Cariacica':{p:4800,v:3.2,d:4},
-    'Cachoeiro de Itapemirim':{p:4500,v:3.1,d:4},
-    'Linhares':{p:4000,v:2.9,d:3},
+    'Cariacica':{p:5500,v:6.0,d:6},
+    'Cachoeiro de Itapemirim':{p:4500,v:4.5,d:5},
+    'Linhares':{p:4800,v:4.8,d:5},
   }},
   'Goiás':{cidades:{
-    'Goiânia':{p:6500,v:4.5,d:7},
+    'Goiânia':{p:8139,v:2.6,d:7},
     'Caldas Novas':{p:5500,v:4.5,d:6},
-    'Aparecida de Goiânia':{p:4800,v:3.5,d:5},
+    'Aparecida de Goiânia':{p:5500,v:3.5,d:6},
     'Senador Canedo':{p:4200,v:3.1,d:4},
-    'Anápolis':{p:4500,v:3.2,d:4},
-    'Rio Verde':{p:4200,v:3.0,d:4},
-    'Catalão':{p:4000,v:3.0,d:3},
-    'Luziânia':{p:3800,v:2.8,d:3},
-    'Águas Lindas de Goiás':{p:3200,v:2.5,d:3},
+    'Anápolis':{p:4800,v:4.0,d:5},
+    'Rio Verde':{p:4500,v:4.0,d:5},
+    'Catalão':{p:3800,v:3.5,d:4},
+    'Luziânia':{p:3500,v:3.5,d:4},
+    'Águas Lindas de Goiás':{p:3000,v:3.0,d:4},
   }},
   'Maranhão':{cidades:{
-    'São Luís':{p:5000,v:3.2,d:5},
-    'Imperatriz':{p:3500,v:2.6,d:3},
-    'Caxias':{p:2800,v:2.1,d:2},
-    'Timon':{p:2800,v:2.2,d:2},
+    'São Luís':{p:8627,v:13.9,d:7},
+    'Imperatriz':{p:3800,v:4.0,d:5},
+    'Caxias':{p:2800,v:3.0,d:3},
+    'Timon':{p:3000,v:3.2,d:4},
   }},
   'Mato Grosso':{cidades:{
-    'Cuiabá':{p:5500,v:3.8,d:5},
-    'Sinop':{p:5000,v:3.8,d:5},
+    'Cuiabá':{p:6200,v:4.2,d:6},
+    'Sinop':{p:5500,v:5.0,d:6},
     'Lucas do Rio Verde':{p:4500,v:3.4,d:4},
-    'Rondonópolis':{p:4500,v:3.2,d:4},
-    'Várzea Grande':{p:4500,v:3.1,d:4},
+    'Rondonópolis':{p:4800,v:4.2,d:5},
+    'Várzea Grande':{p:4500,v:4.0,d:5},
   }},
   'Mato Grosso do Sul':{cidades:{
-    'Campo Grande':{p:5800,v:3.9,d:6},
-    'Dourados':{p:4500,v:3.2,d:4},
-    'Três Lagoas':{p:4000,v:2.9,d:3},
-    'Ponta Porã':{p:3800,v:2.8,d:3},
-    'Corumbá':{p:3500,v:2.6,d:2},
+    'Campo Grande':{p:6500,v:5.5,d:7},
+    'Dourados':{p:4500,v:4.2,d:5},
+    'Três Lagoas':{p:4000,v:3.8,d:5},
+    'Ponta Porã':{p:3000,v:3.0,d:3},
+    'Corumbá':{p:3200,v:3.0,d:4},
   }},
   'Minas Gerais':{cidades:{
     'Nova Lima':{p:8500,v:5.2,d:8},
-    'Belo Horizonte':{p:7200,v:4.3,d:7},
-    'Uberlândia':{p:5800,v:4.0,d:6},
-    'Uberaba':{p:5200,v:3.6,d:5},
-    'Contagem':{p:5200,v:3.5,d:5},
-    'Ipatinga':{p:4500,v:3.1,d:4},
-    'Juiz de Fora':{p:5000,v:3.4,d:5},
-    'Betim':{p:4800,v:3.2,d:4},
-    'Sete Lagoas':{p:4200,v:3.0,d:4},
-    'Divinópolis':{p:4000,v:2.9,d:3},
-    'Governador Valadares':{p:4000,v:2.8,d:3},
-    'Montes Claros':{p:4200,v:2.9,d:3},
+    'Belo Horizonte':{p:10663,v:12.0,d:8},
+    'Uberlândia':{p:6200,v:6.0,d:7},
+    'Uberaba':{p:5500,v:5.2,d:6},
+    'Contagem':{p:5500,v:5.5,d:6},
+    'Ipatinga':{p:4200,v:4.2,d:5},
+    'Juiz de Fora':{p:5200,v:5.0,d:6},
+    'Betim':{p:4900,v:5.0,d:6},
+    'Sete Lagoas':{p:4500,v:4.5,d:5},
+    'Divinópolis':{p:4200,v:4.0,d:5},
+    'Governador Valadares':{p:4000,v:4.0,d:5},
+    'Montes Claros':{p:4200,v:4.0,d:5},
     'Varginha':{p:4200,v:3.0,d:4},
-    'Ribeirão das Neves':{p:4000,v:2.8,d:3},
+    'Ribeirão das Neves':{p:3800,v:3.8,d:5},
   }},
   'Pará':{cidades:{
-    'Belém':{p:5500,v:3.5,d:5},
-    'Ananindeua':{p:4200,v:2.9,d:4},
-    'Santarém':{p:3500,v:2.6,d:3},
-    'Marabá':{p:3800,v:2.8,d:3},
-    'Castanhal':{p:3500,v:2.6,d:3},
+    'Belém':{p:6500,v:11.8,d:7},
+    'Ananindeua':{p:4500,v:5.0,d:5},
+    'Santarém':{p:3500,v:4.0,d:4},
+    'Marabá':{p:3200,v:3.5,d:4},
+    'Castanhal':{p:3500,v:4.0,d:4},
     'Altamira':{p:3200,v:2.4,d:2},
   }},
   'Paraíba':{cidades:{
-    'João Pessoa':{p:5200,v:3.8,d:6},
-    'Campina Grande':{p:3800,v:2.8,d:4},
-    'Santa Rita':{p:3200,v:2.4,d:3},
+    'João Pessoa':{p:8081,v:15.1,d:7},
+    'Campina Grande':{p:4200,v:5.0,d:5},
+    'Santa Rita':{p:3500,v:4.0,d:4},
     'Bayeux':{p:3000,v:2.2,d:2},
   }},
   'Paraná':{cidades:{
-    'Curitiba':{p:8000,v:5.8,d:8},
-    'São José dos Pinhais':{p:6500,v:4.8,d:7},
-    'Foz do Iguaçu':{p:5200,v:4.1,d:6},
-    'Araucária':{p:5200,v:3.9,d:5},
-    'Maringá':{p:6000,v:4.6,d:7},
-    'Londrina':{p:5500,v:4.2,d:6},
-    'Colombo':{p:5000,v:3.6,d:5},
-    'Cascavel':{p:4800,v:3.7,d:5},
-    'Ponta Grossa':{p:4500,v:3.5,d:4},
-    'Toledo':{p:4500,v:3.4,d:4},
-    'Guarapuava':{p:3800,v:2.8,d:3},
-    'Paranaguá':{p:4200,v:3.2,d:4},
+    'Curitiba':{p:11694,v:9.1,d:9},
+    'São José dos Pinhais':{p:6500,v:6.0,d:7},
+    'Foz do Iguaçu':{p:5500,v:5.5,d:6},
+    'Araucária':{p:5000,v:5.0,d:6},
+    'Maringá':{p:6800,v:6.8,d:7},
+    'Londrina':{p:6200,v:6.5,d:7},
+    'Colombo':{p:5200,v:5.0,d:6},
+    'Cascavel':{p:5000,v:5.2,d:6},
+    'Ponta Grossa':{p:4800,v:5.0,d:6},
+    'Toledo':{p:4500,v:4.5,d:5},
+    'Guarapuava':{p:4000,v:4.0,d:5},
+    'Paranaguá':{p:4500,v:4.5,d:5},
   }},
   'Pernambuco':{cidades:{
     'Porto de Galinhas':{p:9000,v:7.0,d:9},
-    'Recife':{p:6500,v:4.0,d:7},
-    'Olinda':{p:5800,v:3.7,d:6},
-    'Jaboatão dos Guararapes':{p:5200,v:3.6,d:5},
-    'Paulista':{p:5000,v:3.5,d:5},
-    'Camarajibe':{p:4500,v:3.2,d:4},
-    'Cabo de Santo Agostinho':{p:4200,v:3.0,d:4},
-    'Caruaru':{p:3800,v:2.8,d:4},
-    'Petrolina':{p:3500,v:2.7,d:3},
+    'Recife':{p:8615,v:4.6,d:8},
+    'Olinda':{p:6500,v:5.0,d:6},
+    'Jaboatão dos Guararapes':{p:5500,v:4.5,d:6},
+    'Paulista':{p:5000,v:4.5,d:6},
+    'Camarajibe':{p:4500,v:4.0,d:5},
+    'Cabo de Santo Agostinho':{p:4500,v:4.0,d:5},
+    'Caruaru':{p:4000,v:4.5,d:5},
+    'Petrolina':{p:4200,v:4.5,d:5},
   }},
   'Piauí':{cidades:{
-    'Teresina':{p:4200,v:3.0,d:4},
-    'Parnaíba':{p:3000,v:2.3,d:3},
-    'Picos':{p:2800,v:2.1,d:2},
+    'Teresina':{p:5857,v:4.9,d:6},
+    'Parnaíba':{p:3200,v:3.5,d:4},
+    'Picos':{p:2900,v:3.2,d:3},
   }},
   'Rio de Janeiro':{cidades:{
-    'Búzios':{p:9500,v:6.2,d:8},
-    'Angra dos Reis':{p:8000,v:5.5,d:7},
-    'Rio de Janeiro (capital)':{p:9000,v:4.1,d:7},
-    'Niterói':{p:7500,v:4.8,d:7},
-    'Cabo Frio':{p:6500,v:5.0,d:7},
-    'Petrópolis':{p:5500,v:4.0,d:5},
-    'Macaé':{p:5000,v:3.5,d:5},
+    'Búzios':{p:10000,v:7.0,d:8},
+    'Angra dos Reis':{p:6500,v:5.5,d:6},
+    'Rio de Janeiro (capital)':{p:10939,v:5.2,d:8},
+    'Niterói':{p:8200,v:5.5,d:7},
+    'Cabo Frio':{p:7500,v:6.0,d:7},
+    'Petrópolis':{p:5500,v:5.0,d:6},
+    'Macaé':{p:5000,v:4.5,d:6},
     'Resende':{p:4500,v:3.2,d:4},
-    'São Gonçalo':{p:4800,v:3.2,d:5},
-    'Volta Redonda':{p:4200,v:3.1,d:4},
-    'Duque de Caxias':{p:4500,v:2.9,d:4},
-    'Nova Iguaçu':{p:4200,v:2.8,d:4},
-    'Nova Friburgo':{p:4000,v:3.0,d:3},
+    'São Gonçalo':{p:3800,v:4.0,d:6},
+    'Volta Redonda':{p:4200,v:4.0,d:5},
+    'Duque de Caxias':{p:3600,v:3.8,d:5},
+    'Nova Iguaçu':{p:4300,v:4.0,d:5},
+    'Nova Friburgo':{p:4500,v:4.2,d:5},
   }},
   'Rio Grande do Norte':{cidades:{
-    'Natal':{p:5500,v:3.8,d:6},
-    'Parnamirim':{p:5000,v:3.5,d:5},
-    'São Gonçalo do Amarante':{p:4200,v:3.0,d:4},
-    'Mossoró':{p:3500,v:2.6,d:3},
+    'Natal':{p:6334,v:9.3,d:7},
+    'Parnamirim':{p:5500,v:5.5,d:6},
+    'São Gonçalo do Amarante':{p:4200,v:4.0,d:5},
+    'Mossoró':{p:3800,v:4.0,d:5},
   }},
   'Rio Grande do Sul':{cidades:{
-    'Gramado':{p:9000,v:6.5,d:9},
+    'Gramado':{p:9800,v:7.0,d:8},
     'Canela':{p:7000,v:5.5,d:8},
-    'Porto Alegre':{p:7500,v:4.0,d:7},
-    'Bento Gonçalves':{p:5500,v:4.0,d:6},
-    'Caxias do Sul':{p:5500,v:3.8,d:6},
-    'Novo Hamburgo':{p:4800,v:3.3,d:5},
-    'São Leopoldo':{p:4500,v:3.1,d:4},
-    'Canoas':{p:4800,v:3.2,d:5},
-    'Gravataí':{p:4500,v:3.1,d:4},
-    'Pelotas':{p:4200,v:2.9,d:4},
-    'Santa Maria':{p:4000,v:2.7,d:3},
-    'Rio Grande':{p:4000,v:2.8,d:3},
-    'Viamão':{p:3800,v:2.6,d:3},
+    'Porto Alegre':{p:7505,v:5.4,d:7},
+    'Bento Gonçalves':{p:5500,v:5.2,d:6},
+    'Caxias do Sul':{p:6200,v:5.5,d:7},
+    'Novo Hamburgo':{p:5400,v:5.0,d:6},
+    'São Leopoldo':{p:5000,v:4.8,d:6},
+    'Canoas':{p:5200,v:5.0,d:6},
+    'Gravataí':{p:4800,v:4.5,d:5},
+    'Pelotas':{p:4400,v:4.0,d:5},
+    'Santa Maria':{p:4600,v:4.2,d:5},
+    'Rio Grande':{p:3800,v:3.8,d:5},
+    'Viamão':{p:4000,v:3.8,d:5},
   }},
   'Rondônia':{cidades:{
-    'Porto Velho':{p:4500,v:3.0,d:4},
-    'Ji-Paraná':{p:3800,v:2.7,d:3},
+    'Porto Velho':{p:4800,v:4.5,d:5},
+    'Ji-Paraná':{p:3800,v:4.0,d:4},
     'Cacoal':{p:3500,v:2.5,d:3},
   }},
   'Roraima':{cidades:{
-    'Boa Vista':{p:4000,v:2.8,d:3},
+    'Boa Vista':{p:4500,v:4.5,d:5},
   }},
   'Santa Catarina':{cidades:{
-    'Balneário Camboriú':{p:18000,v:9.5,d:10},
-    'Itapema':{p:12000,v:8.0,d:9},
-    'Bombinhas':{p:10000,v:7.0,d:8},
-    'Florianópolis':{p:10500,v:6.2,d:9},
-    'São José':{p:7000,v:5.5,d:7},
+    'Balneário Camboriú':{p:15185,v:5.5,d:10},
+    'Itapema':{p:15179,v:8.5,d:9},
+    'Bombinhas':{p:10500,v:7.5,d:8},
+    'Florianópolis':{p:13208,v:8.6,d:9},
+    'São José':{p:9021,v:6.0,d:7},
     'Navegantes':{p:6500,v:5.2,d:7},
-    'Itajaí':{p:7500,v:5.8,d:8},
-    'Joinville':{p:6500,v:4.8,d:7},
+    'Itajaí':{p:13166,v:6.5,d:8},
+    'Joinville':{p:8237,v:5.5,d:7},
     'Palhoça':{p:6000,v:4.5,d:6},
-    'Blumenau':{p:5800,v:4.3,d:6},
-    'Jaraguá do Sul':{p:5500,v:4.0,d:6},
-    'Brusque':{p:4800,v:3.5,d:5},
-    'Criciúma':{p:5000,v:3.8,d:5},
-    'Chapecó':{p:4800,v:3.6,d:5},
-    'Lages':{p:3800,v:2.9,d:3},
+    'Blumenau':{p:7930,v:6.0,d:7},
+    'Jaraguá do Sul':{p:5800,v:5.5,d:6},
+    'Brusque':{p:5500,v:5.2,d:6},
+    'Criciúma':{p:5000,v:5.0,d:6},
+    'Chapecó':{p:5200,v:5.0,d:6},
+    'Lages':{p:4200,v:4.0,d:5},
   }},
   'São Paulo':{cidades:{
-    'São Paulo (capital)':{p:11500,v:5.2,d:9},
-    'Santos':{p:8500,v:4.9,d:8},
-    'São José dos Campos':{p:7000,v:5.0,d:8},
-    'Jundiaí':{p:6800,v:4.6,d:7},
-    'São Bernardo do Campo':{p:6800,v:4.3,d:7},
-    'Santo André':{p:6500,v:4.1,d:6},
-    'Campinas':{p:7200,v:4.8,d:8},
-    'Guarulhos':{p:6000,v:3.9,d:6},
-    'Osasco':{p:5800,v:3.7,d:6},
-    'Americana':{p:5500,v:3.7,d:5},
-    'Mogi das Cruzes':{p:5500,v:3.7,d:5},
-    'Sorocaba':{p:5600,v:3.6,d:6},
-    'Ribeirão Preto':{p:6200,v:4.5,d:7},
-    'São José do Rio Preto':{p:5800,v:4.0,d:6},
-    'Piracicaba':{p:5500,v:3.8,d:5},
-    'Bauru':{p:5200,v:3.5,d:5},
+    'São Paulo (capital)':{p:12019,v:4.6,d:9},
+    'Santos':{p:9000,v:5.8,d:7},
+    'São José dos Campos':{p:7400,v:5.5,d:7},
+    'Jundiaí':{p:7000,v:5.2,d:7},
+    'São Bernardo do Campo':{p:7200,v:5.0,d:7},
+    'Santo André':{p:6900,v:4.8,d:7},
+    'Campinas':{p:7600,v:5.5,d:8},
+    'Guarulhos':{p:6400,v:4.5,d:7},
+    'Osasco':{p:6100,v:4.5,d:6},
+    'Americana':{p:5500,v:4.5,d:6},
+    'Mogi das Cruzes':{p:5500,v:4.5,d:6},
+    'Sorocaba':{p:5900,v:4.8,d:6},
+    'Ribeirão Preto':{p:6700,v:5.2,d:7},
+    'São José do Rio Preto':{p:5800,v:5.0,d:6},
+    'Piracicaba':{p:5600,v:4.8,d:6},
+    'Bauru':{p:4800,v:4.2,d:5},
     'Diadema':{p:5200,v:3.4,d:5},
     'Limeira':{p:5000,v:3.3,d:5},
     'Franca':{p:4800,v:3.2,d:4},
-    'Marília':{p:4600,v:3.1,d:4},
+    'Marília':{p:4500,v:4.0,d:5},
     'Carapicuíba':{p:4800,v:3.2,d:5},
   }},
   'Sergipe':{cidades:{
-    'Aracaju':{p:5000,v:3.5,d:5},
-    'Nossa Senhora do Socorro':{p:3500,v:2.6,d:3},
-    'Lagarto':{p:2800,v:2.1,d:2},
+    'Aracaju':{p:5529,v:2.2,d:6},
+    'Nossa Senhora do Socorro':{p:4000,v:3.5,d:5},
+    'Lagarto':{p:3000,v:3.2,d:4},
   }},
   'Tocantins':{cidades:{
-    'Palmas':{p:5000,v:3.8,d:5},
-    'Araguaína':{p:3800,v:2.8,d:3},
-    'Gurupi':{p:3200,v:2.4,d:2},
+    'Palmas':{p:5500,v:5.0,d:6},
+    'Araguaína':{p:4000,v:4.0,d:5},
+    'Gurupi':{p:3500,v:3.5,d:4},
   }},
 };
 
@@ -1452,6 +1452,58 @@ function sugerirTierPorBairro(nomeBairro){
   }
   return null;
 }
+
+// ==== ATUALIZAÇÃO DE PREÇOS VIA FIPEZAP (venda residencial) ====
+// Permite atualizar rapidamente o campo p (R$/m²) do DB quando sair um novo informe oficial.
+function aplicarFIPEZAP(novosValores){
+  if(!novosValores || typeof novosValores !== 'object') return;
+  Object.entries(novosValores).forEach(([cidadeAlvo, novoP])=>{
+    if(!novoP || isNaN(novoP)) return;
+    let encontrado=false;
+    Object.values(DB).forEach(estado=>{
+      if(!estado || !estado.cidades) return;
+      const cidades = estado.cidades;
+      if(cidades[cidadeAlvo]){
+        cidades[cidadeAlvo].p = novoP;
+        encontrado = true;
+      }
+    });
+    if(!encontrado){
+      console.warn('[FIPEZAP] Cidade não encontrada no DB:', cidadeAlvo);
+    }
+  });
+  console.log('[FIPEZAP] Atualização aplicada', novosValores);
+}
+
+// FIPEZAP Residencial Venda — preços médios de apartamentos (R$/m²)
+// Abril de 2026 — último informe disponível na data deste deploy.
+// Fonte: Índice FipeZAP de Venda Residencial (DataZAP/Fipe).
+const FIPE_ABR_2026 = {
+  'São Paulo (capital)': 12019,
+  'Rio de Janeiro (capital)': 10939,
+  'Belo Horizonte': 10663,
+  'Curitiba': 11694,
+  'Florianópolis': 13208,
+  'Vitória': 14818,
+  'Fortaleza': 9350,
+  'Maceió': 9908,
+  'Recife': 8615,
+  'Salvador': 8385,
+  'João Pessoa': 8081,
+  'São Luís': 8627,
+  'Natal': 6334,
+  'Teresina': 5857,
+  'Aracaju': 5529,
+  'Balneário Camboriú': 15185,
+  'Itapema': 15179,
+  'Joinville': 8237,
+  'Blumenau': 7930,
+  'Itajaí': 13166,
+  'São José': 9021,
+};
+
+// Aplica automaticamente esses valores na carga da página.
+aplicarFIPEZAP(FIPE_ABR_2026);
 
 /* ── FORM ── */
 function onEstado(){
@@ -1944,9 +1996,21 @@ function goTo(pg){
   document.getElementById('pg-result')?.classList.remove('show');
   document.getElementById('loading')?.classList.remove('show');
   const t=document.getElementById('pg-'+pg);
-  if(t){t.classList.add('on');t.removeAttribute('aria-hidden');}
-  document.querySelectorAll('.nav-step').forEach(s=>s.classList.remove('on'));
-  document.getElementById('ns-'+pg)?.classList.add('on');
+  if(t){
+    t.classList.add('on');
+    t.removeAttribute('aria-hidden');
+    const h=t.querySelector('h1, h2');
+    if(h){h.setAttribute('tabindex','-1');h.focus?.();}
+  }
+  document.querySelectorAll('.nav-step').forEach(s=>{
+    s.classList.remove('on');
+    s.removeAttribute('aria-current');
+  });
+  const ns=document.getElementById('ns-'+pg);
+  if(ns){
+    ns.classList.add('on');
+    ns.setAttribute('aria-current','page');
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -2118,6 +2182,25 @@ function enviarCadastro(){
   // Mostra sucesso
   document.getElementById('pf-form-wrap').style.display = 'none';
   document.getElementById('pf-success').style.display   = 'block';
+}
+
+
+// Navegação por setas na barra inferior
+if (typeof document !== 'undefined'){
+  document.addEventListener('DOMContentLoaded',()=>{
+    const steps = Array.from(document.querySelectorAll('.nav-step'));
+    steps.forEach(btn=>{
+      btn.addEventListener('keydown',e=>{
+        if(e.key!=='ArrowRight' && e.key!=='ArrowLeft') return;
+        e.preventDefault();
+        const idx = steps.indexOf(btn);
+        const next = e.key==='ArrowRight'
+          ? steps[(idx+1)%steps.length]
+          : steps[(idx-1+steps.length)%steps.length];
+        next?.focus();
+      });
+    });
+  });
 }
 </script>
 </body>
