@@ -139,15 +139,6 @@ if('requestIdleCallback' in window){
   setTimeout(()=> buildBairroIndex(), 800);
 }
 
-
-
-  } catch(err){
-    console.error(err);
-    const el = document.getElementById('form-err') || document.getElementById('calc-err');
-    if (el) { el.style.display='block'; el.textContent='Erro ao calcular. Verifique os dados de entrada.'; }
-  }
-}
-
 /* ════════════════════════════════════════════════════════
    CAPTAÇÃO DE LEADS — Social Proof, Exit Intent, Share
 ════════════════════════════════════════════════════════ */
@@ -1464,7 +1455,6 @@ footer strong{color:var(--text2)}
   <div class="lead-card" id="lead-card">
     <div class="lead-eyebrow">Quer vender este imóvel?</div>
     <h3>Conecte com um corretor<br>parceiro Valora</h3>
-    <p>Corretores verificados recebem seu laudo completo e entram em contato em até 2h — sem compromisso.</p>
     <div class="lead-form" id="lead-form">
       <label for="lead-nome" class="sr-only">Seu nome completo</label>
       <input class="lead-input" type="text" id="lead-nome" placeholder="Seu nome completo *" autocomplete="name">
@@ -2420,7 +2410,6 @@ function prevStep(cur){
 
 /* ── CALCULAR ── */
 function calcular(){
-  try{
   const bairro  = document.getElementById('f-bairro').value.trim();
   const area    = parseInt(document.getElementById('f-area').value)||80;
   const quartos = parseInt(document.getElementById('f-quartos').value)||3;
@@ -3302,13 +3291,13 @@ function limparComparador(){
 }
 
 function renderComparador(){
+  const saved = avaliacoesSalvas || [];
   // Update badge
   const badge = document.getElementById('comp-badge');
   if(badge){ badge.style.display=saved.length?'inline':'none'; badge.textContent=saved.length+'/2'; }
 
   const grid = document.getElementById('comparador-grid');
   const hint = document.getElementById('comparador-hint');
-  const saved = avaliacoesSalvas;
 
   // Update button label
   const saveBtn = document.querySelector('[onclick="salvarAvaliacao()"]');
