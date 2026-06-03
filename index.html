@@ -4,19 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valora — Avaliar apartamento online grátis com dados FIPEZAP e Banco Central</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
-  <!-- Apple Touch Icon (180×180) para adicionar como app no iPhone/iPad -->
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
-  <!-- PWA Web Manifest -->
-  <link rel="manifest" href="/site.webmanifest">
-  <!-- Tema da barra de status no mobile -->
-  <meta name="theme-color" content="#0f0e0b">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Valora"><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
 <meta name="theme-color" content="#07080d" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f4f1eb" media="(prefers-color-scheme: light)">
-<meta name="description" content="Descubra quanto vale seu apartamento em minutos. Avaliação imobiliária online grátis, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">>
+<meta name="description" content="Descubra quanto vale seu apartamento em minutos. Avaliação imobiliária online grátis, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">
 <script>
 /* Set theme before first paint to prevent FOUC */
 (function(){
@@ -149,6 +140,13 @@ if('requestIdleCallback' in window){
 }
 
 
+
+  } catch(err){
+    console.error(err);
+    const el = document.getElementById('form-err') || document.getElementById('calc-err');
+    if (el) { el.style.display='block'; el.textContent='Erro ao calcular. Verifique os dados de entrada.'; }
+  }
+}
 
 /* ════════════════════════════════════════════════════════
    CAPTAÇÃO DE LEADS — Social Proof, Exit Intent, Share
@@ -2422,6 +2420,7 @@ function prevStep(cur){
 
 /* ── CALCULAR ── */
 function calcular(){
+  try{
   const bairro  = document.getElementById('f-bairro').value.trim();
   const area    = parseInt(document.getElementById('f-area').value)||80;
   const quartos = parseInt(document.getElementById('f-quartos').value)||3;
@@ -2466,7 +2465,8 @@ function calcular(){
     const mIda  = M_IDADE[idade]||1;
     const mVag  = 1+(M_VAGAS[Math.min(vagas,4)]||0);
     const mSui  = 1+(M_SUITES[Math.min(suites,4)]||0);
-    const mBan  = 1+(M_BANHOS[Math.min(banhos-1,4)]||0); // FIX banheiros
+    const idxBan = Math.max(0, Math.min((banhos||1)-1, 4));
+    const mBan  = 1 + (M_BANHOS[idxBan] || 0); // FIX banheiros
     // Usa fator numérico do bairro quando reconhecido (mais preciso que M_TIER por tier)
     const mTier = (_fatorBairro!==null) ? _fatorBairro : (M_TIER[tier]||1);
     const mAmen = 1+Math.min(Math.log1p(chips)*0.025,0.075);
@@ -2543,10 +2543,13 @@ function calcular(){
     /* ── DOM ── */
     document.getElementById('r-val').textContent  = fmt(total);
     document.getElementById('r-range').innerHTML  = 'Faixa: <strong>'+fmt(low)+' – '+fmt(high)+'</strong>';
-    document.getElementById('r-addr').textContent = (bairro?bairro+' · ':'')+cidadeKey+' · '+estadoKey;
+    const rAddrEl = document.getElementById('r-addr');
+    if (rAddrEl) rAddrEl.textContent = (bairro?bairro+' · ':'')+cidadeKey+' · '+estadoKey;
     document.getElementById('r-m2').textContent   = fmt(m2);
-    document.getElementById('r-valz').textContent = '+'+valzBase.toFixed(1)+'% a.a.';
-    document.getElementById('r-alug').textContent = fmt(aluguel)+'/mês';
+    const rValzEl = document.getElementById('r-valz');
+    if (rValzEl) rValzEl.textContent = '+'+valzBase.toFixed(1)+'% a.a.';
+    const rAlugEl = document.getElementById('r-alug');
+    if (rAlugEl) rAlugEl.textContent = fmt(aluguel)+'/mês';
     document.getElementById('r-yield').textContent= yieldBruto+'% a.a.';
     document.getElementById('r-score').textContent= score;
     document.getElementById('r-slabel').textContent=slabel;
