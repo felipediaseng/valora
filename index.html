@@ -289,53 +289,222 @@ function recusarCookies(){
 ════════════════════════════════════════════════════════ */
 function gerarPDFResultado(){
   const get = id => (document.getElementById(id)||{}).textContent||'—';
-  const cidade = cidadeKey||'não informada';
-  const estado = estadoKey||'';
+  const cidade  = cidadeKey||'não informada';
+  const estado  = estadoKey||'';
   const now = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+
+  /* ── Captura dados do formulário ── */
+  const area    = document.getElementById('f-area')?.value||'—';
+  const quartos = document.getElementById('f-quartos')?.value||'—';
+  const suites  = document.getElementById('f-suites')?.value||'0';
+  const vagas   = document.getElementById('f-vagas')?.value||'0';
+  const banhos  = document.getElementById('f-banheiros')?.value||'—';
+  const andarEl = document.getElementById('f-andar');
+  const andar   = andarEl?.options[andarEl.selectedIndex]?.text||'—';
+  const conservEl = document.getElementById('f-conserv');
+  const conserv = conservEl?.options[conservEl.selectedIndex]?.text||'—';
+  const idadeEl = document.getElementById('f-idade');
+  const idade   = idadeEl?.options[idadeEl.selectedIndex]?.text||'—';
+  const bairro  = document.getElementById('f-bairro')?.value||'não informado';
+
+  /* Padrão de acabamento */
+  const padraosIds = ['simples','medio','alto','luxo'];
+  const padraosLabel = {simples:'Simples',medio:'Médio',alto:'Alto',luxo:'Luxo'};
+  const padrao = padraosIds.find(p=>document.getElementById('pc-'+p)?.classList.contains('on'))||'médio';
+  const padraoLabel = padraosLabel[padrao]||'Médio';
+
+  /* Padrão do bairro (tier) */
+  const tiers = ['periferico','popular','medio','nobre','premium'];
+  const tierLabel = {'periferico':'Periférico','popular':'Popular','medio':'Médio','nobre':'Nobre','premium':'Premium'};
+  const tier = tiers.find(t=>document.getElementById('tc-'+t)?.classList.contains('on'))||'medio';
+  const tierStr = tierLabel[tier]||'Médio';
+
+  /* Diferenciais selecionados */
+  const chips = Array.from(document.querySelectorAll('#chips .chip.on')).map(c=>c.textContent.trim());
+  const chipsStr = chips.length ? chips.join(', ') : 'Nenhum selecionado';
+
+  const suitesTxt  = suites==='0'||suites===0 ? 'Sem suíte' : suites+' suíte(s)';
+  const vagasTxt   = vagas==='0'||vagas===0   ? 'Sem vaga'  : vagas+(parseInt(vagas)===1?' vaga':' vagas');
 
   const conteudo = `
     <html><head><title>Laudo Valora — ${cidade}</title>
     <meta charset="utf-8">
     <style>
-      body{font-family:Georgia,serif;max-width:680px;margin:40px auto;color:#1a1a1a;line-height:1.6}
-      h1{font-size:1.6rem;border-bottom:3px solid #c8a032;padding-bottom:.5rem;margin-bottom:1.5rem}
-      h2{font-size:1.1rem;color:#8a6e1e;margin-top:2rem;margin-bottom:.5rem;border-bottom:1px solid #e0d0a0;padding-bottom:.3rem}
-      .row{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid #f0e8d0}
-      .label{color:#555;font-size:.9rem}
-      .val{font-weight:700;font-size:.9rem}
-      .highlight{background:#fffbee;border:1px solid #e0c860;border-radius:6px;padding:1rem;margin:1rem 0}
-      .footer{margin-top:3rem;font-size:.75rem;color:#888;border-top:1px solid #ddd;padding-top:1rem}
-      @media print{body{margin:20px}}
-    </style></head><body>
-    <h1>✦ Laudo de Avaliação — Valora</h1>
-    <p style="color:#888;font-size:.85rem">Gerado em ${now} · valora.app.br</p>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Georgia,serif;max-width:700px;margin:40px auto;color:#1a1a1a;line-height:1.6;padding:0 16px}
+      .header{border-bottom:3px solid #c8a032;padding-bottom:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-end}
+      .header-logo{font-size:1.6rem;font-style:italic;color:#c8a032;letter-spacing:-.02em}
+      .header-meta{font-size:.78rem;color:#888;text-align:right}
+      h2{font-size:1rem;color:#8a6e1e;margin:1.6rem 0 .6rem;border-bottom:1px solid #e0d0a0;padding-bottom:.3rem;text-transform:uppercase;letter-spacing:.06em}
+      .highlight{background:#fffbee;border:1px solid #e0c860;border-radius:8px;padding:1.2rem 1.4rem;margin:1rem 0;display:flex;align-items:center;gap:1.5rem}
+      .hl-val{font-size:2.2rem;font-weight:700;color:#1a1a1a;line-height:1}
+      .hl-range{font-size:.82rem;color:#666;margin-top:.3rem}
+      .hl-label{font-size:.72rem;color:#8a6e1e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.25rem}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem}
+      .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem .8rem}
+      .row{display:flex;justify-content:space-between;align-items:flex-start;padding:.45rem 0;border-bottom:1px solid #f0e8d0;gap:.5rem}
+      .row:last-child{border-bottom:none}
+      .label{color:#666;font-size:.83rem;flex-shrink:0}
+      .val{font-weight:700;font-size:.83rem;text-align:right}
+      .badge{display:inline-block;padding:.15rem .55rem;border-radius:99px;font-size:.72rem;font-weight:700;margin-left:.3rem}
+      .badge-gold{background:#fef3c7;color:#92400e}
+      .badge-green{background:#dcfce7;color:#166534}
+      .badge-blue{background:#dbeafe;color:#1e40af}
+      .imovel-card{background:#f8f5ef;border:1px solid #e0d5c0;border-radius:8px;padding:1rem 1.2rem;margin:.8rem 0}
+      .imovel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem}
+      .imovel-item{background:#fff;border:1px solid #e8e0d0;border-radius:6px;padding:.5rem .6rem;text-align:center}
+      .imovel-icon{font-size:1.1rem;display:block;margin-bottom:.2rem}
+      .imovel-val{font-size:.9rem;font-weight:700;color:#1a1a1a}
+      .imovel-lbl{font-size:.65rem;color:#888;margin-top:.1rem}
+      .chips-wrap{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
+      .chip-tag{background:#f3eedd;border:1px solid #d4b868;border-radius:99px;padding:.18rem .6rem;font-size:.72rem;color:#7a5c1e}
+      .score-row{display:flex;align-items:center;gap:1rem;padding:.8rem 0}
+      .score-circle{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#c8a032,#f5e090);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+      .score-num{font-size:1.3rem;font-weight:700;color:#1a1a1a;font-style:italic}
+      .score-desc{font-size:.82rem;color:#555}
+      .footer{margin-top:2.5rem;font-size:.72rem;color:#999;border-top:1px solid #ddd;padding-top:1rem;line-height:1.7}
+      .footer strong{color:#8a6e1e}
+      @media print{
+        body{margin:10px auto}
+        .no-print{display:none}
+        a[href]:after{content:" (" attr(href) ")"}
+      }
+    </style></head>
+    <body>
 
-    <div class="highlight">
-      <div style="font-size:.8rem;color:#8a6e1e">Valor estimado de venda</div>
-      <div style="font-size:2rem;font-weight:700;color:#1a1a1a">${get('r-val')}</div>
-      <div style="font-size:.85rem;color:#555">${get('r-range')}</div>
+    <div class="header">
+      <div>
+        <div class="header-logo">✦ valora</div>
+        <div style="font-size:.75rem;color:#888;margin-top:.2rem">Laudo de Avaliação Imobiliária</div>
+      </div>
+      <div class="header-meta">
+        Gerado em ${now}<br>
+        valora.app.br
+      </div>
     </div>
 
-    <h2>Localização</h2>
-    <div class="row"><span class="label">Cidade / Estado</span><span class="val">${cidade}${estado?' / '+estado:''}</span></div>
-    <div class="row"><span class="label">Endereço / Bairro</span><span class="val">${get('r-addr')}</span></div>
+    <!-- VALOR ESTIMADO -->
+    <div class="highlight">
+      <div style="flex:1">
+        <div class="hl-label">Valor estimado de venda</div>
+        <div class="hl-val">${get('r-val')}</div>
+        <div class="hl-range">Faixa: ${get('r-range')}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="hl-label">Preço/m²</div>
+        <div style="font-size:1.2rem;font-weight:700">${get('r-m2')}</div>
+        <div style="font-size:.72rem;color:#888">mercado local</div>
+      </div>
+    </div>
 
-    <h2>Indicadores</h2>
-    <div class="row"><span class="label">Preço estimado/m²</span><span class="val">${get('r-m2')}</span></div>
-    <div class="row"><span class="label">Score Valora</span><span class="val">${get('r-score')}/100</span></div>
-    <div class="row"><span class="label">Valorização estimada a.a.</span><span class="val">${get('r-valz')}</span></div>
-    <div class="row"><span class="label">Aluguel estimado/mês</span><span class="val">${get('r-alug')}</span></div>
-    <div class="row"><span class="label">Yield bruto anual</span><span class="val">${get('r-yield')}</span></div>
-    <div class="row"><span class="label">Liquidez</span><span class="val">${get('r-liq')||'—'}</span></div>
-    <div class="row"><span class="label">Previsão de venda</span><span class="val">${get('r-dias')||'—'}</span></div>
+    <!-- IDENTIFICAÇÃO DO IMÓVEL -->
+    <h2>📍 Identificação do Imóvel</h2>
+    <div class="imovel-card">
+      <div class="row">
+        <span class="label">Cidade / Estado</span>
+        <span class="val">${cidade}${estado?' — '+estado:''}</span>
+      </div>
+      <div class="row">
+        <span class="label">Bairro</span>
+        <span class="val">${bairro||'não informado'} <span class="badge badge-blue">${tierStr}</span></span>
+      </div>
+      <div class="row">
+        <span class="label">Endereço / Referência</span>
+        <span class="val">${get('r-addr')}</span>
+      </div>
+
+      <!-- GRID DE CARACTERÍSTICAS -->
+      <div class="imovel-grid">
+        <div class="imovel-item">
+          <span class="imovel-icon">🛏️</span>
+          <div class="imovel-val">${quartos}</div>
+          <div class="imovel-lbl">Quarto${parseInt(quartos)!==1?'s':''}</div>
+        </div>
+        <div class="imovel-item">
+          <span class="imovel-icon">🛁</span>
+          <div class="imovel-val">${banhos}</div>
+          <div class="imovel-lbl">Banheiro${parseInt(banhos)!==1?'s':''}</div>
+        </div>
+        <div class="imovel-item">
+          <span class="imovel-icon">🏠</span>
+          <div class="imovel-val">${suitesTxt}</div>
+          <div class="imovel-lbl">Suíte(s)</div>
+        </div>
+        <div class="imovel-item">
+          <span class="imovel-icon">🚗</span>
+          <div class="imovel-val">${vagasTxt}</div>
+          <div class="imovel-lbl">Garagem</div>
+        </div>
+        <div class="imovel-item">
+          <span class="imovel-icon">📐</span>
+          <div class="imovel-val">${area}m²</div>
+          <div class="imovel-lbl">Área útil</div>
+        </div>
+        <div class="imovel-item">
+          <span class="imovel-icon">🏢</span>
+          <div class="imovel-val">${andar}</div>
+          <div class="imovel-lbl">Andar</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-top:.75rem;flex-wrap:wrap">
+        <div><span style="font-size:.72rem;color:#888">Padrão de acabamento:</span> <strong>${padraoLabel}</strong></div>
+        <div><span style="font-size:.72rem;color:#888">Conservação:</span> <strong>${conserv}</strong></div>
+        <div><span style="font-size:.72rem;color:#888">Idade:</span> <strong>${idade}</strong></div>
+      </div>
+
+      ${chips.length?`
+      <div style="margin-top:.75rem">
+        <div style="font-size:.72rem;color:#888;margin-bottom:.35rem">Diferenciais / Infraestrutura:</div>
+        <div class="chips-wrap">
+          ${chips.map(c=>`<span class="chip-tag">${c}</span>`).join('')}
+        </div>
+      </div>`:''}
+    </div>
+
+    <!-- INDICADORES -->
+    <h2>📊 Indicadores de Valor</h2>
+    <div class="row"><span class="label">Score Valora</span>
+      <span class="val">${get('r-score')}<span style="color:#888">/100</span></span></div>
+    <div class="row"><span class="label">Preço estimado/m²</span>
+      <span class="val">${get('r-m2')}</span></div>
+    <div class="row"><span class="label">Valorização estimada a.a.</span>
+      <span class="val">${get('r-valz')}</span></div>
+    <div class="row"><span class="label">Aluguel estimado/mês</span>
+      <span class="val">${get('r-alug')}</span></div>
+    <div class="row"><span class="label">Yield bruto anual</span>
+      <span class="val">${get('r-yield')}</span></div>
+
+    <!-- PREVISÃO DE VENDA -->
+    <h2>⏱️ Previsão de Venda</h2>
+    <div class="row"><span class="label">Liquidez de mercado</span>
+      <span class="val">${get('r-liq')||'—'}</span></div>
+    <div class="row"><span class="label">Tempo estimado</span>
+      <span class="val">${get('r-dias')||'—'}</span></div>
+
+    <!-- NOTA DO AVALIADOR -->
+    <h2>📝 Observações</h2>
+    <div style="font-size:.82rem;color:#555;line-height:1.75;padding:.5rem 0">
+      Esta avaliação foi gerada automaticamente com base nos dados informados pelo
+      usuário e nos indicadores de mercado do período. O valor estimado representa
+      uma <strong>faixa de referência</strong> baseada em dados agregados do FipeZAP e Banco
+      Central, considerando localização, padrão do imóvel e condições econômicas.
+      Para fins de negociação, financiamento ou processo judicial, recomenda-se a
+      elaboração de laudo técnico por profissional habilitado (CRECI/COFECI),
+      conforme <strong>NBR 14653</strong>.
+    </div>
 
     <div class="footer">
-      Estimativa baseada em dados FIPEZAP abr/2026 e Banco Central do Brasil (SGS).<br>
-      Não substitui laudo técnico (NBR 14653). Para fins informativos.
+      <strong>Fonte dos dados:</strong> FipeZAP abr/2026 · Banco Central do Brasil (SGS séries 432, 433, 189) ·
+      SECOVI/SP · Dados regionais de portais imobiliários (ZAP, Viva Real, Quinto Andar).<br>
+      <strong>Aviso legal:</strong> Estimativa com finalidade informativa. Não substitui laudo técnico (NBR 14653).
+      Yield exibido é <em>bruto</em> — o líquido pode ser 30–40% menor após IR, vacância e custos.<br>
+      valora.app.br · ${now}
     </div>
+
     </body></html>`;
 
-  const w = window.open('','_blank','width=780,height=900');
+  const w = window.open('','_blank','width=820,height=960');
   if(!w){ alert('Permita pop-ups para gerar o PDF.'); return; }
   w.document.write(conteudo);
   w.document.close();
@@ -2240,6 +2409,25 @@ const BAIRRO_FATOR = {
   'águas claras bsb':0.95,'taguatinga bsb':0.82,'guará':0.78,
   'samambaia':0.65,'ceilândia':0.52,
   'estrutural':0.32,'itapoã bsb':0.38,'varjão':0.28,
+  /* ── NITERÓI (RJ) — base R$8.200/m² ────────────────────
+     Fonte: FipeZAP, ZAP Imóveis 2025-2026                    */
+  'icaraí':1.85,'ingá':1.75,'charitas':1.70,
+  'piratininga':1.55,'camboinhas':1.65,'itacoatiara':1.50,
+  'boa viagem ni':1.45,'santa rosa ni':1.20,'gragoatá':1.18,
+  'largo da batalha':1.10,'fonseca':0.82,'barreto':0.78,
+  'engenhoca':0.68,'cavalcante':0.65,'caramujo':0.58,
+  'baldeador':0.55,'cafubá':0.52,'pendotiba':0.50,
+
+  /* ── GOIÂNIA — base R$7.900/m² ───────────────────────────*/
+  'setor marista':1.95,'setor bueno':1.80,'setor oeste':1.65,
+  'setor sul':1.50,'jardim goiás':1.45,'aldeota go':1.40,
+  'setor aeroporto':1.20,'setor central go':0.90,'setor norte go':0.85,
+  'setor leste universitário':0.80,'vila nova go':0.75,'couto magalhães':0.65,
+
+  /* ── BELÉM (PA) — base R$5.800/m² ────────────────────────*/
+  'umarizal':1.80,'nazaré bel':1.55,'batista campos':1.45,
+  'são brás bel':1.30,'marco bel':1.20,'pedreira bel':1.10,
+  'fátima bel':0.95,'jurunas':0.65,'condor':0.55,
 };
 
 /* ────────────────────────────────────────────────────────────
