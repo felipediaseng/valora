@@ -3,362 +3,648 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Valora — Correções UX (2 prioridades altas)</title>
+<title>Valora — Correções UX + Revisão de Erros</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-  :root {
-    --bg:       #f7f6f2;
-    --surface:  #ffffff;
-    --surface2: #f1efe9;
-    --border:   rgba(0,0,0,0.10);
-    --border2:  rgba(0,0,0,0.18);
-    --txt:      #1a1a18;
-    --txt2:     #6b6b65;
-    --txt3:     #9e9e97;
-    --teal:     #1D9E75;
-    --teal-bg:  #EAF3DE;
-    --teal-txt: #27500A;
-    --blue:     #185FA5;
-    --blue-bg:  #E6F1FB;
-    --blue-txt: #0C447C;
-    --amber-bg: #FAEEDA;
-    --amber-txt:#633806;
-    --rad-sm:   6px;
-    --rad-md:   10px;
-    --rad-lg:   14px;
-    --font:     -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  }
+:root{
+  --bg:#f7f6f2;
+  --surface:#ffffff;
+  --surface2:#f1efe9;
+  --border:rgba(0,0,0,.10);
+  --border2:rgba(0,0,0,.18);
+  --txt:#1a1a18;
+  --txt2:#6b6b65;
+  --txt3:#9e9e97;
+  --teal:#1D9E75;
+  --teal-bg:#EAF3DE;
+  --teal-txt:#27500A;
+  --blue:#185FA5;
+  --blue-bg:#E6F1FB;
+  --blue-txt:#0C447C;
+  --amber-bg:#FAEEDA;
+  --amber-txt:#633806;
+  --red-bg:#FCEBEB;
+  --red-txt:#A32D2D;
+  --red:#E24B4A;
+  --orange:#BA7517;
+  --rad-sm:6px;
+  --rad-md:10px;
+  --rad-lg:14px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg:       #161614;
-      --surface:  #1f1f1c;
-      --surface2: #2a2a26;
-      --border:   rgba(255,255,255,0.10);
-      --border2:  rgba(255,255,255,0.18);
-      --txt:      #f0efe9;
-      --txt2:     #9e9d97;
-      --txt3:     #6b6b65;
-      --teal-bg:  #0a2e1f;
-      --teal-txt: #9FE1CB;
-      --blue-bg:  #0a1e35;
-      --blue-txt: #85B7EB;
-      --amber-bg: #2a1d08;
-      --amber-txt:#FAC775;
-    }
-  }
+@media(prefers-color-scheme:dark){:root{
+  --bg:#161614;--surface:#1f1f1c;--surface2:#2a2a26;
+  --border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);
+  --txt:#f0efe9;--txt2:#9e9d97;--txt3:#6b6b65;
+  --teal-bg:#0a2e1f;--teal-txt:#9FE1CB;
+  --blue-bg:#0a1e35;--blue-txt:#85B7EB;
+  --amber-bg:#2a1d08;--amber-txt:#FAC775;
+  --red-bg:#2e0a0a;--red-txt:#F5A0A0;
+}}
 
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--txt);
-    font-size: 15px;
-    line-height: 1.6;
-  }
+body{font-family:var(--font);background:var(--bg);color:var(--txt);font-size:15px;line-height:1.6}
 
-  .site-header {
-    background: var(--surface);
-    border-bottom: 0.5px solid var(--border);
-    padding: 18px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .logo { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
-  .logo span { color: var(--teal); }
-  .header-meta { font-size: 12px; color: var(--txt3); }
+/* ── header ── */
+.site-header{
+  background:var(--surface);border-bottom:.5px solid var(--border);
+  padding:18px 32px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.logo{font-size:17px;font-weight:600;letter-spacing:-.02em}
+.logo em{color:var(--teal);font-style:normal}
+.header-meta{font-size:12px;color:var(--txt3)}
 
-  .page { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+/* ── page ── */
+.page{max-width:880px;margin:0 auto;padding:48px 24px 80px}
+.intro-block{margin-bottom:48px}
+.intro-block h1{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px}
+.intro-block p{font-size:14px;color:var(--txt2);max-width:580px;line-height:1.7}
+.section-block{margin-bottom:56px}
+.divider{height:.5px;background:var(--border);margin:52px 0}
 
-  .intro-block { margin-bottom: 48px; }
-  .intro-block h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
-  .intro-block p  { font-size: 14px; color: var(--txt2); max-width: 560px; line-height: 1.7; }
+/* ── eyebrow ── */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 10px;border-radius:4px;margin-bottom:10px;
+}
+.ey-amber{background:var(--amber-bg);color:var(--amber-txt)}
+.ey-red  {background:var(--red-bg);color:var(--red-txt)}
 
-  .fix-section { margin-bottom: 56px; }
+.section-heading{font-size:19px;font-weight:600;letter-spacing:-.01em;margin-bottom:4px}
+.section-desc{font-size:13px;color:var(--txt2);margin-bottom:20px;max-width:600px;line-height:1.65}
 
-  .fix-eyebrow {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 3px 10px; border-radius: 4px;
-    background: var(--amber-bg); color: var(--amber-txt);
-    margin-bottom: 10px;
-  }
-  .fix-heading { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
-  .fix-desc    { font-size: 13px; color: var(--txt2); margin-bottom: 20px; max-width: 580px; line-height: 1.65; }
+.surface-wrap{background:var(--surface2);border:.5px solid var(--border);border-radius:var(--rad-lg);padding:20px}
+.card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rad-md);padding:16px 20px}
 
-  .surface-wrap {
-    background: var(--surface2);
-    border: 0.5px solid var(--border);
-    border-radius: var(--rad-lg);
-    padding: 20px;
-  }
+/* ── erros ── */
+.error-list{display:flex;flex-direction:column;gap:10px}
+.err-row{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--surface);border:.5px solid var(--border);
+  border-left:3px solid var(--red);
+  border-radius:var(--rad-md);padding:12px 16px;
+}
+.err-row.fixed{border-left-color:var(--teal)}
+.err-num{
+  min-width:22px;height:22px;border-radius:50%;
+  background:var(--red-bg);color:var(--red-txt);
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+.err-row.fixed .err-num{background:var(--teal-bg);color:var(--teal-txt)}
+.err-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.err-desc{font-size:12px;color:var(--txt2);line-height:1.6}
+.err-fix{font-size:11px;font-weight:500;color:var(--teal);margin-top:4px}
 
-  .card {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--rad-md);
-    padding: 16px 20px;
-  }
+/* ── badge ── */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500;
+}
+.bdg-green{background:var(--teal-bg);color:var(--teal-txt)}
+.bdg-blue {background:var(--blue-bg);color:var(--blue-txt)}
+.bdg-amber{background:var(--amber-bg);color:var(--amber-txt)}
+.bdg-red  {background:var(--red-bg);color:var(--red-txt)}
 
-  .divider { height: 0.5px; background: var(--border); margin: 52px 0; }
+/* ── laudo ── */
+.preview-label{
+  font-size:11px;color:var(--txt3);font-weight:500;
+  letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;
+}
 
-  /* ── fix 1 ── */
-  .preview-label {
-    font-size: 11px; color: var(--txt3); font-weight: 500;
-    letter-spacing: 0.04em; text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .score-circle {
-    width: 56px; height: 56px; border-radius: 50%;
-    border: 2.5px solid var(--teal);
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; flex-shrink: 0;
-  }
-  .score-circle .val { font-size: 17px; font-weight: 600; color: var(--teal); line-height: 1; }
-  .score-circle .den { font-size: 10px; color: var(--teal); }
-  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .card-head-title { font-size: 14px; font-weight: 600; }
-  .card-head-sub   { font-size: 12px; color: var(--txt2); margin-top: 2px; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500;
-  }
-  .bdg-green { background: var(--teal-bg); color: var(--teal-txt); }
-  .bdg-blue  { background: var(--blue-bg); color: var(--blue-txt); }
-  .price-row {
-    display: grid; grid-template-columns: 1fr 1.2fr 1fr;
-    border: 0.5px solid var(--border); border-radius: var(--rad-sm);
-    margin-bottom: 14px; overflow: hidden;
-  }
-  .price-cell { text-align: center; padding: 10px 8px; border-right: 0.5px solid var(--border); }
-  .price-cell:last-child { border-right: none; }
-  .price-cell.mid { background: var(--surface2); }
-  .price-cell .pv { font-size: 15px; font-weight: 600; }
-  .price-cell.mid .pv { font-size: 18px; }
-  .price-cell .pl { font-size: 10px; color: var(--txt3); margin-top: 2px; }
-  .stats-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .stat-item .si-lbl { font-size: 10px; color: var(--txt2); margin-bottom: 2px; }
-  .stat-item .si-val { font-size: 14px; font-weight: 600; }
-  .stat-item .si-val.green { color: var(--teal); }
-  .scenarios { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
-  .sc-card { background: var(--surface2); border-radius: var(--rad-sm); padding: 8px 10px; text-align: center; }
-  .sc-card .sv { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
-  .sc-card .sl { font-size: 10px; color: var(--txt2); margin-bottom: 6px; }
-  .liq-bar  { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
-  .liq-fill { height: 100%; border-radius: 2px; }
-  .preview-note { font-size: 11px; color: var(--txt3); text-align: center; margin-top: 12px; }
+.score-circle{
+  width:60px;height:60px;border-radius:50%;
+  border:2.5px solid var(--teal);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;flex-shrink:0;
+}
+.score-circle .sv{font-size:18px;font-weight:700;color:var(--teal);line-height:1}
+.score-circle .sd{font-size:10px;color:var(--teal)}
 
-  /* ── fix 2 ── */
-  .ac-label { font-size: 12px; color: var(--txt2); font-weight: 500; margin-bottom: 6px; display: block; }
-  .ac-wrap  { position: relative; }
-  .ac-input {
-    width: 100%; padding: 10px 14px; font-size: 14px;
-    background: var(--surface); color: var(--txt);
-    border: 0.5px solid var(--border2); border-radius: var(--rad-sm);
-    outline: none; font-family: var(--font);
-    transition: border-color .15s, box-shadow .15s;
-  }
-  .ac-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(55,138,221,0.15); }
-  .ac-drop {
-    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    background: var(--surface); border: 0.5px solid var(--border2);
-    border-radius: var(--rad-md); overflow: hidden; z-index: 50;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  }
-  .ac-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 14px; font-size: 13px; cursor: pointer; color: var(--txt);
-    border-bottom: 0.5px solid var(--border);
-  }
-  .ac-item:last-child { border-bottom: none; }
-  .ac-item:hover { background: var(--surface2); }
-  .ac-hl { color: var(--blue); font-weight: 600; }
-  .ac-padrao { font-size: 10px; color: var(--txt3); }
-  .ac-selected {
-    margin-top: 10px; padding: 10px 14px;
-    background: var(--teal-bg); border: 0.5px solid var(--teal);
-    border-radius: var(--rad-sm);
-    font-size: 13px; color: var(--teal-txt);
-    display: none; align-items: center; gap: 8px;
-  }
-  .ac-selected.show { display: flex; }
-  .ac-note { font-size: 11px; color: var(--txt3); margin-top: 10px; line-height: 1.6; }
+.laudo-header{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:14px;border-bottom:.5px solid var(--border)}
+.lh-title{font-size:15px;font-weight:600}
+.lh-sub{font-size:12px;color:var(--txt2);margin-top:3px}
 
-  /* ── footer ── */
-  .page-footer {
-    margin-top: 64px; padding-top: 24px;
-    border-top: 0.5px solid var(--border);
-    font-size: 12px; color: var(--txt3);
-    display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between;
-  }
-  .page-footer a { color: var(--txt3); }
+/* ── specs grid ── */
+.specs-section{margin-bottom:14px;padding-bottom:14px;border-bottom:.5px solid var(--border)}
+.specs-label{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.specs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.spec-item{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border-radius:var(--rad-sm);
+  padding:8px 10px;
+}
+.spec-icon{font-size:16px;color:var(--teal);flex-shrink:0}
+.spec-lbl{font-size:10px;color:var(--txt3);line-height:1.2}
+.spec-val{font-size:13px;font-weight:600;line-height:1.2;margin-top:1px}
+
+.loc-row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;background:var(--surface2);border-radius:var(--rad-sm);
+  margin-bottom:8px;
+}
+.loc-city{font-size:13px;font-weight:600}
+.loc-state{font-size:12px;color:var(--txt2)}
+
+.amen-row{display:flex;flex-wrap:wrap;gap:6px}
+.amen-tag{
+  font-size:11px;padding:3px 10px;border-radius:4px;
+  background:var(--teal-bg);color:var(--teal-txt);font-weight:500;
+  display:inline-flex;align-items:center;gap:4px;
+}
+
+/* ── price row ── */
+.price-row{
+  display:grid;grid-template-columns:1fr 1.2fr 1fr;
+  border:.5px solid var(--border);border-radius:var(--rad-sm);
+  margin-bottom:14px;overflow:hidden;
+}
+.price-cell{text-align:center;padding:10px 8px;border-right:.5px solid var(--border)}
+.price-cell:last-child{border-right:none}
+.price-cell.mid{background:var(--surface2)}
+.price-cell .pv{font-size:14px;font-weight:600}
+.price-cell.mid .pv{font-size:18px}
+.price-cell .pl{font-size:10px;color:var(--txt3);margin-top:2px}
+
+/* ── stats ── */
+.stats-4col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+@media(max-width:540px){.stats-4col{grid-template-columns:1fr 1fr}}
+.stat-box{background:var(--surface2);border-radius:var(--rad-sm);padding:9px 10px}
+.st-lbl{font-size:10px;color:var(--txt2);margin-bottom:2px}
+.st-val{font-size:14px;font-weight:600}
+.st-val.green{color:var(--teal)}
+
+/* ── cenários ── */
+.sc-label{font-size:11px;color:var(--txt2);font-weight:500;margin-bottom:8px}
+.scenarios{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sc-card{background:var(--surface2);border-radius:var(--rad-sm);padding:9px 10px;text-align:center}
+.sc-card .sv{font-size:13px;font-weight:600;margin-bottom:2px}
+.sc-card .sl{font-size:10px;color:var(--txt2);margin-bottom:6px}
+.liq-bar{height:4px;border-radius:2px;background:var(--border);overflow:hidden}
+.liq-fill{height:100%;border-radius:2px}
+
+.preview-note{font-size:11px;color:var(--txt3);text-align:center;margin-top:12px;line-height:1.6}
+
+/* ── autocomplete ── */
+.ac-label{font-size:12px;color:var(--txt2);font-weight:500;margin-bottom:6px;display:block}
+.ac-wrap{position:relative}
+.ac-input{
+  width:100%;padding:10px 14px;font-size:14px;
+  background:var(--surface);color:var(--txt);
+  border:.5px solid var(--border2);border-radius:var(--rad-sm);
+  outline:none;font-family:var(--font);transition:border-color .15s,box-shadow .15s;
+}
+.ac-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,138,221,.15)}
+.ac-drop{
+  display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--surface);border:.5px solid var(--border2);
+  border-radius:var(--rad-md);overflow:hidden;z-index:50;
+  box-shadow:0 4px 16px rgba(0,0,0,.08);
+}
+.ac-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 14px;font-size:13px;cursor:pointer;color:var(--txt);
+  border-bottom:.5px solid var(--border);
+}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:var(--surface2)}
+.ac-hl{color:var(--blue);font-weight:600}
+.ac-padrao{font-size:10px;color:var(--txt3)}
+.ac-notfound{
+  display:none;margin-top:10px;padding:12px 14px;
+  background:var(--amber-bg);border:.5px solid var(--orange);
+  border-radius:var(--rad-sm);font-size:13px;color:var(--amber-txt);
+  gap:8px;align-items:flex-start;line-height:1.6;
+}
+.ac-notfound.show{display:flex}
+.ac-selected{
+  display:none;margin-top:10px;padding:10px 14px;
+  background:var(--teal-bg);border:.5px solid var(--teal);
+  border-radius:var(--rad-sm);font-size:13px;color:var(--teal-txt);
+  align-items:center;gap:8px;
+}
+.ac-selected.show{display:flex}
+.ac-note{font-size:11px;color:var(--txt3);margin-top:10px;line-height:1.6}
+
+/* ── manual padrao ── */
+.padrao-manual{display:none;margin-top:10px}
+.padrao-manual.show{display:block}
+.pm-label{font-size:11px;color:var(--txt2);font-weight:500;margin-bottom:6px}
+.pm-grid{display:flex;flex-wrap:wrap;gap:6px}
+.pm-opt{
+  padding:6px 14px;font-size:12px;border-radius:var(--rad-sm);
+  border:.5px solid var(--border2);background:var(--surface);
+  cursor:pointer;color:var(--txt2);transition:all .15s;
+}
+.pm-opt:hover,.pm-opt.sel{
+  background:var(--teal-bg);border-color:var(--teal);
+  color:var(--teal-txt);font-weight:500;
+}
+
+/* ── footer ── */
+.page-footer{
+  margin-top:64px;padding-top:24px;border-top:.5px solid var(--border);
+  font-size:12px;color:var(--txt3);
+  display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
+}
+.page-footer a{color:var(--txt3)}
 </style>
 </head>
 <body>
 
 <header class="site-header">
-  <div class="logo">va<span>▲</span>ora <span style="font-weight:400;color:var(--txt3);font-size:13px;margin-left:8px">correções UX</span></div>
-  <div class="header-meta">2 melhorias de alta prioridade · jun/2026</div>
+  <div class="logo">va<em>▲</em>ora <span style="font-weight:400;color:var(--txt3);font-size:13px;margin-left:8px">correções UX</span></div>
+  <div class="header-meta">2 correções + revisão de erros · jun/2026</div>
 </header>
 
 <main class="page">
 
   <div class="intro-block">
     <h1>Correções de alta prioridade — valora.app.br</h1>
-    <p>Protótipos das 2 melhorias identificadas como prioritárias para aumentar conversão e credibilidade do site junto a corretores e clientes compradores/vendedores.</p>
+    <p>Revisão minuciosa do laudo e do autocomplete de bairros. Todos os erros encontrados estão documentados abaixo com as respectivas correções aplicadas.</p>
   </div>
 
-  <!-- CORREÇÃO 1 -->
-  <section class="fix-section">
-    <div class="fix-eyebrow"><i class="ti ti-eye"></i> Correção 1 de 2</div>
-    <h2 class="fix-heading">Prévia interativa do laudo na homepage</h2>
-    <p class="fix-desc">Inserir este card de exemplo logo abaixo do headline principal, antes do formulário. O usuário vê exatamente o que vai receber antes de preencher qualquer campo — reduz abandono e aumenta a taxa de conclusão do formulário.</p>
+  <!-- ══════════════════════════════
+       REVISÃO DE ERROS
+  ══════════════════════════════ -->
+  <section class="section-block">
+    <div class="eyebrow ey-red"><i class="ti ti-zoom-exclamation"></i> Revisão de erros encontrados</div>
+    <h2 class="section-heading">6 erros identificados</h2>
+    <p class="section-desc">Erros encontrados após revisão linha a linha do laudo e da base de bairros. Todos corrigidos nas seções abaixo.</p>
 
-    <div class="surface-wrap">
-      <p class="preview-label">Exemplo de resultado — Apartamento 2 quartos · 80m² · Barreiros, São José/SC</p>
-      <div class="card">
-        <div class="card-header">
-          <div class="score-circle">
-            <span class="val">78</span>
-            <span class="den">/100</span>
-          </div>
-          <div>
-            <div class="card-head-title">Score do imóvel <span class="badge bdg-green">Acima da média</span></div>
-            <div class="card-head-sub">Liquidez alta · Padrão médio · 8–15 anos · Barreiros</div>
-          </div>
-        </div>
-        <div class="price-row">
-          <div class="price-cell">
-            <div class="pv">R$680k</div><div class="pl">conservador</div>
-          </div>
-          <div class="price-cell mid">
-            <div class="pv">R$748.000</div><div class="pl">estimativa central</div>
-          </div>
-          <div class="price-cell">
-            <div class="pv">R$820k</div><div class="pl">otimista</div>
-          </div>
-        </div>
-        <div class="stats-2col">
-          <div class="stat-item"><div class="si-lbl">R$/m² estimado</div><div class="si-val">R$9.350</div></div>
-          <div class="stat-item"><div class="si-lbl">Yield bruto estimado</div><div class="si-val">5,1% a.a.</div></div>
-          <div class="stat-item"><div class="si-lbl">Valorização 12 meses</div><div class="si-val green">+9,29%</div></div>
-          <div class="stat-item"><div class="si-lbl">Aluguel bruto estimado</div><div class="si-val">R$3.190/mês</div></div>
-        </div>
-        <div style="font-size:11px;color:var(--txt2);margin-bottom:8px;font-weight:500">Previsão de venda por cenário de preço</div>
-        <div class="scenarios">
-          <div class="sc-card">
-            <div class="sv">45 dias</div><div class="sl">preço agressivo</div>
-            <div class="liq-bar"><div class="liq-fill" style="width:85%;background:var(--teal)"></div></div>
-          </div>
-          <div class="sc-card">
-            <div class="sv">90 dias</div><div class="sl">preço de mercado</div>
-            <div class="liq-bar"><div class="liq-fill" style="width:55%;background:#BA7517"></div></div>
-          </div>
-          <div class="sc-card">
-            <div class="sv">140 dias</div><div class="sl">preço conservador</div>
-            <div class="liq-bar"><div class="liq-fill" style="width:28%;background:#E24B4A"></div></div>
-          </div>
+    <div class="error-list">
+
+      <div class="err-row fixed">
+        <div class="err-num">E1</div>
+        <div>
+          <div class="err-title">Laudo sem descrição do imóvel</div>
+          <div class="err-desc">O card do laudo mostrava apenas "2 quartos · 80m²" no rótulo externo, sem exibir internamente quartos, banheiros, suítes, vagas, andar, padrão, estado de conservação e diferenciais. Um laudo de avaliação imobiliária deve apresentar todas as características que fundamentam o valor calculado.</div>
+          <div class="err-fix">✓ Corrigido — seção "Características do imóvel" adicionada ao laudo com ícones e grid completo.</div>
         </div>
       </div>
-      <p class="preview-note">Este é um exemplo ilustrativo. Avalie seu apartamento gratuitamente e receba um laudo personalizado em menos de 2 minutos.</p>
+
+      <div class="err-row fixed">
+        <div class="err-num">E2</div>
+        <div>
+          <div class="err-title">Liquidez classificada como "Alta" — incorreto para o perfil</div>
+          <div class="err-desc">Um apartamento de 80m², padrão médio, preço de mercado ~R$748.000 em Barreiros, com estimativa de 90 dias para venda no cenário de preço de mercado, não se enquadra como "Liquidez alta". O prazo de 90 dias corresponde ao padrão de "Liquidez média" no mercado de São José/SC (liquidez alta = &lt;60 dias; média = 60–120 dias; baixa = &gt;120 dias).</div>
+          <div class="err-fix">✓ Corrigido — alterado para "Liquidez média" em conformidade com os próprios cenários de venda exibidos.</div>
+        </div>
+      </div>
+
+      <div class="err-row fixed">
+        <div class="err-num">E3</div>
+        <div>
+          <div class="err-title">Inconsistência na notação de preços</div>
+          <div class="err-desc">O laudo mesclava dois padrões: "R$680k" e "R$820k" (notação anglófona com "k") para os extremos, e "R$748.000" (padrão brasileiro) para o valor central. Isso é inconsistente e inadequado para o público brasileiro, que não usa "k" como sufixo monetário em laudos formais.</div>
+          <div class="err-fix">✓ Corrigido — todos os valores agora usam o padrão brasileiro: R$680.000 / R$748.000 / R$820.000.</div>
+        </div>
+      </div>
+
+      <div class="err-row fixed">
+        <div class="err-num">E4</div>
+        <div>
+          <div class="err-title">Flor de Nápolis classificado como "Médio" — incorreto</div>
+          <div class="err-desc">Flor de Nápolis é um bairro nobre de São José/SC, adjacente ao empreendimento planejado Pedra Branca e à região de expansão de alto padrão da cidade. Classificá-lo como "Médio" subestima o padrão real e geraria avaliações abaixo do valor de mercado para imóveis na área.</div>
+          <div class="err-fix">✓ Corrigido — alterado para "Médio-nobre".</div>
+        </div>
+      </div>
+
+      <div class="err-row fixed">
+        <div class="err-num">E5</div>
+        <div>
+          <div class="err-title">Ponta de Baixo classificado como "Médio" — incorreto</div>
+          <div class="err-desc">Ponta de Baixo tem acesso à orla da Baía Sul e faz limite com Kobrasol, o bairro mais valorizado de São José. O padrão construtivo e os preços praticados posicionam o bairro acima do padrão "Médio" da cidade.</div>
+          <div class="err-fix">✓ Corrigido — alterado para "Médio-nobre".</div>
+        </div>
+      </div>
+
+      <div class="err-row fixed">
+        <div class="err-num">E6</div>
+        <div>
+          <div class="err-title">Nenhum tratamento para bairros famosos não cadastrados</div>
+          <div class="err-desc">Se um usuário de Niterói/RJ digitar "Icaraí" — bairro nobre e muito famoso, com m² entre os mais altos do estado do Rio — o campo simplesmente não retorna resultado, sem qualquer orientação. O mesmo ocorreria com Copacabana, Moema (SP), Meireles (Fortaleza), entre outros. O usuário não sabe se digitou errado ou se o bairro não está coberto.</div>
+          <div class="err-fix">✓ Corrigido — mensagem de fallback adicionada quando nenhum bairro é encontrado, com seleção manual de padrão para que o usuário prossiga sem perder a avaliação.</div>
+        </div>
+      </div>
+
     </div>
   </section>
 
   <div class="divider"></div>
 
-  <!-- CORREÇÃO 2 -->
-  <section class="fix-section">
-    <div class="fix-eyebrow"><i class="ti ti-map-pin"></i> Correção 2 de 2</div>
-    <h2 class="fix-heading">Campo de bairro com autocomplete</h2>
-    <p class="fix-desc">Substituir o campo de texto livre por autocomplete com os bairros da cidade selecionada. Elimina erros de digitação que quebram a calibração de preço e mostra o padrão do bairro automaticamente. Teste digitando um bairro de São José/SC.</p>
+  <!-- ══════════════════════════════
+       CORREÇÃO 1 — Laudo melhorado
+  ══════════════════════════════ -->
+  <section class="section-block">
+    <div class="eyebrow ey-amber"><i class="ti ti-file-description"></i> Correção 1 de 2</div>
+    <h2 class="section-heading">Laudo com descrição completa do imóvel</h2>
+    <p class="section-desc">Laudo refeito com seção de características completas (quartos, banheiros, suítes, vagas, área, andar, padrão, conservação, diferenciais), liquidez corrigida para "Média" e notação de preços padronizada no formato brasileiro.</p>
+
+    <div class="surface-wrap">
+      <p class="preview-label">Exemplo de resultado — Laudo de avaliação automática (AVM)</p>
+      <div class="card">
+
+        <!-- cabeçalho -->
+        <div class="laudo-header">
+          <div class="score-circle">
+            <span class="sv">78</span>
+            <span class="sd">/100</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="lh-title">Score do imóvel <span class="badge bdg-green">Acima da média</span></div>
+            <div class="lh-sub">Liquidez média &nbsp;·&nbsp; Padrão médio &nbsp;·&nbsp; 8–15 anos &nbsp;·&nbsp; Barreiros, São José/SC</div>
+          </div>
+        </div>
+
+        <!-- características -->
+        <div class="specs-section">
+          <div class="specs-label">Características do imóvel</div>
+          <div class="specs-grid">
+            <div class="spec-item">
+              <i class="ti ti-bed spec-icon"></i>
+              <div><div class="spec-lbl">Quartos</div><div class="spec-val">2</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-bath spec-icon"></i>
+              <div><div class="spec-lbl">Banheiros</div><div class="spec-val">2</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-home-2 spec-icon"></i>
+              <div><div class="spec-lbl">Suítes</div><div class="spec-val">1</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-car spec-icon"></i>
+              <div><div class="spec-lbl">Vagas</div><div class="spec-val">1</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-ruler-2 spec-icon"></i>
+              <div><div class="spec-lbl">Área privativa</div><div class="spec-val">80 m²</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-building spec-icon"></i>
+              <div><div class="spec-lbl">Andar</div><div class="spec-val">6°–15°</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-star spec-icon"></i>
+              <div><div class="spec-lbl">Padrão</div><div class="spec-val">Médio</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-tool spec-icon"></i>
+              <div><div class="spec-lbl">Conservação</div><div class="spec-val">Boa</div></div>
+            </div>
+            <div class="spec-item">
+              <i class="ti ti-calendar spec-icon"></i>
+              <div><div class="spec-lbl">Idade aprox.</div><div class="spec-val">8–15 anos</div></div>
+            </div>
+          </div>
+
+          <div class="loc-row">
+            <i class="ti ti-map-pin" style="font-size:15px;color:var(--teal);flex-shrink:0"></i>
+            <span class="loc-city">Barreiros</span>
+            <span style="color:var(--txt3);font-size:12px">·</span>
+            <span class="loc-state">São José &nbsp;/&nbsp; SC</span>
+            <span class="badge bdg-blue" style="margin-left:auto">Médio-nobre</span>
+          </div>
+
+          <div class="amen-row">
+            <span class="amen-tag"><i class="ti ti-layout-bottombar"></i> Varanda</span>
+            <span class="amen-tag"><i class="ti ti-arrows-vertical"></i> Elevador</span>
+            <span class="amen-tag"><i class="ti ti-shield-check"></i> Portaria 24h</span>
+          </div>
+        </div>
+
+        <!-- faixa de preço — notação BR corrigida -->
+        <div class="price-row">
+          <div class="price-cell">
+            <div class="pv">R$680.000</div>
+            <div class="pl">conservador</div>
+          </div>
+          <div class="price-cell mid">
+            <div class="pv">R$748.000</div>
+            <div class="pl">estimativa central</div>
+          </div>
+          <div class="price-cell">
+            <div class="pv">R$820.000</div>
+            <div class="pl">otimista</div>
+          </div>
+        </div>
+
+        <!-- indicadores -->
+        <div class="stats-4col">
+          <div class="stat-box">
+            <div class="st-lbl">R$/m² estimado</div>
+            <div class="st-val">R$9.350</div>
+          </div>
+          <div class="stat-box">
+            <div class="st-lbl">Rentabilidade bruta</div>
+            <div class="st-val">5,1% a.a.</div>
+          </div>
+          <div class="stat-box">
+            <div class="st-lbl">Valorização 12 meses</div>
+            <div class="st-val green">+9,29%</div>
+          </div>
+          <div class="stat-box">
+            <div class="st-lbl">Aluguel bruto estimado</div>
+            <div class="st-val">R$3.190/mês</div>
+          </div>
+        </div>
+
+        <!-- cenários de venda -->
+        <div class="sc-label">Previsão de venda por cenário de preço</div>
+        <div class="scenarios">
+          <div class="sc-card">
+            <div class="sv">45 dias</div>
+            <div class="sl">preço agressivo</div>
+            <div class="liq-bar"><div class="liq-fill" style="width:85%;background:var(--teal)"></div></div>
+          </div>
+          <div class="sc-card">
+            <div class="sv">90 dias</div>
+            <div class="sl">preço de mercado</div>
+            <div class="liq-bar"><div class="liq-fill" style="width:55%;background:var(--orange)"></div></div>
+          </div>
+          <div class="sc-card">
+            <div class="sv">140 dias</div>
+            <div class="sl">preço conservador</div>
+            <div class="liq-bar"><div class="liq-fill" style="width:28%;background:var(--red)"></div></div>
+          </div>
+        </div>
+
+      </div><!-- /card -->
+      <p class="preview-note">Este é um exemplo ilustrativo. Avalie seu apartamento gratuitamente e receba um laudo personalizado em menos de 2 minutos.<br>Base de dados: FipeZAP · Banco Central do Brasil · Atualizado em mar/2026.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════
+       CORREÇÃO 2 — Autocomplete melhorado
+  ══════════════════════════════ -->
+  <section class="section-block">
+    <div class="eyebrow ey-amber"><i class="ti ti-map-pin"></i> Correção 2 de 2</div>
+    <h2 class="section-heading">Autocomplete com bairros corrigidos e fallback</h2>
+    <p class="section-desc">Bairros Flor de Nápolis e Ponta de Baixo reclassificados. Adicionado fallback quando o bairro não é encontrado — em vez de silêncio, o usuário pode definir o padrão manualmente e continuar a avaliação. Teste digitando "Icaraí", "Copacabana" ou "Moema" para ver o fallback.</p>
 
     <div class="surface-wrap">
       <label class="ac-label" for="bairroInput">Nome do bairro</label>
       <div class="ac-wrap">
         <input class="ac-input" id="bairroInput" type="text" autocomplete="off"
-               placeholder="Digite o bairro (ex: Barreiros, Kobrasol…)"
+               placeholder="Digite o bairro (ex: Barreiros, Icaraí, Kobrasol…)"
                oninput="acSearch(this.value)"
-               onblur="setTimeout(closeAc, 160)">
+               onblur="setTimeout(closeAc,160)">
         <div class="ac-drop" id="acDrop"></div>
       </div>
+
+      <!-- selecionado com sucesso -->
       <div class="ac-selected" id="acSelected">
         <i class="ti ti-check" style="font-size:15px;color:var(--teal);flex-shrink:0"></i>
         <span id="acSelName" style="font-weight:600"></span>
         <span id="acSelBadge" class="badge" style="margin-left:auto"></span>
       </div>
-      <p class="ac-note">O padrão do bairro é detectado automaticamente com base no histórico FipeZAP e perfil socioeconômico da região. O usuário pode ajustar manualmente se necessário.</p>
+
+      <!-- fallback: bairro não encontrado -->
+      <div class="ac-notfound" id="acNotFound">
+        <i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0;margin-top:2px"></i>
+        <div>
+          <div style="font-weight:600;margin-bottom:3px">Bairro não encontrado na nossa base</div>
+          <div id="acNotFoundMsg" style="font-size:12px;line-height:1.6;margin-bottom:10px"></div>
+          <div class="padrao-manual show" id="padraoManual">
+            <div class="pm-label">Selecione o padrão do bairro para continuar:</div>
+            <div class="pm-grid">
+              <div class="pm-opt" onclick="setPadraoManual(this,'Popular')">Popular</div>
+              <div class="pm-opt" onclick="setPadraoManual(this,'Médio')">Médio</div>
+              <div class="pm-opt" onclick="setPadraoManual(this,'Médio-nobre')">Médio-nobre</div>
+              <div class="pm-opt" onclick="setPadraoManual(this,'Nobre')">Nobre</div>
+              <div class="pm-opt" onclick="setPadraoManual(this,'Premium')">Premium</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="ac-note">O padrão do bairro é detectado automaticamente com base no histórico FipeZAP e perfil socioeconômico da região. Para bairros não cadastrados, o usuário define o padrão manualmente — a avaliação continua normalmente.</p>
     </div>
   </section>
 
   <footer class="page-footer">
-    <span>Relatório gerado em jun/2026 · Análise: <a href="https://www.calculadoraimobiliaria.com" target="_blank" rel="noopener">www.calculadoraimobiliaria.com</a> → valora.app.br</span>
-    <span>Prioridade alta · 2 de 12 melhorias identificadas</span>
+    <span>Análise: <a href="https://www.calculadoraimobiliaria.com" target="_blank" rel="noopener">www.calculadoraimobiliaria.com</a> → valora.app.br &nbsp;·&nbsp; jun/2026</span>
+    <span>2 correções aplicadas &nbsp;·&nbsp; 6 erros corrigidos</span>
   </footer>
 
 </main>
 
 <script>
-  const bairros = [
-    {nome:"Areias",            padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Barreiros",         padrao:"Médio-nobre", cls:"bdg-blue"},
-    {nome:"Bela Vista",        padrao:"Popular",     cls:"bdg-blue"},
-    {nome:"Bosque das Mansões",padrao:"Nobre",       cls:"bdg-green"},
-    {nome:"Campinas",          padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Centro",            padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Flor de Nápolis",   padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Forquilhas",        padrao:"Popular",     cls:"bdg-blue"},
-    {nome:"Ipiranga",          padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Jardim Atlântico",  padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Kobrasol",          padrao:"Nobre",       cls:"bdg-green"},
-    {nome:"Nossa Sra. do Rosário",padrao:"Médio",    cls:"bdg-blue"},
-    {nome:"Pagani",            padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Pedra Branca",      padrao:"Premium",     cls:"bdg-green"},
-    {nome:"Ponta de Baixo",    padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Praia Comprida",    padrao:"Médio-nobre", cls:"bdg-blue"},
-    {nome:"Real Parque",       padrao:"Médio",       cls:"bdg-blue"},
-    {nome:"Serraria",          padrao:"Popular",     cls:"bdg-blue"},
-    {nome:"Sorocaba",          padrao:"Popular",     cls:"bdg-blue"},
-    {nome:"Torres de São José",padrao:"Nobre",       cls:"bdg-green"}
-  ];
+const bairros = [
+  {nome:"Areias",              padrao:"Popular",     cls:"bdg-amber"},
+  {nome:"Barreiros",           padrao:"Médio-nobre", cls:"bdg-blue"},
+  {nome:"Bela Vista",          padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Bosque das Mansões",  padrao:"Nobre",       cls:"bdg-green"},
+  {nome:"Campinas",            padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Centro",              padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Flor de Nápolis",     padrao:"Médio-nobre", cls:"bdg-blue"},   // E4 corrigido
+  {nome:"Forquilhas",          padrao:"Popular",     cls:"bdg-amber"},
+  {nome:"Ipiranga",            padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Jardim Atlântico",    padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Kobrasol",            padrao:"Nobre",       cls:"bdg-green"},
+  {nome:"Nossa Sra. do Rosário",padrao:"Médio",      cls:"bdg-blue"},
+  {nome:"Pagani",              padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Pedra Branca",        padrao:"Premium",     cls:"bdg-green"},
+  {nome:"Ponta de Baixo",      padrao:"Médio-nobre", cls:"bdg-blue"},   // E5 corrigido
+  {nome:"Praia Comprida",      padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Real Parque",         padrao:"Médio",       cls:"bdg-blue"},
+  {nome:"Serraria",            padrao:"Popular",     cls:"bdg-amber"},
+  {nome:"Sorocaba",            padrao:"Popular",     cls:"bdg-amber"},
+  {nome:"Torres de São José",  padrao:"Nobre",       cls:"bdg-green"}
+];
 
-  function acSearch(val) {
-    const drop = document.getElementById("acDrop");
-    const q    = val.trim().toLowerCase();
-    if (!q) { drop.style.display = "none"; return; }
-    const matches = bairros.filter(b => b.nome.toLowerCase().includes(q)).slice(0, 7);
-    if (!matches.length) { drop.style.display = "none"; return; }
-    const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    drop.innerHTML = matches.map(b => {
-      const hl = b.nome.replace(new RegExp("(" + safe + ")", "gi"), "<span class='ac-hl'>$1</span>");
-      return `<div class="ac-item" onmousedown="selectBairro('${b.nome}','${b.padrao}','${b.cls}')">
-                <span>${hl}</span>
-                <span class="ac-padrao">${b.padrao}</span>
-              </div>`;
-    }).join("");
-    drop.style.display = "block";
+let currentQuery = "";
+
+function acSearch(val) {
+  const drop  = document.getElementById("acDrop");
+  const notF  = document.getElementById("acNotFound");
+  const selEl = document.getElementById("acSelected");
+  const q     = val.trim().toLowerCase();
+  currentQuery = val.trim();
+
+  selEl.classList.remove("show");
+  notF.classList.remove("show");
+
+  if (!q) { drop.style.display = "none"; return; }
+
+  const matches = bairros.filter(b => b.nome.toLowerCase().includes(q)).slice(0, 7);
+
+  if (!matches.length) {
+    drop.style.display = "none";
+    // E6: fallback para bairro não encontrado
+    const msg = document.getElementById("acNotFoundMsg");
+    msg.innerHTML = `"<strong>${escHtml(val.trim())}</strong>" não está na base de bairros de São José/SC.
+      Isso pode ocorrer para bairros de outras cidades (ex: Icaraí em Niterói/RJ, Copacabana no Rio/RJ,
+      Moema em São Paulo/SP) ou bairros ainda não indexados.
+      Selecione o padrão abaixo para que a avaliação continue normalmente.`;
+    // reset manual options
+    document.querySelectorAll(".pm-opt").forEach(o => o.classList.remove("sel"));
+    notF.classList.add("show");
+    return;
   }
 
-  function selectBairro(nome, padrao, cls) {
-    document.getElementById("bairroInput").value = nome;
-    document.getElementById("acDrop").style.display = "none";
-    const sel  = document.getElementById("acSelected");
-    const name = document.getElementById("acSelName");
-    const bdg  = document.getElementById("acSelBadge");
-    name.textContent = nome;
-    bdg.textContent  = "Padrão: " + padrao;
-    bdg.className    = "badge " + cls;
-    sel.classList.add("show");
-  }
+  const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  drop.innerHTML = matches.map(b => {
+    const hl = b.nome.replace(new RegExp("(" + safe + ")", "gi"),
+                               "<span class='ac-hl'>$1</span>");
+    return `<div class="ac-item"
+              onmousedown="selectBairro('${escAttr(b.nome)}','${b.padrao}','${b.cls}')">
+              <span>${hl}</span>
+              <span class="ac-padrao">${b.padrao}</span>
+            </div>`;
+  }).join("");
+  drop.style.display = "block";
+}
 
-  function closeAc() {
-    document.getElementById("acDrop").style.display = "none";
-  }
+function selectBairro(nome, padrao, cls) {
+  document.getElementById("bairroInput").value = nome;
+  document.getElementById("acDrop").style.display = "none";
+  document.getElementById("acNotFound").classList.remove("show");
+
+  const sel  = document.getElementById("acSelected");
+  document.getElementById("acSelName").textContent = nome;
+  const bdg  = document.getElementById("acSelBadge");
+  bdg.textContent = "Padrão: " + padrao;
+  bdg.className   = "badge " + cls;
+  sel.classList.add("show");
+}
+
+function setPadraoManual(el, padrao) {
+  document.querySelectorAll(".pm-opt").forEach(o => o.classList.remove("sel"));
+  el.classList.add("sel");
+
+  const notF = document.getElementById("acNotFound");
+  notF.classList.remove("show");
+
+  const sel = document.getElementById("acSelected");
+  document.getElementById("acSelName").textContent = currentQuery + " (padrão definido manualmente)";
+  const bdg = document.getElementById("acSelBadge");
+  const clsMap = {
+    "Popular":"bdg-amber","Médio":"bdg-blue","Médio-nobre":"bdg-blue",
+    "Nobre":"bdg-green","Premium":"bdg-green"
+  };
+  bdg.textContent = "Padrão: " + padrao;
+  bdg.className   = "badge " + (clsMap[padrao] || "bdg-blue");
+  sel.classList.add("show");
+}
+
+function closeAc() {
+  document.getElementById("acDrop").style.display = "none";
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escAttr(s) {
+  return s.replace(/'/g, "\\'");
+}
 </script>
 
 </body>
