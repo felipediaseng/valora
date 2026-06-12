@@ -5,11 +5,11 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.bcb.gov.br; frame-ancestors 'none';">
 <meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Valora — Avaliar apartamento online grátis com dados FIPEZAP e Banco Central</title>
+<title>Valora — Avaliar imóvel online grátis com dados FIPEZAP e Banco Central</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
 <meta name="theme-color" content="#07080d" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f4f1eb" media="(prefers-color-scheme: light)">
-<meta name="description" content="Descubra quanto vale seu apartamento em minutos. Avaliação imobiliária online grátis, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">
+<meta name="description" content="Descubra quanto vale seu imóvel em minutos. Avaliação imobiliária online grátis, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">
 <script>
 /* Set theme before first paint to prevent FOUC */
 (function(){
@@ -169,16 +169,8 @@ function animarContador(el){
   }, duration/60);
 }
 
-// Dispara quando hero entra na viewport
-const spObs = new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      e.target.querySelectorAll('.sp-num[data-target]').forEach(animarContador);
-      spObs.unobserve(e.target);
-    }
-  });
-},{threshold:.3});
-document.querySelectorAll('.social-proof-bar').forEach(el=>spObs.observe(el));
+// IntersectionObserver para contadores — inicializado no DOMContentLoaded (ver abaixo)
+// (movido do head para garantir que o DOM esteja pronto)
 
 /* ── Exit Intent ── */
 let _exitShown = false;
@@ -252,7 +244,7 @@ function compartilharResultado(modo){
   const val  = document.getElementById('r-val')?.textContent||'';
   const addr = document.getElementById('r-addr')?.textContent||'';
   const score= document.getElementById('r-score')?.textContent||'';
-  const texto = `🏠 Avaliei meu apartamento na Valora!\n\n💰 Valor estimado: ${val}\n📍 ${addr}\n⭐ Score: ${score}/100\n\n👉 Avalie o seu grátis em valora.app.br`;
+  const texto = `🏠 Avaliei meu imóvel na Valora!\n\n💰 Valor estimado: ${val}\n📍 ${addr}\n⭐ Score: ${score}/100\n\n👉 Avalie o seu grátis em valora.app.br`;
 
   if(modo==='whatsapp'){
     safeOpen('https://wa.me/?text='+encodeURIComponent(texto));
@@ -558,7 +550,7 @@ if(localStorage.getItem('valora_cookie_consent')==='all'){
 </script>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Valora — Avaliação Imobiliária com IA">
-<meta property="og:description" content="Descubra o valor real do seu apartamento. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
+<meta property="og:description" content="Descubra o valor real do seu imóvel. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
 <meta property="og:url" content="https://valora.app.br">
 <meta property="og:image" content="https://valora.app.br/og-image.png">
   <meta property="og:image:width" content="1200">
@@ -566,7 +558,7 @@ if(localStorage.getItem('valora_cookie_consent')==='all'){
   <meta property="og:image:type" content="image/png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Valora — Avaliação Imobiliária com IA">
-<meta name="twitter:description" content="Descubra o valor real do seu apartamento com dados reais de mercado.">
+<meta name="twitter:description" content="Descubra o valor real do seu imóvel com dados reais de mercado.">
   <meta name="twitter:image" content="https://valora.app.br/og-image.png">
 <meta name="robots" content="index, follow">
 <meta property="og:site_name" content="Valora">
@@ -1188,7 +1180,7 @@ footer strong{color:var(--text2)}
     "@type": "SoftwareApplication",
     "name": "Valora — Avaliação Imobiliária com IA",
     "url": "https://valora.app.br",
-    "description": "Avalie seu apartamento online grátis com dados FIPEZAP, Banco Central e mais de 150 cidades brasileiras.",
+    "description": "Avalie seu imóvel online grátis com dados FIPEZAP, Banco Central e mais de 150 cidades brasileiras.",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Web",
     "offers": {
@@ -1234,8 +1226,8 @@ footer strong{color:var(--text2)}
   <section class="hero">
     <div class="hero-eyebrow">✦ Avaliação Imobiliária com IA</div>
     <div class="v-badge">✦ API Banco Central ao vivo · Dados FipeZAP Abr/2026 · 27 estados · 150+ cidades</div>
-    <h1>Descubra o valor <span class="grad">real</span><br>do seu apartamento</h1>
-    <p class="hero-sub">Avalie seu apartamento online e grátis em minutos. Usamos dados FIPEZAP, Banco Central e comparáveis reais para estimar preço e tempo de venda com mais precisão.</p>
+    <h1>Descubra o valor <span class="grad">real</span><br>do seu imóvel</h1>
+    <p class="hero-sub">Avalie seu imóvel online e grátis em minutos. Usamos dados FIPEZAP, Banco Central e comparáveis reais para estimar preço e tempo de venda com mais precisão.</p>
 
     <!-- Social Proof bar -->
     <div class="social-proof-bar">
@@ -1319,8 +1311,8 @@ footer strong{color:var(--text2)}
 <!-- CALCULADORA -->
 <div class="page" id="pg-calc" aria-hidden="true">
   <div class="form-page-hd">
-    <h1 class="sr-only">Avalie seu apartamento</h1>
-    <h2 aria-hidden="true">Avalie seu apartamento</h2>
+    <h1 class="sr-only">Avalie seu imóvel</h1>
+    <h2 aria-hidden="true">Avalie seu imóvel</h2>
     <p>Preencha em 3 etapas simples</p>
   </div>
   <div class="progress-wrap" id="progress">
@@ -1712,7 +1704,7 @@ footer strong{color:var(--text2)}
 
       <div class="faq-grid">
         <article class="faq-card">
-          <h3>Quanto vale meu apartamento?</h3>
+          <h3>Quanto vale meu imóvel?</h3>
           <p>A Valora estima uma faixa de preço com base em FIPEZAP, Banco Central e características do seu imóvel. Você vê valor mínimo, médio e máximo para decidir como anunciar.</p>
         </article>
 
@@ -1751,7 +1743,7 @@ footer strong{color:var(--text2)}
       <div class="why-grid">
         <div class="why-card">
           <h3>Veja uma faixa de preço realista</h3>
-          <p>Nada de um número mágico solto. Você vê mínimo, médio e máximo sugeridos para o seu apartamento.</p>
+          <p>Nada de um número mágico solto. Você vê mínimo, médio e máximo sugeridos para o seu imóvel.</p>
         </div>
         <div class="why-card">
           <h3>Entenda o tempo provável de venda</h3>
@@ -1825,16 +1817,13 @@ footer strong{color:var(--text2)}
         <li><span class="sp-check">✓</span>Lead com nome e WhatsApp do cliente direto para você</li>
         <li><span class="sp-check">✓</span>Laudo com valor estimado, score e dados do imóvel no mesmo contato</li>
         <li><span class="sp-check">✓</span>Cadastro antecipado — perfil verificado antes do lançamento oficial</li>
-        <li><span class="sp-check">✓</span>Sem mensalidade — comissão de 8% apenas sobre venda fechada</li>
+        <li><span class="sp-check">✓</span>Sem mensalidade e sem comissão — cadastro 100% gratuito</li>
         <li><span class="sp-check soon">🔜</span><span style="color:var(--text3)">Perfil público na plataforma <em>(em breve)</em></span></li>
         <li><span class="sp-check soon">🔜</span><span style="color:var(--text3)">Distribuição automática de leads por região <em>(em breve)</em></span></li>
       </ul>
-      <div class="sp-commission">
-        <span class="sp-comm-label">Comissão sobre venda fechada</span>
-        <span class="sp-comm-value">8%</span>
-      </div>
+
       <button class="sp-cta hero-cta" onclick="goToPartnerForm('parceiro')">
-        Garantir meu cadastro antecipado
+        Garantir meu cadastro gratuito
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
       <div class="sp-privacy">🔒 Sem spam. Dados usados apenas para o programa de parceiros.</div>
@@ -1873,7 +1862,7 @@ footer strong{color:var(--text2)}
   <div class="partner-benefits">
     <div class="pb-card"><div class="pb-icon">🎯</div><div class="pb-title">Cliente já informado</div><div class="pb-desc">Quem solicita contato já viu o valor estimado do imóvel — chega na conversa mais receptivo e realista.</div></div>
     <div class="pb-card"><div class="pb-icon">📋</div><div class="pb-title">Laudo junto com o lead</div><div class="pb-desc">Você recebe valor estimado, score, metragem, bairro e padrão do imóvel junto com o contato do cliente.</div></div>
-    <div class="pb-card"><div class="pb-icon">⚡</div><div class="pb-title">Sem mensalidade</div><div class="pb-desc">Você não paga nada para se cadastrar. A comissão de 8% só é cobrada se a venda for concretizada.</div></div>
+    <div class="pb-card"><div class="pb-icon">⚡</div><div class="pb-title">100% Gratuito</div><div class="pb-desc">Você não paga nada para se cadastrar e não há cobrança de comissão. Acesso total e gratuito à plataforma.</div></div>
   </div>
 
   <div style="text-align:center;padding:1rem 1.5rem 3rem">
@@ -3572,8 +3561,20 @@ function renderComparador(){
 
 // Restore comparador from localStorage on page load
 document.addEventListener('DOMContentLoaded', ()=>{
+  // Restaura comparador salvo
   avaliacoesSalvas = (JSON.parse(localStorage.getItem('valora_comp')||'[]')).map(sanitizeLocalStorageData);
   if(avaliacoesSalvas.length) renderComparador();
+
+  // Contadores animados de social proof — só rodar após DOM pronto
+  const spObs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.querySelectorAll('.sp-num[data-target]').forEach(animarContador);
+        spObs.unobserve(e.target);
+      }
+    });
+  },{threshold:.25, rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.social-proof-bar').forEach(el=>spObs.observe(el));
 });
 
 </script>
