@@ -17,10 +17,7 @@
   document.documentElement.setAttribute('data-theme',d);
 })();
 
-/* NOTE: normBairro() is defined in the second <script> block.
-   buildBairroIndex() / normBairroCached() call it via requestIdleCallback
-   AFTER the full DOM is parsed, so the reference is valid.
-   If moved to head, ensure normBairro is declared here first. */
+/* normBairro definida no bloco acima — safe para requestIdleCallback */
 
 function fmtCPF(el){
   let v=el.value.replace(/\D/g,'').slice(0,11);
@@ -46,7 +43,7 @@ function enviarLead(){
   else document.getElementById('lead-tel').style.borderColor='';
   if(!valido) return;
 
-  const numeroWhatsApp = '5548991916097';
+  const numeroWhatsApp = CONFIG.WA_LEADS;
   const cidade  = cidadeKey  || 'não informada';
   const estado  = estadoKey  || '';
   const valor   = document.getElementById('r-val')?.textContent || 'não calculado';
@@ -76,6 +73,15 @@ function enviarLead(){
 /* ══════════════════════════════════════════════════════════
    PERFORMANCE — inicialização lazy e índices pré-computados
 ══════════════════════════════════════════════════════════ */
+
+// Definição antecipada de normBairro — necessária aqui pois normBairroCached
+// (abaixo) e buildBairroIndex dependem dela, e ambas podem ser chamadas
+// via requestIdleCallback antes do segundo <script> ser parseado.
+function normBairro(s){
+  return (s||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ');
+}
 
 // 1) Índice Map() do BAIRRO_FATOR — O(1) lookup vs O(n) scan
 let _bairroIndex = null;
@@ -215,12 +221,13 @@ function fecharExitPopup(){
 
 function capturarEmailExit(){
   const email = document.getElementById('exit-email').value.trim();
-  if(!email || !email.includes('@')){
+  const _emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!email || !_emailRx.test(email)){
     document.getElementById('exit-email').style.borderColor='var(--red)';
     return;
   }
   // Abre WhatsApp com e-mail do lead
-  const numWA = '5548991916097';
+  const numWA = CONFIG.WA_LEADS;
   const val  = document.getElementById('r-val')?.textContent||'não calculado';
   const addr = document.getElementById('r-addr')?.textContent||'não informado';
   const msg  = encodeURIComponent(
@@ -512,12 +519,17 @@ function gerarPDFResultado(){
 
     </body></html>`;
 
-  const w = window.open('','_blank','width=820,height=960');
-  if(!w){ alert('Permita pop-ups para gerar o PDF.'); return; }
-  w.document.write(conteudo);
-  w.document.close();
-  w.focus();
-  setTimeout(()=>{ w.print(); }, 600);
+  // Usar Blob URL em vez de document.write (mais seguro, evita XSS no popup)
+  try {
+    const blob = new Blob([conteudo], {type:'text/html;charset=utf-8'});
+    const blobUrl = URL.createObjectURL(blob);
+    const w = window.open(blobUrl,'_blank','width=820,height=960');
+    if(!w){ alert('Permita pop-ups para gerar o PDF.'); URL.revokeObjectURL(blobUrl); return; }
+    w.focus();
+    w.addEventListener('load', ()=>{ setTimeout(()=>{ w.print(); URL.revokeObjectURL(blobUrl); }, 400); });
+  } catch(e) {
+    alert('Erro ao gerar PDF. Tente novamente.');
+  }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -529,14 +541,14 @@ function initGTM(){
   (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
   var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
   j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-  f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-XXXXXXX');
+  f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-XXXXXXX' /* ⚠️ SUBSTITUIR antes de ir para produção */);
 }
 function initMetaPixel(){
   if(window._fbqLoaded) return; window._fbqLoaded=true;
   !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
   if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
   t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init','YOUR_PIXEL_ID'); fbq('track','PageView');
+  fbq('init','YOUR_PIXEL_ID' /* ⚠️ SUBSTITUIR antes de ir para produção */); fbq('track','PageView');
 }
 // Auto-init se consentimento já foi dado
 if(localStorage.getItem('valora_cookie_consent')==='all'){
@@ -1931,6 +1943,16 @@ footer strong{color:var(--text2)}
 
 <script>
 /* ══════════════════════════════════════════════
+   ⚠️  CONFIGURAÇÃO — SUBSTITUA ANTES DE PUBLICAR
+══════════════════════════════════════════════ */
+const CONFIG = {
+  // Número WhatsApp para receber leads de avaliação (formato: 55 + DDD + número)
+  WA_LEADS: '5548991916097',
+  // Número WhatsApp comercial para parceiros/demo (SUBSTITUA)
+  WA_PARCEIROS: '5511999999999', // ← ⚠️ SUBSTITUIR pelo número real
+};
+
+/* ══════════════════════════════════════════════
    BASE DE DADOS — 27 estados, 150+ cidades
    { p: R$/m² base, v: valorização anual %, d: demanda_score 1-10 }
    Fontes: FIPE/ZAP Índice, SECOVI, QuintoAndar, CBIC 2024
@@ -2442,30 +2464,7 @@ const BAIRRO_FATOR = {
   'fátima bel':0.95,'jurunas':0.65,'condor':0.55,
 };
 
-/* ────────────────────────────────────────────────────────────
-   sugerirFatorBairro(nomeBairro, estado)
-   Retorna {fator, match} ou null se não encontrado.
-   O fator substitui o antigo BAIRRO_TIER na ponderação.
-──────────────────────────────────────────────────────────── */
-function normBairro(s){
-  return (s||'').trim().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ');
-}
-
-function sugerirFatorBairro(nomeBairro){
-  if(!nomeBairro||nomeBairro.length<2) return null;
-  const key = normBairro(nomeBairro);
-  for(const [b,f] of Object.entries(BAIRRO_FATOR)){
-    if(normBairro(b)===key) return {fator:f,match:b};
-  }
-  // partial
-  for(const [b,f] of Object.entries(BAIRRO_FATOR)){
-    const bn=normBairro(b);
-    if(bn.includes(key)||key.includes(bn)) return {fator:f,match:b};
-  }
-  return null;
-}
+/* normBairro e sugerirFatorBairro legados removidos — usar sugerirFatorBairroFast() */
 
 function aplicarFIPEZAP(novosValores){
   if(!novosValores || typeof novosValores !== 'object') return;
@@ -2992,6 +2991,10 @@ function fmtK(v){
 /* Inicializa BCB ao carregar */
 
 function safeOpen(url){
+  // Whitelist de domínios permitidos para evitar Open Redirect
+  const allowed = ['https://wa.me/', 'https://api.whatsapp.com/'];
+  const ok = allowed.some(prefix => url.startsWith(prefix));
+  if(!ok){ console.error('[Valora] safeOpen: URL não permitida', url); return; }
   const a=document.createElement('a');
   a.href=url;a.target='_blank';a.rel='noopener noreferrer';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
@@ -3107,7 +3110,7 @@ function goToPartnerForm(plano){
 
 function solicitarDemo(plano){
   // Monta mensagem para WhatsApp comercial Valora
-  const numeroWhatsApp = '5511999999999'; // ← SUBSTITUA PELO SEU NÚMERO
+  const numeroWhatsApp = CONFIG.WA_PARCEIROS;
   const planos = {
     starter:'Starter (R$349/mês)',
     business:'Business (R$799/mês)',
@@ -3147,7 +3150,7 @@ function enviarCadastro(){
   if(!valido) return;
 
   // Envia via WhatsApp
-  const numeroWhatsApp = '5511999999999'; // ← SUBSTITUA PELO SEU NÚMERO
+  const numeroWhatsApp = CONFIG.WA_PARCEIROS;
   const msg = encodeURIComponent(
     `*Novo Cadastro de Parceiro — Valora*\n\n`+
     `📋 Plano: ${plano}\n\n`+
@@ -3225,7 +3228,7 @@ const CITY_COORDS = {
 /* ── Estado compartilhado ── */
 let valoraMap          = null;
 let valoraChartIns     = null;
-let avaliacoesSalvas   = (JSON.parse(localStorage.getItem('valora_comp') || '[]')).map(sanitizeLocalStorageData);
+let avaliacoesSalvas   = []; // inicializado no DOMContentLoaded abaixo
 let mapaFiltro         = 'ambos'; // 'vendido' | 'oferta' | 'ambos'
 
 /* ════════════════════════════════════════════════
@@ -3270,7 +3273,7 @@ function initMapa(cidade, precoM2, demanda){
 
   /* Comparáveis gerados ao redor */
   const numComp = Math.round(demanda * 2.5 + 3);
-  window._mapaMarkers = [];
+  let _mapaMarkersLocal = [];
 
   for(let i=0; i<numComp; i++){
     const status   = Math.random() > 0.38 ? 'vendido' : 'oferta';
@@ -3305,7 +3308,7 @@ function initMapa(cidade, precoM2, demanda){
         ${quartos} qto${quartos>1?'s':''}${vagas?' · '+vagas+' vaga'+(vagas>1?'s':''):''}<br>
         <span style="color:#888">Total estimado:</span> <b>R$${(compM2*compArea).toLocaleString('pt-BR')}</b>
       </div>`);
-    window._mapaMarkers.push({marker, status});
+    _mapaMarkersLocal.push({marker, status});
   }
 
   /* Legenda clicável com filtro */
@@ -3325,7 +3328,7 @@ function initMapa(cidade, precoM2, demanda){
     render();
     d.onclick = ()=>{
       mapaFiltro = mapaFiltro==='ambos'?'vendido':mapaFiltro==='vendido'?'oferta':'ambos';
-      (window._mapaMarkers||[]).forEach(({marker,status})=>{
+      (_mapaMarkersLocal||[]).forEach(({marker,status})=>{
         const show = mapaFiltro==='ambos' || mapaFiltro===status;
         show ? marker.addTo(valoraMap) : valoraMap.removeLayer(marker);
       });
