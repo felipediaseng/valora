@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.bcb.gov.br; frame-ancestors 'none';">
+<meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valora — Avaliar apartamento online grátis com dados FIPEZAP e Banco Central</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
@@ -14,6 +16,11 @@
   var d=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
   document.documentElement.setAttribute('data-theme',d);
 })();
+
+/* NOTE: normBairro() is defined in the second <script> block.
+   buildBairroIndex() / normBairroCached() call it via requestIdleCallback
+   AFTER the full DOM is parsed, so the reference is valid.
+   If moved to head, ensure normBairro is declared here first. */
 
 function fmtCPF(el){
   let v=el.value.replace(/\D/g,'').slice(0,11);
@@ -50,7 +57,7 @@ function enviarLead(){
     `👤 Nome: ${nome}\n`+
     `📱 WhatsApp: ${tel}\n`+
     `📧 E-mail: ${email||'não informado'}\n`+
-    `🪪 CPF: ${cpf||'não informado'}\n`+
+    /* CPF removido por segurança LGPD */
     `🎯 Interesse: ${intent}\n\n`+
     `🏠 *Imóvel avaliado*\n`+
     `📍 ${cidade}${estado?' / '+estado:''}\n`+
@@ -106,7 +113,7 @@ function sugerirFatorBairroFast(nomeBairro){
 
 // 3) Debounce para onBairro (evita busca a cada tecla)
 let _bairroDebounce = null;
-const _origOnBairro = typeof onBairro !== 'undefined' ? onBairro : null;
+// _origOnBairro removed (dead code)
 function onBairroDebounced(val){
   clearTimeout(_bairroDebounce);
   _bairroDebounce = setTimeout(()=> onBairro(val), 220);
@@ -177,6 +184,7 @@ document.addEventListener('mouseleave', e=>{
     const hasInteracted = document.getElementById('pg-result')?.classList.contains('show')
       || document.getElementById('pg-calc')?.classList.contains('on');
     if(!hasInteracted) return;
+    if(ValoraState._exitDelay) clearTimeout(ValoraState._exitDelay);
     _exitDelay = setTimeout(()=>{
       _exitShown = true;
       document.getElementById('exit-overlay').style.display = 'flex';
@@ -268,7 +276,7 @@ document.querySelectorAll('.lead-card').forEach(el=>leadObs.observe(el));
   if(!localStorage.getItem('valora_cookie_consent')){
     document.addEventListener('DOMContentLoaded',()=>{
       const b=document.getElementById('cookie-banner');
-      if(b) setTimeout(()=>b.style.display='flex',1200);
+      if(b) setTimeout(()=>{b.style.display='flex';b.classList.add('active');},1200);
     });
   }
 })();
@@ -549,8 +557,11 @@ if(localStorage.getItem('valora_cookie_consent')==='all'){
 <meta name="twitter:description" content="Descubra o valor real do seu apartamento com dados reais de mercado.">
   <meta name="twitter:image" content="https://valora.app.br/og-image.png">
 <meta name="robots" content="index, follow">
+<meta property="og:site_name" content="Valora">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:image:alt" content="Valora — Avaliação imobiliária online grátis">
+<meta name="geo.region" content="BR">
 <meta name="author" content="Valora">
-<meta name="keywords" content="avaliação imobiliária, valor apartamento, preço imóvel, calculadora imóvel, avaliação online">
 <link rel="canonical" href="https://valora.app.br">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -600,7 +611,7 @@ if(localStorage.getItem('valora_cookie_consent')==='all'){
 }
 html{scroll-behavior:smooth}
 body{font-family:var(--fn);background:var(--bg);color:var(--text);font-size:16px;line-height:1.6;min-height:100vh;transition:background .35s,color .35s;overflow-x:hidden}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--gold1);border-radius:var(--radius-full)}
+/* scrollbar styles consolidated below */
 
 /* GRAIN */
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:200px;opacity:.55}
@@ -619,7 +630,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--gborder);position:sticky;top:0;z-index:100;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
 [data-theme=dark]{color-scheme:dark}
 [data-theme=light]{color-scheme:light}
-[data-theme=light] [data-theme=light] .topbar{background:rgba(244,241,235,0.92)}
+[data-theme=light] .topbar{background:rgba(244,241,235,0.92)}
 .logo{font-family:var(--fd);font-size:1.4rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.01em}
 .topbar-r{display:flex;gap:.6rem;align-items:center}
 .btn-ghost{background:transparent;border:1px solid var(--gborder);color:var(--text2);border-radius:var(--radius-full);padding:.32rem .8rem;font-size:.72rem;font-family:var(--fn);cursor:pointer;transition:all .2s}
@@ -848,7 +859,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 
 /* NAV */
 .nav-bar{display:flex;justify-content:center;gap:.5rem;padding:.9rem 1.5rem;border-top:1px solid var(--gborder);position:sticky;bottom:0;z-index:40;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(20px)}
-[data-theme=light] [data-theme=light] .nav-bar{background:rgba(244,241,235,0.9)}
+[data-theme=light] .nav-bar{background:rgba(244,241,235,0.9)}
 .nav-step{display:flex;align-items:center;gap:.32rem;font-size:.7rem;font-weight:500;color:var(--text3);white-space:nowrap;cursor:pointer;padding:.3rem .55rem;border-radius:var(--rxs);transition:color .2s}
 .nav-step.on{color:var(--gold2)}
 .ndot{width:5px;height:5px;background:currentColor;border-radius:50%;flex-shrink:0}
@@ -1153,7 +1164,8 @@ footer strong{color:var(--text2)}
 .test-city{font-size:.72rem;color:var(--text2)}
 </style>
   <!-- Leaflet CSS — leve, carrega sempre para evitar flash no mapa -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <!-- TODO SECURITY: Add integrity="sha256-..." crossorigin="anonymous" (SRI) to this link -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
   <!-- Chart.js e Leaflet JS — carregados sob demanda (lazy) ao mostrar o resultado -->
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" as="script" crossorigin>
   <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script" crossorigin>
@@ -2468,11 +2480,7 @@ function aplicarFIPEZAP(novosValores){
         encontrado = true;
       }
     });
-    if(!encontrado){
-      console.warn('[FIPEZAP] Cidade não encontrada no DB:', cidadeAlvo);
-    }
   });
-  console.log('[FIPEZAP] Atualização aplicada', novosValores);
 }
 
 // FIPEZAP Residencial Venda — preços médios de apartamentos (R$/m²)
@@ -3054,12 +3062,7 @@ function resetForm(){
   goTo('calc');
 }
 
-/* Init theme from system preference */
-(function(){
-  const prefersDark=matchMedia('(prefers-color-scheme:dark)').matches;
-  const stored=document.documentElement.getAttribute('data-theme');
-  if(!stored){document.documentElement.setAttribute('data-theme',prefersDark?'dark':'light');}
-})();
+/* theme init is in the head script */
 
 function updateRingGradient(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -3222,7 +3225,7 @@ const CITY_COORDS = {
 /* ── Estado compartilhado ── */
 let valoraMap          = null;
 let valoraChartIns     = null;
-let avaliacoesSalvas   = JSON.parse(localStorage.getItem('valora_comp') || '[]');
+let avaliacoesSalvas   = (JSON.parse(localStorage.getItem('valora_comp') || '[]')).map(sanitizeLocalStorageData);
 let mapaFiltro         = 'ambos'; // 'vendido' | 'oferta' | 'ambos'
 
 /* ════════════════════════════════════════════════
@@ -3434,6 +3437,22 @@ function initChart(cidade, precoAtual, variacaoAnual){
 /* ════════════════════════════════════════════════
    COMPARADOR DE AVALIAÇÕES — com localStorage
 ════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════
+   SECURITY — HTML Sanitizer (anti-XSS)
+════════════════════════════════════════════ */
+function sanitizeHTML(str){
+  const d=document.createElement('div');
+  d.appendChild(document.createTextNode(String(str==null?'':str)));
+  return d.innerHTML;
+}
+function sanitizeLocalStorageData(obj){
+  if(!obj||typeof obj!=='object') return {};
+  return Object.fromEntries(
+    Object.entries(obj).map(([k,v])=>[k, typeof v==='string'?sanitizeHTML(v):v])
+  );
+}
+
 function coletarResultadoAtual(){
   const get = id => (document.getElementById(id)||{}).textContent||'—';
   return {
@@ -3550,7 +3569,7 @@ function renderComparador(){
 
 // Restore comparador from localStorage on page load
 document.addEventListener('DOMContentLoaded', ()=>{
-  avaliacoesSalvas = JSON.parse(localStorage.getItem('valora_comp')||'[]');
+  avaliacoesSalvas = (JSON.parse(localStorage.getItem('valora_comp')||'[]')).map(sanitizeLocalStorageData);
   if(avaliacoesSalvas.length) renderComparador();
 });
 
@@ -3558,7 +3577,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 
 <!-- ══ COOKIE CONSENT ══ -->
-<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:var(--bg2);border-top:1px solid var(--gborder);padding:.85rem 1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,.2)">
+<div id="cookie-banner" class="cookie-flex" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:var(--bg2);border-top:1px solid var(--gborder);padding:.85rem 1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,.2)">
   <p style="font-size:.78rem;color:var(--text2);margin:0;flex:1;min-width:200px">
     🍪 Usamos cookies para melhorar sua experiência e analisar o uso do site. 
     <a href="#" style="color:var(--gold1);text-decoration:underline">Política de privacidade</a>
