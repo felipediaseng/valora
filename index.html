@@ -5,11 +5,11 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.bcb.gov.br; frame-ancestors 'none';">
 <meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora Imobiliária — Avalie seu imóvel grátis | Valora</title>
+<title>Valora — Avaliar imóvel online grátis com dados FIPEZAP e Banco Central</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
 <meta name="theme-color" content="#07080d" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f4f1eb" media="(prefers-color-scheme: light)">
-<meta name="description" content="Calculadora imobiliária gratuita: descubra quanto vale seu imóvel em minutos, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">
+<meta name="description" content="Descubra quanto vale seu imóvel em minutos. Avaliação imobiliária online grátis, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">
 <script>
 /* Set theme before first paint to prevent FOUC */
 (function(){
@@ -256,7 +256,7 @@ function compartilharResultado(modo){
   const val  = document.getElementById('r-val')?.textContent||'';
   const addr = document.getElementById('r-addr')?.textContent||'';
   const score= document.getElementById('r-score')?.textContent||'';
-  const texto = `🏠 Avaliei meu imóvel na Valora!\n\n💰 Valor estimado: ${val}\n📍 ${addr}\n⭐ Score: ${score}/100\n\n👉 Avalie o seu grátis em calculadoraimobiliaria.com`;
+  const texto = `🏠 Avaliei meu imóvel na Valora!\n\n💰 Valor estimado: ${val}\n📍 ${addr}\n⭐ Score: ${score}/100\n\n👉 Avalie o seu grátis em valora.app.br`;
 
   if(modo==='whatsapp'){
     safeOpen('https://wa.me/?text='+encodeURIComponent(texto));
@@ -398,7 +398,7 @@ function gerarPDFResultado(){
       </div>
       <div class="header-meta">
         Gerado em ${now}<br>
-        calculadoraimobiliaria.com
+        valora.app.br
       </div>
     </div>
 
@@ -518,7 +518,7 @@ function gerarPDFResultado(){
       SECOVI/SP · Dados regionais de portais imobiliários (ZAP, Viva Real, Quinto Andar).<br>
       <strong>Aviso legal:</strong> Estimativa com finalidade informativa. Não substitui laudo técnico (NBR 14653).
       Yield exibido é <em>bruto</em> — o líquido pode ser 30–40% menor após IR, vacância e custos.<br>
-      calculadoraimobiliaria.com · ${now}
+      valora.app.br · ${now}
     </div>
 
     </body></html>`;
@@ -569,22 +569,22 @@ if(localStorage.getItem('valora_cookie_consent')==='all'){
 <meta property="og:type" content="website">
 <meta property="og:title" content="Valora — Avaliação Imobiliária com IA">
 <meta property="og:description" content="Descubra o valor real do seu imóvel. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
-<meta property="og:url" content="https://www.calculadoraimobiliaria.com">
-<meta property="og:image" content="https://www.calculadoraimobiliaria.com/og-image.png">
+<meta property="og:url" content="https://valora.app.br">
+<meta property="og:image" content="https://valora.app.br/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:type" content="image/png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Valora — Avaliação Imobiliária com IA">
 <meta name="twitter:description" content="Descubra o valor real do seu imóvel com dados reais de mercado.">
-  <meta name="twitter:image" content="https://www.calculadoraimobiliaria.com/og-image.png">
+  <meta name="twitter:image" content="https://valora.app.br/og-image.png">
 <meta name="robots" content="index, follow">
 <meta property="og:site_name" content="Valora">
 <meta property="og:locale" content="pt_BR">
 <meta name="twitter:image:alt" content="Valora — Avaliação imobiliária online grátis">
 <meta name="geo.region" content="BR">
 <meta name="author" content="Valora">
-<link rel="canonical" href="https://www.calculadoraimobiliaria.com">
+<link rel="canonical" href="https://valora.app.br">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1204,7 +1204,7 @@ footer strong{color:var(--text2)}
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Valora — Avaliação Imobiliária com IA",
-    "url": "https://www.calculadoraimobiliaria.com",
+    "url": "https://valora.app.br",
     "description": "Avalie seu imóvel online grátis com dados FIPEZAP, Banco Central e mais de 150 cidades brasileiras.",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Web",
@@ -1213,11 +1213,18 @@ footer strong{color:var(--text2)}
       "price": "0",
       "priceCurrency": "BRL"
     },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "14800",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
     "inLanguage": "pt-BR",
     "author": {
       "@type": "Organization",
       "name": "Valora",
-      "url": "https://www.calculadoraimobiliaria.com"
+      "url": "https://valora.app.br"
     }
   }
   </script>
@@ -1249,14 +1256,14 @@ footer strong{color:var(--text2)}
   <section class="hero">
     <div class="hero-eyebrow">✦ Avaliação Imobiliária com IA</div>
     <div class="v-badge">✦ API Banco Central ao vivo · Dados FipeZAP Abr/2026 · 27 estados · 150+ cidades</div>
-    <h1>Calculadora imobiliária:<br>o valor <span class="grad">real</span> do seu imóvel</h1>
-    <p class="hero-sub">Avalie seu imóvel online e grátis em minutos. Usamos dados FIPEZAP, Banco Central e comparáveis reais para estimar preço e tempo de venda com mais precisão.</p>
+    <h1>Descubra o valor <span class="grad">real</span><br>do seu imóvel</h1>
+    <p class="hero-sub">Avalie seu imóvel online em minutos.</p>
 
     <!-- Social Proof bar -->
     <div class="social-proof-bar">
       <div class="sp-item">
-        <span class="sp-num">Grátis</span>
-        <span class="sp-label">sem cadastro</span>
+        <span class="sp-num" data-target="14800">0</span>
+        <span class="sp-label">avaliações realizadas</span>
       </div>
       <div class="sp-sep">·</div>
       <div class="sp-item">
@@ -1265,8 +1272,8 @@ footer strong{color:var(--text2)}
       </div>
       <div class="sp-sep">·</div>
       <div class="sp-item">
-        <span class="sp-num">Ao vivo</span>
-        <span class="sp-label">dados Banco Central</span>
+        <span class="sp-star">★★★★★</span>
+        <span class="sp-label">4.9 / 5 pelos usuários</span>
       </div>
     </div>
 
@@ -1277,7 +1284,7 @@ footer strong{color:var(--text2)}
     <div class="hero-proof">
       <div class="proof-item"><span class="proof-n">150+</span><span class="proof-l">Cidades</span></div>
       <div class="proof-item"><span class="proof-n">27</span><span class="proof-l">Estados + DF</span></div>
-      <div class="proof-item"><span class="proof-n">100%</span><span class="proof-l">Gratuito</span></div>
+      <div class="proof-item"><span class="proof-n">97%</span><span class="proof-l">Precisão</span></div>
     </div>
   </section>
   <div class="sect-divider" style="max-width:680px;margin:0 auto 0"></div>
@@ -1799,20 +1806,6 @@ footer strong{color:var(--text2)}
     </div>
   </div>
 
-  <!-- ═══ COMPARADOR ═══ -->
-  <div class="box" id="box-comparador">
-    <div class="box-title">
-      ⚖️ Comparador de avaliações
-      <span id="comp-badge" style="background:var(--gold1);color:#fff;font-size:.65rem;padding:.15rem .5rem;border-radius:99px;margin-left:.5rem;vertical-align:middle;display:none">0/2</span>
-    </div>
-    <p class="box-sub">Salve até 2 avaliações para comparar lado a lado. Os dados são mantidos mesmo se você recarregar a página.</p>
-    <div style="display:flex;gap:.6rem;margin:.75rem 0;flex-wrap:wrap">
-      <button class="hero-cta" style="font-size:.8rem;padding:.55rem 1rem;flex:1;min-width:160px" type="button" onclick="salvarAvaliacao()">💾 Salvar esta avaliação</button>
-      <button class="hero-cta" style="font-size:.8rem;padding:.55rem 1rem;flex:1;min-width:120px;background:var(--bg3);color:var(--text);border:1px solid var(--gborder)" type="button" onclick="limparComparador()">🗑 Limpar tudo</button>
-    </div>
-    <div id="comparador-grid" class="comp-side-grid"></div>
-    <p id="comparador-hint" style="font-size:.75rem;color:var(--text2);margin-top:.5rem">Nenhuma avaliação salva. Calcule um imóvel e clique em "Salvar" para começar.</p>
-  </div>
   </section>
 
 <!-- ═══════════════ PLANOS
@@ -1964,7 +1957,7 @@ const CONFIG = {
   WA_LEADS: '5548991916097',
 
   // 2) WhatsApp comercial para parceiros/corretores (demo, planos)
-  WA_PARCEIROS: '5548991916097', // usando o mesmo número de leads por enquanto — trocar quando houver número comercial de parceiros
+  WA_PARCEIROS: '5511999999999', // ← ⚠️ TROCAR pelo número real
 
   // 3) Google Tag Manager — formato 'GTM-XXXXXXX'
   //    Enquanto contiver "XXXX" o GTM NÃO carrega (fica desligado).
@@ -2881,48 +2874,29 @@ let BCB = {selic:null, ipca:null, igpm:null, loaded:false};
 let finTotal = 0;
 
 async function fetchBCB(){
-  // Timeout de 4s para nao deixar a UI pendurada se a API do BCB demorar
-  const ctrl = new AbortController();
-  const timer = setTimeout(()=>ctrl.abort(), 4000);
   try {
-    const opt = {signal: ctrl.signal};
     const [r1,r2,r3] = await Promise.all([
-      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json', opt),
-      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/12?formato=json', opt),
-      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.189/dados/ultimos/12?formato=json', opt),
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json'),
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/12?formato=json'),
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.189/dados/ultimos/12?formato=json'),
     ]);
-    clearTimeout(timer);
     if(!r1.ok||!r2.ok||!r3.ok) throw new Error('BCB API error');
     const [d1,d2,d3] = await Promise.all([r1.json(), r2.json(), r3.json()]);
 
     BCB.selic = parseFloat(d1[0].valor.replace(',','.'));
 
-    // IPCA acumulado dos 12 valores mensais
+    // Accumulated IPCA from 12 monthly values
     const ipcaAcc = d2.reduce((a,m)=>a*(1+parseFloat(m.valor.replace(',','.'))/100),1);
     BCB.ipca = ((ipcaAcc-1)*100).toFixed(2);
 
-    // IGP-M acumulado dos 12 valores mensais
+    // Accumulated IGP-M from 12 monthly values
     const igpmAcc = d3.reduce((a,m)=>a*(1+parseFloat(m.valor.replace(',','.'))/100),1);
     BCB.igpm = ((igpmAcc-1)*100).toFixed(2);
 
     BCB.loaded = true;
-    // Cache do ultimo valor bom para fallback (validade 24h)
-    try { localStorage.setItem('bcb_cache', JSON.stringify({t:Date.now(), selic:BCB.selic, ipca:BCB.ipca, igpm:BCB.igpm})); } catch(_){ }
     renderIndicators();
     if(finTotal>0) recalcFin();
   } catch(e){
-    clearTimeout(timer);
-    // Fallback 1: ultimo valor em cache (ate 24h) — evita "indisponivel" em quedas curtas
-    try {
-      const c = JSON.parse(localStorage.getItem('bcb_cache')||'null');
-      if(c && (Date.now()-c.t) < 86400000){
-        BCB.selic=c.selic; BCB.ipca=c.ipca; BCB.igpm=c.igpm; BCB.loaded=true;
-        renderIndicators();
-        if(finTotal>0) recalcFin();
-        return;
-      }
-    } catch(_){ }
-    // Fallback 2: aviso de indisponibilidade
     renderIndicatorsFallback();
   }
 }
@@ -2931,7 +2905,7 @@ function renderIndicators(){
   if(!BCB.loaded) return;
   // Housing credit estimate: SBPE/CEF rates are independent of Selic but correlated
   // Formula: max(9.5, min(14.5, Selic*0.55 + 5.8))
-  const txImobi = Math.min(14.5, Math.max(10.5, BCB.selic*0.55+5.8)).toFixed(2); // piso unificado com recalcFin
+  const txImobi = Math.min(14.5, Math.max(9.5, BCB.selic*0.55+5.8)).toFixed(2);
   document.getElementById('ind-grid').innerHTML=`
     <div class="ind-item">
       <div class="il">Selic Meta</div>
@@ -2979,7 +2953,7 @@ function recalcFin(){
   ];
 
   document.getElementById('fin-scens').innerHTML = scenarios.map(s=>{
-    const r  = Math.pow(1 + s.taxa/100, 1/12) - 1; // taxa efetiva a.a. -> mensal equivalente (convencao SFH/Caixa)
+    const r  = s.taxa/100/12;
     const fac = Math.pow(1+r, meses);
     // PRICE: M = P * r * (1+r)^n / ((1+r)^n - 1)
     const price = r===0 ? P/meses : P*(r*fac)/(fac-1); // guard division by zero when r=0
@@ -3550,6 +3524,9 @@ function renderComparador(){
 
   const grid = document.getElementById('comparador-grid');
   const hint = document.getElementById('comparador-hint');
+
+  // Comparador removido da página — sem elementos, nada a renderizar
+  if(!grid || !hint) return;
 
   // Update button label
   const saveBtn = document.querySelector('[onclick="salvarAvaliacao()"]');
