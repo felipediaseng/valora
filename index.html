@@ -48,6 +48,12 @@ function enviarLead(){
   // E-mail: opcional, mas se preenchido precisa ter formato válido
   const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   setErr('lead-email', !email || emailRx.test(email));
+  // Consentimento LGPD: obrigatório marcar antes de enviar os dados
+  const consentEl = document.getElementById('lead-consent');
+  const consentOk = consentEl && consentEl.checked;
+  const consentLabel = document.getElementById('lead-consent-label');
+  if(consentLabel) consentLabel.style.color = consentOk ? '' : 'var(--red)';
+  if(!consentOk) valido = false;
   if(!valido) return;
 
   const numeroWhatsApp = CONFIG.WA_LEADS;
@@ -140,6 +146,8 @@ function ensureLeaflet(cb){
   if(typeof L !== 'undefined'){ _leafletReady=true; cb(); return; }
   const s=document.createElement('script');
   s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  s.integrity='sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH';
+  s.crossOrigin='anonymous';
   s.onload=()=>{ _leafletReady=true; cb(); };
   document.head.appendChild(s);
 }
@@ -147,7 +155,9 @@ function ensureLeaflet(cb){
 function ensureChart(cb){
   if(typeof Chart !== 'undefined'){ _chartReady=true; cb(); return; }
   const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js';
+  s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.js';
+  s.integrity='sha384-zuFoHkJ6+XzUchVtS39qBWxb+LvdA7aQ/ze8jYdufBf/A1jeuKGDBg4crfxvZAr8';
+  s.crossOrigin='anonymous';
   s.onload=()=>{ _chartReady=true; cb(); };
   document.head.appendChild(s);
 }
@@ -301,6 +311,15 @@ function aceitarCookies(){
 function recusarCookies(){
   localStorage.setItem('valora_cookie_consent','essential');
   document.getElementById('cookie-banner').style.display='none';
+}
+
+function abrirPrivacidade(){
+  const o=document.getElementById('priv-overlay');
+  if(o) o.style.display='flex';
+}
+function fecharPrivacidade(){
+  const o=document.getElementById('priv-overlay');
+  if(o) o.style.display='none';
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1193,11 +1212,10 @@ footer strong{color:var(--text2)}
 .test-city{font-size:.72rem;color:var(--text2)}
 </style>
   <!-- Leaflet CSS — leve, carrega sempre para evitar flash no mapa -->
-  <!-- TODO SECURITY: Add integrity="sha256-..." crossorigin="anonymous" (SRI) to this link -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
   <!-- Chart.js e Leaflet JS — carregados sob demanda (lazy) ao mostrar o resultado -->
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" as="script" crossorigin>
-  <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script" crossorigin>
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.js" as="script" integrity="sha384-zuFoHkJ6+XzUchVtS39qBWxb+LvdA7aQ/ze8jYdufBf/A1jeuKGDBg4crfxvZAr8" crossorigin="anonymous">
+  <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous">
 
   <script type="application/ld+json">
   {
@@ -1212,13 +1230,6 @@ footer strong{color:var(--text2)}
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "BRL"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "14800",
-      "bestRating": "5",
-      "worstRating": "1"
     },
     "inLanguage": "pt-BR",
     "author": {
@@ -1694,8 +1705,13 @@ footer strong{color:var(--text2)}
         </div>
       </div>
 
+      <label class="lead-consent" for="lead-consent" id="lead-consent-label">
+        <input type="checkbox" id="lead-consent">
+        <span>Li e concordo com a <a href="#" onclick="abrirPrivacidade();return false;">Política de Privacidade</a> e autorizo o compartilhamento dos meus dados (nome, WhatsApp e e-mail) com um corretor parceiro para que entre em contato. *</span>
+      </label>
+
       <button class="lead-submit" type="button" onclick="enviarLead()">Quero ser contatado por um corretor →</button>
-      <div class="lead-privacy">🔒 Seus dados são usados apenas para esta finalidade. Sem spam.</div>
+      <div class="lead-privacy">🔒 Seus dados são usados apenas para esta finalidade. Sem spam. Você pode solicitar a exclusão a qualquer momento.</div>
     </div>
     <div class="lead-success" id="lead-success">
       <div class="ls-icon">✅</div>
@@ -3614,7 +3630,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 <div id="cookie-banner" class="cookie-flex" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:var(--bg2);border-top:1px solid var(--gborder);padding:.85rem 1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,.2)">
   <p style="font-size:.78rem;color:var(--text2);margin:0;flex:1;min-width:200px">
     🍪 Usamos cookies para melhorar sua experiência e analisar o uso do site. 
-    <a href="#" style="color:var(--gold1);text-decoration:underline">Política de privacidade</a>
+    <a href="#" onclick="abrirPrivacidade();return false;" style="color:var(--gold1);text-decoration:underline">Política de privacidade</a>
   </p>
   <div style="display:flex;gap:.6rem;flex-shrink:0">
     <button onclick="aceitarCookies()" class="hero-cta" style="font-size:.78rem;padding:.45rem 1rem">Aceitar</button>
@@ -3634,6 +3650,58 @@ document.addEventListener('DOMContentLoaded', ()=>{
       Receber minha avaliação grátis →
     </button>
     <p style="font-size:.72rem;color:var(--text2);margin-top:.6rem;text-align:center">🔒 Sem spam. Você pode cancelar a qualquer momento.</p>
+  </div>
+</div>
+
+<!-- ══ MODAL POLÍTICA DE PRIVACIDADE (LGPD) ══ -->
+<style>
+  .lead-consent{display:flex;gap:.55rem;align-items:flex-start;margin:.4rem 0 .9rem;font-size:.74rem;line-height:1.35;color:var(--text2);cursor:pointer;text-align:left}
+  .lead-consent input[type=checkbox]{margin-top:.15rem;flex-shrink:0;width:1rem;height:1rem;accent-color:var(--gold1);cursor:pointer}
+  .lead-consent a{color:var(--gold1);text-decoration:underline}
+  #priv-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:10001;align-items:center;justify-content:center;padding:1rem}
+  #priv-modal{background:var(--bg2);border:1px solid var(--gborder);border-radius:var(--r);max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:2rem;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+  #priv-modal h3{font-size:1.3rem;margin-bottom:1rem}
+  #priv-modal h4{font-size:.95rem;margin:1.1rem 0 .35rem;color:var(--text)}
+  #priv-modal p,#priv-modal li{font-size:.83rem;color:var(--text2);line-height:1.5}
+  #priv-modal ul{padding-left:1.2rem;margin:.3rem 0}
+  .priv-todo{background:rgba(184,144,42,.12);border:1px dashed var(--gold1);border-radius:var(--rsm);padding:.6rem .8rem;font-size:.78rem;color:var(--text);margin-bottom:1rem}
+</style>
+<div id="priv-overlay" onclick="if(event.target===this)fecharPrivacidade()">
+  <div id="priv-modal" role="dialog" aria-modal="true" aria-label="Política de Privacidade">
+    <button onclick="fecharPrivacidade()" aria-label="Fechar" style="position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;padding:.25rem">✕</button>
+    <h3>Política de Privacidade</h3>
+    <div class="priv-todo">⚠️ MODELO a revisar com um(a) advogado(a). Substitua os campos entre [colchetes] e valide o texto antes de publicar.</div>
+
+    <p>A Valora ([RAZÃO SOCIAL], CNPJ [00.000.000/0001-00]) respeita sua privacidade e trata seus dados conforme a Lei nº 13.709/2018 (LGPD).</p>
+
+    <h4>1. Dados que coletamos</h4>
+    <ul>
+      <li>Dados de contato que você informa: nome, telefone/WhatsApp e e-mail.</li>
+      <li>Dados do imóvel informados na calculadora: cidade, bairro, área, características e o valor estimado gerado.</li>
+      <li>Dados de navegação (cookies de análise), apenas se você consentir no banner de cookies.</li>
+    </ul>
+    <p><strong>Não coletamos CPF, RG nem dados financeiros.</strong></p>
+
+    <h4>2. Para que usamos</h4>
+    <ul>
+      <li>Conectar você a um corretor parceiro que entrará em contato sobre compra/venda.</li>
+      <li>Gerar a estimativa de valor e o laudo do imóvel.</li>
+      <li>Medir o uso do site (com seu consentimento).</li>
+    </ul>
+
+    <h4>3. Compartilhamento</h4>
+    <p>Ao marcar a caixa de consentimento, seus dados de contato são enviados a um corretor parceiro verificado, com a finalidade exclusiva de contatá-lo. Não vendemos seus dados.</p>
+
+    <h4>4. Base legal</h4>
+    <p>O tratamento se baseia no seu <strong>consentimento</strong> (art. 7º, I, da LGPD), que você pode revogar a qualquer momento.</p>
+
+    <h4>5. Seus direitos</h4>
+    <p>Você pode solicitar acesso, correção, portabilidade ou exclusão dos seus dados, e revogar o consentimento, pelo contato do nosso Encarregado (DPO): <strong>[email-do-encarregado@dominio.com.br]</strong>.</p>
+
+    <h4>6. Retenção</h4>
+    <p>Mantemos os dados apenas pelo tempo necessário à finalidade informada ou conforme exigência legal.</p>
+
+    <p style="margin-top:1.2rem;font-size:.75rem;color:var(--text3)">Última atualização: [DD/MM/AAAA].</p>
   </div>
 </div>
 </body>
