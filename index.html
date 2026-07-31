@@ -2,8 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.bcb.gov.br; frame-ancestors 'none';">
-<meta http-equiv="X-Frame-Options" content="DENY">
+<!-- frame-ancestors e X-Frame-Options são ignorados em <meta>.
+     Configure-os como header HTTP no servidor/CDN. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://unpkg.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.bcb.gov.br; child-src blob:; frame-ancestors 'none';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valora — Avaliar imóvel online grátis com dados FIPEZAP e Banco Central</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
@@ -12,12 +13,15 @@
 <meta name="description" content="Descubra quanto vale seu imóvel em minutos. Avaliação imobiliária online grátis, com dados FIPEZAP, Banco Central e 150+ cidades brasileiras.">
 <script>
 /* Set theme before first paint to prevent FOUC */
+/* Tema: preferência salva tem prioridade sobre a do sistema. */
 (function(){
-  var d=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  var salvo=null;
+  try{ salvo=localStorage.getItem('valora_tema'); }catch(e){}
+  var d = (salvo==='dark'||salvo==='light')
+        ? salvo
+        : (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
   document.documentElement.setAttribute('data-theme',d);
 })();
-
-/* normBairro definida no bloco acima — safe para requestIdleCallback */
 
 /* esc(): neutraliza caracteres HTML perigosos antes de inserir texto do
    usuário via innerHTML. Evita XSS/HTML injection com dados digitados. */
@@ -76,10 +80,10 @@ function enviarLead(){
     `Aguardando contato de corretor parceiro.`
   );
 
-  safeOpen(`https://wa.me/${numeroWhatsApp}?text=${msg}`);
+  const urlWa = `https://wa.me/${numeroWhatsApp}?text=${msg}`;
+  safeOpen(urlWa);
 
-  document.getElementById('lead-form').style.display    = 'none';
-  document.getElementById('lead-success').style.display = 'block';
+  mostrarPendenteEnvio(urlWa, 'lead-form', 'lead-success');
 }
 
 
@@ -96,15 +100,20 @@ function normBairro(s){
     .replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ');
 }
 
-// 1) Índice Map() do BAIRRO_FATOR — O(1) lookup vs O(n) scan
-let _bairroIndex = null;
+// 1) Índice Map() POR CIDADE — O(1) lookup vs O(n) scan
+let _bairroIndex = null;              // Map<cidade, Map<bairroNorm, {fator,match}>>
 let _bairroNormCache = new Map();
 
 function buildBairroIndex(){
   if(_bairroIndex) return;
+  if(typeof BAIRRO_POR_CIDADE === 'undefined') return; // ainda não parseado
   _bairroIndex = new Map();
-  for(const [b,f] of Object.entries(BAIRRO_FATOR)){
-    _bairroIndex.set(normBairro(b), {fator:f, match:b});
+  for(const [cidade, bairros] of Object.entries(BAIRRO_POR_CIDADE)){
+    const m = new Map();
+    for(const [b,f] of Object.entries(bairros)){
+      m.set(normBairro(b), {fator:f, match:b});
+    }
+    _bairroIndex.set(cidade, m);
   }
 }
 
@@ -117,48 +126,56 @@ function normBairroCached(s){
 }
 
 // 2) sugerirFatorBairro otimizado com Map index
-function sugerirFatorBairroFast(nomeBairro){
-  if(!nomeBairro||nomeBairro.length<2) return null;
+/* Busca só dentro da cidade selecionada. Exato tem prioridade; parcial
+   exige 4+ caracteres e vence o candidato de nome mais longo. */
+function sugerirFatorBairroFast(nomeBairro, cidade){
+  if(!nomeBairro || !cidade) return null;
   buildBairroIndex();
+  if(!_bairroIndex) return null;
+  const mapa = _bairroIndex.get(cidade);
+  if(!mapa) return null;                      // cidade sem base de bairros
+
   const key = normBairroCached(nomeBairro);
-  // exact match O(1)
-  if(_bairroIndex.has(key)) return _bairroIndex.get(key);
-  // partial match — still O(n) but only when exact fails
-  for(const [bn, data] of _bairroIndex.entries()){
-    if(bn.includes(key)||key.includes(bn)) return data;
+  if(key.length < 3) return null;
+
+  if(mapa.has(key)) return mapa.get(key);     // exato — O(1)
+
+  if(key.length < 4) return null;             // curto demais p/ parcial
+  let melhor = null, melhorLen = 0;
+  for(const [bn, data] of mapa.entries()){
+    if(bn.length < 4) continue;
+    if(bn.includes(key) || key.includes(bn)){
+      if(bn.length > melhorLen){ melhor = data; melhorLen = bn.length; }
+    }
   }
-  return null;
+  return melhor;
 }
 
 // 3) Debounce para onBairro (evita busca a cada tecla)
 let _bairroDebounce = null;
-// _origOnBairro removed (dead code)
 function onBairroDebounced(val){
   clearTimeout(_bairroDebounce);
   _bairroDebounce = setTimeout(()=> onBairro(val), 220);
 }
 
 // 4) Lazy init: Leaflet e Chart.js só instanciados quando resultado é exibido
-let _leafletReady = false;
-let _chartReady   = false;
-
 function ensureLeaflet(cb){
-  if(typeof L !== 'undefined'){ _leafletReady=true; cb(); return; }
+  if(typeof L !== 'undefined'){ cb(); return; }
   const s=document.createElement('script');
   s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
   s.integrity='sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH';
   s.crossOrigin='anonymous';
-  s.onload=()=>{ _leafletReady=true; cb(); };
+  s.onload=cb;
   document.head.appendChild(s);
 }
 
 function ensureChart(cb){
-  if(typeof Chart !== 'undefined'){ _chartReady=true; cb(); return; }
+  if(typeof Chart !== 'undefined'){ cb(); return; }
   const s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.js';
   s.integrity='sha384-zuFoHkJ6+XzUchVtS39qBWxb+LvdA7aQ/ze8jYdufBf/A1jeuKGDBg4crfxvZAr8';
   s.crossOrigin='anonymous';
-  s.onload=()=>{ _chartReady=true; cb(); };
+  s.onload=cb;
   document.head.appendChild(s);
 }
 
@@ -174,6 +191,20 @@ if('requestIdleCallback' in window){
 ════════════════════════════════════════════════════════ */
 
 /* ── Contador animado social proof ── */
+/* Contador só aparece se CONFIG.TOTAL_AVALIACOES tiver número real. */
+document.addEventListener('DOMContentLoaded', ()=>{
+  const n = window.CONFIG && CONFIG.TOTAL_AVALIACOES;
+  if(typeof n === 'number' && n > 0){
+    const item = document.getElementById('sp-avaliacoes');
+    const sep  = document.getElementById('sp-sep-1');
+    if(item){
+      item.querySelector('.sp-num').dataset.target = String(n);
+      item.style.display = '';
+    }
+    if(sep) sep.style.display = '';
+  }
+});
+
 function animarContador(el){
   const target = parseInt(el.dataset.target)||0;
   const duration = 1800;
@@ -185,9 +216,6 @@ function animarContador(el){
     if(current>=target) clearInterval(timer);
   }, duration/60);
 }
-
-// IntersectionObserver para contadores — inicializado no DOMContentLoaded (ver abaixo)
-// (movido do head para garantir que o DOM esteja pronto)
 
 /* ── Exit Intent ── */
 let _exitShown = false;
@@ -274,7 +302,7 @@ function compartilharResultado(modo){
   const val  = document.getElementById('r-val')?.textContent||'';
   const addr = document.getElementById('r-addr')?.textContent||'';
   const score= document.getElementById('r-score')?.textContent||'';
-  const texto = `🏠 Avaliei meu imóvel na Valora!\n\n💰 Valor estimado: ${val}\n📍 ${addr}\n⭐ Score: ${score}/100\n\n👉 Avalie o seu grátis em valora.app.br`;
+  const texto = `🏠 Avaliei meu imóvel na Valora!\n\n💰 Valor estimado: ${val}\n📍 ${addr}\n⭐ Score: ${score}/100\n\n👉 Avalie o seu grátis em calculadoraimobiliaria.com`;
 
   if(modo==='whatsapp'){
     safeOpen('https://wa.me/?text='+encodeURIComponent(texto));
@@ -295,7 +323,6 @@ const leadObs = new IntersectionObserver(entries=>{
   });
 },{threshold:.2});
 document.querySelectorAll('.lead-card').forEach(el=>leadObs.observe(el));
-
 
 
 /* ════════════════════════════════════════════════════════
@@ -352,7 +379,8 @@ function gerarPDFResultado(){
   const idadeEl = document.getElementById('f-idade');
   const idade   = idadeEl?.options[idadeEl.selectedIndex]?.text||'—';
   const bairro  = esc(document.getElementById('f-bairro')?.value||'não informado');
-
+  const tipoEl  = document.getElementById('f-tipo');
+  const tipoTxt = tipoEl?.options[tipoEl.selectedIndex]?.text||'Apartamento';
   /* Padrão de acabamento */
   const padraosIds = ['simples','medio','alto','luxo'];
   const padraosLabel = {simples:'Simples',medio:'Médio',alto:'Alto',luxo:'Luxo'};
@@ -386,15 +414,11 @@ function gerarPDFResultado(){
       .hl-val{font-size:2.2rem;font-weight:700;color:#1a1a1a;line-height:1}
       .hl-range{font-size:.82rem;color:#666;margin-top:.3rem}
       .hl-label{font-size:.72rem;color:#8a6e1e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.25rem}
-      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem}
-      .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem .8rem}
       .row{display:flex;justify-content:space-between;align-items:flex-start;padding:.45rem 0;border-bottom:1px solid #f0e8d0;gap:.5rem}
       .row:last-child{border-bottom:none}
       .label{color:#666;font-size:.83rem;flex-shrink:0}
       .val{font-weight:700;font-size:.83rem;text-align:right}
       .badge{display:inline-block;padding:.15rem .55rem;border-radius:99px;font-size:.72rem;font-weight:700;margin-left:.3rem}
-      .badge-gold{background:#fef3c7;color:#92400e}
-      .badge-green{background:#dcfce7;color:#166534}
       .badge-blue{background:#dbeafe;color:#1e40af}
       .imovel-card{background:#f8f5ef;border:1px solid #e0d5c0;border-radius:8px;padding:1rem 1.2rem;margin:.8rem 0}
       .imovel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem}
@@ -404,15 +428,11 @@ function gerarPDFResultado(){
       .imovel-lbl{font-size:.65rem;color:#888;margin-top:.1rem}
       .chips-wrap{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
       .chip-tag{background:#f3eedd;border:1px solid #d4b868;border-radius:99px;padding:.18rem .6rem;font-size:.72rem;color:#7a5c1e}
-      .score-row{display:flex;align-items:center;gap:1rem;padding:.8rem 0}
-      .score-circle{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#c8a032,#f5e090);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-      .score-num{font-size:1.3rem;font-weight:700;color:#1a1a1a;font-style:italic}
       .score-desc{font-size:.82rem;color:#555}
       .footer{margin-top:2.5rem;font-size:.72rem;color:#999;border-top:1px solid #ddd;padding-top:1rem;line-height:1.7}
       .footer strong{color:#8a6e1e}
       @media print{
         body{margin:10px auto}
-        .no-print{display:none}
         a[href]:after{content:" (" attr(href) ")"}
       }
     </style></head>
@@ -425,7 +445,7 @@ function gerarPDFResultado(){
       </div>
       <div class="header-meta">
         Gerado em ${now}<br>
-        valora.app.br
+        calculadoraimobiliaria.com
       </div>
     </div>
 
@@ -446,6 +466,10 @@ function gerarPDFResultado(){
     <!-- IDENTIFICAÇÃO DO IMÓVEL -->
     <h2>📍 Identificação do Imóvel</h2>
     <div class="imovel-card">
+      <div class="row">
+        <span class="label">Tipo de imóvel</span>
+        <span class="val">${tipoTxt}</span>
+      </div>
       <div class="row">
         <span class="label">Cidade / Estado</span>
         <span class="val">${cidade}${estado?' — '+estado:''}</span>
@@ -514,7 +538,7 @@ function gerarPDFResultado(){
       <span class="val">${get('r-score')}<span style="color:#888">/100</span></span></div>
     <div class="row"><span class="label">Preço estimado/m²</span>
       <span class="val">${get('r-m2')}</span></div>
-    <div class="row"><span class="label">Valorização estimada a.a.</span>
+    <div class="row"><span class="label">Variação registrada (12 meses)</span>
       <span class="val">${get('r-valz')}</span></div>
     <div class="row"><span class="label">Aluguel estimado/mês</span>
       <span class="val">${get('r-alug')}</span></div>
@@ -541,11 +565,11 @@ function gerarPDFResultado(){
     </div>
 
     <div class="footer">
-      <strong>Fonte dos dados:</strong> FipeZAP <span class="fipezap-ref">abr/2026</span> · Banco Central do Brasil (SGS séries 432, 433, 189) ·
+      <strong>Fonte dos dados:</strong> FipeZAP ${CONFIG.FIPE_REF} · Banco Central do Brasil (SGS séries 432, 433, 189) ·
       SECOVI/SP · Dados regionais de portais imobiliários (ZAP, Viva Real, Quinto Andar).<br>
       <strong>Aviso legal:</strong> Estimativa com finalidade informativa. Não substitui laudo técnico (NBR 14653).
       Yield exibido é <em>bruto</em> — o líquido pode ser 30–40% menor após IR, vacância e custos.<br>
-      valora.app.br · ${now}
+      calculadoraimobiliaria.com · ${now}
     </div>
 
     </body></html>`;
@@ -555,9 +579,24 @@ function gerarPDFResultado(){
     const blob = new Blob([conteudo], {type:'text/html;charset=utf-8'});
     const blobUrl = URL.createObjectURL(blob);
     const w = window.open(blobUrl,'_blank','width=820,height=960');
-    if(!w){ alert('Permita pop-ups para gerar o PDF.'); URL.revokeObjectURL(blobUrl); return; }
+    if(!w){ alert('Permita pop-ups para gerar o laudo.'); URL.revokeObjectURL(blobUrl); return; }
     w.focus();
-    w.addEventListener('load', ()=>{ setTimeout(()=>{ w.print(); URL.revokeObjectURL(blobUrl); }, 400); });
+
+    /* Blob URLs carregam quase instantaneamente: o 'load' pode já ter
+       disparado antes do listener. Daí a checagem de readyState. */
+    let jaImprimiu = false;
+    const imprimir = ()=>{
+      if(jaImprimiu) return;
+      jaImprimiu = true;
+      try{ w.focus(); w.print(); }catch(e){ console.warn('[Valora] print falhou', e); }
+      setTimeout(()=> URL.revokeObjectURL(blobUrl), 1000);
+    };
+    if(w.document && w.document.readyState === 'complete'){
+      setTimeout(imprimir, 300);
+    } else {
+      w.addEventListener('load', ()=> setTimeout(imprimir, 300));
+    }
+    setTimeout(()=>{ if(!jaImprimiu) URL.revokeObjectURL(blobUrl); }, 15000);
   } catch(e) {
     alert('Erro ao gerar PDF. Tente novamente.');
   }
@@ -596,22 +635,22 @@ if(localStorage.getItem('valora_cookie_consent')==='all'){
 <meta property="og:type" content="website">
 <meta property="og:title" content="Valora — Avaliação Imobiliária com IA">
 <meta property="og:description" content="Descubra o valor real do seu imóvel. Dados reais de mercado + API Banco Central para mais de 150 cidades brasileiras.">
-<meta property="og:url" content="https://valora.app.br">
-<meta property="og:image" content="https://valora.app.br/og-image.png">
+<meta property="og:url" content="https://calculadoraimobiliaria.com">
+<meta property="og:image" content="https://calculadoraimobiliaria.com/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:type" content="image/png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Valora — Avaliação Imobiliária com IA">
 <meta name="twitter:description" content="Descubra o valor real do seu imóvel com dados reais de mercado.">
-  <meta name="twitter:image" content="https://valora.app.br/og-image.png">
+  <meta name="twitter:image" content="https://calculadoraimobiliaria.com/og-image.png">
 <meta name="robots" content="index, follow">
 <meta property="og:site_name" content="Valora">
 <meta property="og:locale" content="pt_BR">
 <meta name="twitter:image:alt" content="Valora — Avaliação imobiliária online grátis">
 <meta name="geo.region" content="BR">
 <meta name="author" content="Valora">
-<link rel="canonical" href="https://valora.app.br">
+<link rel="canonical" href="https://calculadoraimobiliaria.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -630,14 +669,11 @@ if(localStorage.getItem('valora_cookie_consent')==='all'){
   --text3:#524a3c;
   --gold1:#c49a2e;
   --gold2:#e8c870;
-  --gold3:#faeeb0;
   --gold-g:linear-gradient(135deg,#c49a2e,#e8c870,#faeeb0);
   --gold-glow:rgba(220,185,90,0.22);
   --green:#4ade80;
   --green-g:linear-gradient(135deg,#22c55e,#4ade80,#86efac);
   --red:#f87171;
-  --orange:#fb923c;
-  --blue:#60a5fa;
   --btn-text:#0e0a02;
   --fn:'Plus Jakarta Sans',sans-serif;
   --fd:'Playfair Display',serif;
@@ -834,7 +870,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
    em navegadores que de fato suportam background-clip:text. Evita o valor
    "sumir" em WebViews/navegadores antigos que não suportam o efeito. */
 @supports ((-webkit-background-clip:text) or (background-clip:text)){
-  .logo,.hero h1 .grad,.rh-value,.gold-txt,.proof-n,.sld-val,.ring-inner span,.up,.sp-price,.sp-comm-value,.how-num{-webkit-text-fill-color:transparent}
+  .logo,.hero h1 .grad,.rh-value,.gold-txt,.proof-n,.sld-val,.ring-inner span,.up,.sp-price,.how-num{-webkit-text-fill-color:transparent}
 }
 .up{background:var(--green-g);-webkit-background-clip:text;background-clip:text;color:var(--green)}
 
@@ -966,7 +1002,6 @@ footer strong{color:var(--text2)}
 .pb-desc{font-size:.76rem;color:var(--text2);line-height:1.55}
 
 
-
 /* ── BCB LIVE INDICATORS ── */
 .live-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.65rem;font-weight:600;color:#4ade80;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.85rem}
 .live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:livepulse 2s ease-in-out infinite}
@@ -1027,7 +1062,7 @@ footer strong{color:var(--text2)}
 /* Focus-visible for keyboard navigation */
 .chip:focus-visible,.tchip:focus-visible,.pchip:focus-visible,
 .btn-ghost:focus-visible,.btn-gold:focus-visible,.nav-step:focus-visible,
-.btn-next:focus-visible,.btn-prev:focus-visible,.plan-cta:focus-visible,
+.btn-next:focus-visible,.btn-prev:focus-visible,
 .reset-btn:focus-visible,.lead-submit:focus-visible,.pf-submit:focus-visible{
   outline:2px solid var(--gold2);outline-offset:3px;border-radius:var(--rxs);
 }
@@ -1085,10 +1120,6 @@ footer strong{color:var(--text2)}
 .sp-feats li{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:var(--text);line-height:1.5}
 .sp-check{color:var(--green);font-weight:700;flex-shrink:0;margin-top:.05rem}
 
-.sp-commission{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid var(--gborder);border-radius:var(--rsm);padding:.75rem 1rem;margin-bottom:1.4rem}
-.sp-comm-label{font-size:.75rem;color:var(--text2)}
-.sp-comm-value{font-family:var(--fd);font-size:1.5rem;font-style:italic;background:var(--gold-g);-webkit-background-clip:text;background-clip:text;color:var(--gold2)}
-
 .sp-cta{width:100%;justify-content:center;padding:1rem;font-size:.95rem;margin-bottom:.75rem}
 .sp-privacy{font-size:.65rem;color:var(--text3);text-align:center;line-height:1.5}
 
@@ -1132,18 +1163,6 @@ footer strong{color:var(--text2)}
   color: #f0ece2;
 }
 
-
-/* ── BLOG / GUIAS ── */
-.blog{max-width:860px;margin:0 auto;padding:3rem 1.5rem 4rem}
-.blog-hd{text-align:center;margin-bottom:2.5rem}
-.blog-hd h2{font-size:1.6rem;margin:.6rem 0 0}
-.blog-sub{font-size:.9rem;color:var(--text2);max-width:520px;margin:.6rem auto 0;line-height:1.7}
-.blog-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1.5rem}
-.blog-post{background:var(--glass);border:1px solid var(--gborder);border-radius:var(--r);padding:1.4rem 1.5rem;box-shadow:var(--shadow-card)}
-.blog-post h3{font-size:1rem;margin-bottom:.6rem}
-.blog-post p{font-size:.85rem;color:var(--text2);line-height:1.7;margin-bottom:.3rem}
-@media(min-width:960px){.blog-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
-
 /* ── FAQ VISUAL ── */
 .faq{max-width:860px;margin:0 auto;padding:3rem 1.5rem 2.5rem}
 .faq-hd{text-align:center;margin-bottom:2rem}
@@ -1171,14 +1190,6 @@ footer strong{color:var(--text2)}
 
 /* ── MAPA / CHART / COMPARADOR ── */
 .box-sub{font-size:.78rem;color:var(--text2);margin:.1rem 0 0;line-height:1.5}
-.comp-side-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;margin-top:.5rem}
-.comp-side-card{background:var(--bg3);border:1px solid var(--gborder);border-radius:var(--rsm);padding:1rem 1.1rem}
-.comp-side-card h4{font-size:.82rem;margin-bottom:.6rem;color:var(--gold2)}
-.comp-side-row{display:flex;justify-content:space-between;font-size:.76rem;padding:.25rem 0;border-bottom:1px solid var(--gborder)}
-.comp-side-row:last-child{border-bottom:none}
-.comp-side-row span:last-child{font-weight:600}
-.comp-diff-better{color:#3db97a}
-.comp-diff-worse{color:#e05a5a}
 #valora-map .leaflet-container{background:var(--bg3)}
 
 /* ── LEAD INTENT SELECTOR ── */
@@ -1196,7 +1207,6 @@ footer strong{color:var(--text2)}
 .sp-num{font-weight:700;color:var(--gold1);font-size:1rem}
 .sp-label{color:var(--text2)}
 .sp-sep{color:var(--text2);opacity:.4}
-.sp-star{color:#c8a032;font-size:.9rem;letter-spacing:.05em}
 
 /* ── Share Buttons ── */
 .share-btn{display:inline-flex;align-items:center;gap:.4rem;background:var(--bg3);border:1px solid var(--gborder);color:var(--text);border-radius:var(--rsm);padding:.5rem .9rem;font-size:.8rem;cursor:pointer;transition:background .2s,border-color .2s}
@@ -1208,16 +1218,6 @@ footer strong{color:var(--text2)}
 @keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* ── Testimonials ── */
-.testimonials-section{padding:2rem 1rem 1.5rem;max-width:860px;margin:0 auto}
-.test-title{font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:1.2rem;text-align:center}
-.test-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.85rem}
-.test-card{background:var(--bg2);border:1px solid var(--gborder);border-radius:var(--r);padding:1.1rem;display:flex;flex-direction:column;gap:.65rem}
-.test-stars{color:#c8a032;font-size:.95rem;letter-spacing:.1em}
-.test-text{font-size:.82rem;color:var(--text2);line-height:1.6;flex:1;font-style:italic}
-.test-author{display:flex;align-items:center;gap:.6rem;margin-top:auto}
-.test-avatar{width:34px;height:34px;border-radius:50%;background:rgba(200,160,50,.18);border:1px solid rgba(200,160,50,.3);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--gold1);flex-shrink:0}
-.test-name{font-size:.8rem;font-weight:600;color:var(--text)}
-.test-city{font-size:.72rem;color:var(--text2)}
 </style>
   <!-- Leaflet CSS — leve, carrega sempre para evitar flash no mapa -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
@@ -1230,7 +1230,7 @@ footer strong{color:var(--text2)}
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Valora — Avaliação Imobiliária com IA",
-    "url": "https://valora.app.br",
+    "url": "https://calculadoraimobiliaria.com",
     "description": "Avalie seu imóvel online grátis com dados FIPEZAP, Banco Central e mais de 150 cidades brasileiras.",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Web",
@@ -1243,7 +1243,7 @@ footer strong{color:var(--text2)}
     "author": {
       "@type": "Organization",
       "name": "Valora",
-      "url": "https://valora.app.br"
+      "url": "https://calculadoraimobiliaria.com"
     }
   }
   </script>
@@ -1278,21 +1278,22 @@ footer strong{color:var(--text2)}
     <h1>Descubra o valor <span class="grad">real</span><br>do seu imóvel</h1>
     <p class="hero-sub">Avalie seu imóvel online em minutos.</p>
 
-    <!-- Social Proof bar -->
+    <!-- Só use números comprováveis aqui (CDC art. 37). O contador de
+         avaliações depende de CONFIG.TOTAL_AVALIACOES. -->
     <div class="social-proof-bar">
-      <div class="sp-item">
-        <span class="sp-num" data-target="14800">0</span>
+      <div class="sp-item" id="sp-avaliacoes" style="display:none">
+        <span class="sp-num" data-target="0">0</span>
         <span class="sp-label">avaliações realizadas</span>
       </div>
-      <div class="sp-sep">·</div>
+      <div class="sp-sep" id="sp-sep-1" style="display:none">·</div>
       <div class="sp-item">
         <span class="sp-num" data-target="150">0</span>
         <span class="sp-label">cidades cobertas</span>
       </div>
       <div class="sp-sep">·</div>
       <div class="sp-item">
-        <span class="sp-star">★★★★★</span>
-        <span class="sp-label">4.9 / 5 pelos usuários</span>
+        <span class="sp-num" data-target="27">0</span>
+        <span class="sp-label">estados + DF</span>
       </div>
     </div>
 
@@ -1303,7 +1304,7 @@ footer strong{color:var(--text2)}
     <div class="hero-proof">
       <div class="proof-item"><span class="proof-n">150+</span><span class="proof-l">Cidades</span></div>
       <div class="proof-item"><span class="proof-n">27</span><span class="proof-l">Estados + DF</span></div>
-      <div class="proof-item"><span class="proof-n">97%</span><span class="proof-l">Precisão</span></div>
+      <div class="proof-item"><span class="proof-n">±12%</span><span class="proof-l">Margem informada</span></div>
     </div>
   </section>
   <div class="sect-divider" style="max-width:680px;margin:0 auto 0"></div>
@@ -1311,51 +1312,15 @@ footer strong{color:var(--text2)}
     <div class="section-label">Como funciona</div>
     <div class="feat-grid">
       <div class="feat-card"><div class="feat-icon">📍</div><h3>150+ cidades brasileiras</h3><p>Preços calibrados por cidade e bairro — não uma média genérica por estado.</p></div>
-      <div class="feat-card"><div class="feat-icon">⏱</div><h3>Quando vai vender?</h3><p>Previsão de venda em 3 cenários de preço com base em comparáveis reais da região.</p></div>
+      <div class="feat-card"><div class="feat-icon">⏱</div><h3>Quando vai vender?</h3><p>Previsão de venda em 3 cenários de preço, calibrada pela demanda da região.</p></div>
       <div class="feat-card"><div class="feat-icon">📊</div><h3>Score e estratégia</h3><p>Score do imóvel, yield bruto, valorização histórica e estratégia de preço com base em dados FIPEZAP e Banco Central.</p></div>
     </div>
   </div>
 </div>
 
-<!-- ══ DEPOIMENTOS ══ -->
-<section class="testimonials-section" aria-label="Depoimentos">
-  <div class="test-title">O que dizem nossos usuários</div>
-  <div class="test-grid">
-    <div class="test-card">
-      <div class="test-stars">★★★★★</div>
-      <p class="test-text">"Recebi uma avaliação super detalhada do meu apartamento em Florianópolis em menos de 2 minutos. O valor foi muito próximo do que o corretor estimou depois."</p>
-      <div class="test-author">
-        <div class="test-avatar">MR</div>
-        <div>
-          <div class="test-name">Marcos R.</div>
-          <div class="test-city">Florianópolis, SC</div>
-        </div>
-      </div>
-    </div>
-    <div class="test-card">
-      <div class="test-stars">★★★★★</div>
-      <p class="test-text">"Fui vender meu ap no Itaim Bibi e usei o Valora pra ter uma base. O score e a faixa de preço me ajudaram a negociar com mais segurança. Recomendo!"</p>
-      <div class="test-author">
-        <div class="test-avatar">AC</div>
-        <div>
-          <div class="test-name">Ana C.</div>
-          <div class="test-city">São Paulo, SP</div>
-        </div>
-      </div>
-    </div>
-    <div class="test-card">
-      <div class="test-stars">★★★★☆</div>
-      <p class="test-text">"Muito prático. Usei para comparar dois apartamentos antes de comprar em Joinville. O mapa de comparáveis e o gráfico de valorização foram decisivos."</p>
-      <div class="test-author">
-        <div class="test-avatar">LP</div>
-        <div>
-          <div class="test-name">Lucas P.</div>
-          <div class="test-city">Joinville, SC</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- Depoimentos: HTML e CSS removidos por não haver depoimentos reais.
+     O bloco está no CHANGELOG. Só reative com autorização por escrito
+     de cada pessoa citada (CDC art. 37). -->
 
 <!-- CALCULADORA -->
 <div class="page" id="pg-calc" aria-hidden="true">
@@ -1412,6 +1377,21 @@ footer strong{color:var(--text2)}
           <label for="f-bairro">Nome do bairro <span style="font-size:.65rem;color:var(--text3)">(opcional — detectamos o padrão automaticamente)</span></label>
           <input type="text" id="f-bairro" placeholder="ex: Moema, Ipanema, Batel, Asa Sul…" autocomplete="off" oninput="onBairroDebounced(this.value)">
           <div id="bairro-sugestao" style="display:none;margin-top:.4rem;background:rgba(200,165,60,.1);border:1px solid rgba(200,165,60,.25);border-radius:var(--rxs);padding:.45rem .75rem;font-size:.74rem;color:var(--gold2);align-items:center;justify-content:space-between;gap:.5rem"><span id="bairro-sugestao-txt"></span><button type="button" onclick="aplicarSugestao()" style="background:rgba(200,165,60,.2);border:1px solid rgba(200,165,60,.3);border-radius:var(--radius-full);padding:.2rem .65rem;font-size:.68rem;font-weight:700;color:var(--gold2);cursor:pointer;font-family:var(--fn)">Aplicar</button></div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-tipo">Tipo de imóvel</label>
+        <select id="f-tipo">
+          <option value="apartamento" selected>Apartamento</option>
+          <option value="studio">Studio / Kitnet</option>
+          <option value="cobertura">Cobertura</option>
+          <option value="casa">Casa (rua)</option>
+          <option value="casaCond">Casa em condomínio</option>
+          <option value="comercial">Sala comercial</option>
+        </select>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:.3rem">
+          A base de preços é de apartamentos — os demais tipos usam um fator de conversão.
+          Terrenos não são cobertos por este modelo.
         </div>
       </div>
       <div class="fg">
@@ -1584,7 +1564,7 @@ footer strong{color:var(--text2)}
 
   <div class="metrics">
     <div class="mc"><div class="mc-l">R$/m²</div><div class="mc-v gold-txt" id="r-m2">—</div><div class="mc-s">preço por metro</div></div>
-    <div class="mc"><div class="mc-l">Valorização 12m</div><div class="mc-v up" id="r-valz">—</div><div class="mc-s">histórico regional</div></div>
+    <div class="mc"><div class="mc-l">Variação 12m</div><div class="mc-v up" id="r-valz">—</div><div class="mc-s">registrada, não projetada</div></div>
     <div class="mc"><div class="mc-l">Aluguel bruto</div><div class="mc-v" id="r-alug">—</div><div class="mc-s">estimativa/mês</div></div>
     <div class="mc"><div class="mc-l">Yield bruto</div><div class="mc-v" id="r-yield">—</div><div class="mc-s">ver nota abaixo</div></div>
   </div>
@@ -1668,6 +1648,7 @@ footer strong{color:var(--text2)}
 
   <div class="box">
     <div class="box-title">Comparativo R$/m² — referência regional</div>
+    <p class="box-sub" id="r-bars-sub"></p>
     <div class="bars" id="r-bars"></div>
   </div>
 
@@ -1682,6 +1663,28 @@ footer strong{color:var(--text2)}
     • Previsão de venda calculada com base em tempo médio de venda do SECOVI e dados de portais imobiliários (ZAP, Quinto Andar, Viva Real) por padrão, cidade e ciclo de mercado.<br>
     • Yield exibido é <strong>bruto</strong>. Após IR, vacância (~10%) e custos operacionais, o líquido pode ser 30–40% menor.<br>
     • Valorização baseada no histórico regional FIPE/ZAP — não é garantia de rendimento futuro.
+  </div>
+
+  <!-- ═══ MAPA DE COMPARÁVEIS ═══ -->
+  <div class="box" id="box-mapa" style="display:none">
+    <div class="box-title">📍 Distribuição de preços na região
+      <span style="float:right;font-size:.72rem;font-weight:400;color:var(--text2)">Clique na legenda para filtrar</span>
+    </div>
+    <p class="box-sub"><strong>Simulação ilustrativa.</strong> Os pontos representam a
+      dispersão de preço/m² esperada na região, gerada a partir do preço estimado do seu
+      imóvel — não são transações registradas. Comparáveis verificados entram nas próximas versões.</p>
+    <div id="valora-map" style="height:280px;border-radius:var(--r);overflow:hidden;margin-top:.75rem;background:var(--bg3)"></div>
+  </div>
+
+  <!-- ═══ GRÁFICO HISTÓRICO ═══ -->
+  <div class="box" id="box-chart" style="display:none">
+    <div class="box-title">📈 Projeção retroativa do preço/m² — 24 meses</div>
+    <p class="box-sub" id="chart-city-label"><strong>Curva calculada, não observada.</strong>
+      Aplica a variação anual de referência sobre o preço atual estimado.</p>
+    <div id="chart-summary" style="display:flex;gap:.6rem;flex-wrap:wrap;margin:.6rem 0"></div>
+    <div style="position:relative;height:210px;margin-top:.5rem">
+      <canvas id="valora-chart"></canvas>
+    </div>
   </div>
 
   <!-- ══ LEAD CAPTURE ══ -->
@@ -1740,10 +1743,6 @@ footer strong{color:var(--text2)}
   <button class="nav-step" id="ns-result" onclick="showResult()" type="button"><span class="ndot" aria-hidden="true"></span>Resultado</button>
 </nav>
 
-  
-  </section>
-
-  
   <!-- ═══════════════ PERGUNTAS RÁPIDAS ═══════════════ -->
   <section class="faq" id="faq">
     <div class="faq-wrap">
@@ -1802,7 +1801,7 @@ footer strong{color:var(--text2)}
         </div>
         <div class="why-card">
           <h3>Use dados, não só opinião</h3>
-          <p>FIPEZAP, Banco Central e comparáveis reais entram na conta para evitar “achismo” na hora de precificar.</p>
+          <p>Preços de referência do FIPEZAP e indicadores do Banco Central entram na conta para evitar “achismo” na hora de precificar.</p>
         </div>
         <div class="why-card">
           <h3>Ligue o dado à ação</h3>
@@ -1811,28 +1810,7 @@ footer strong{color:var(--text2)}
       </div>
     </div>
 
-  <!-- ═══ MAPA DE COMPARÁVEIS ═══ -->
-  <div class="box" id="box-mapa" style="display:none">
-    <div class="box-title">📍 Mapa de comparáveis na região
-      <span style="float:right;font-size:.72rem;font-weight:400;color:var(--text2)">Clique na legenda para filtrar</span>
-    </div>
-    <p class="box-sub">Imóveis similares vendidos (🟢) ou em oferta (🔵) na mesma cidade. Raio estimado a partir da localização central.</p>
-    <div id="valora-map" style="height:280px;border-radius:var(--r);overflow:hidden;margin-top:.75rem;background:var(--bg3)"></div>
-  </div>
-
-  <!-- ═══ GRÁFICO HISTÓRICO ═══ -->
-  <div class="box" id="box-chart" style="display:none">
-    <div class="box-title">📈 Evolução do preço/m² — últimos 24 meses</div>
-    <p class="box-sub" id="chart-city-label">Estimativa baseada na variação anual registrada pelo FIPEZAP para esta cidade.</p>
-    <div id="chart-summary" style="display:flex;gap:.6rem;flex-wrap:wrap;margin:.6rem 0"></div>
-    <div style="position:relative;height:210px;margin-top:.5rem">
-      <canvas id="valora-chart"></canvas>
-    </div>
-  </div>
-
   </section>
-
-<!-- ═══════════════ PLANOS
 
 <!-- ═══════════════ PLANOS ═══════════════ -->
 <div class="page" id="pg-planos" aria-hidden="true">
@@ -1951,6 +1929,12 @@ footer strong{color:var(--text2)}
           </select>
         </div>
       </div>
+      <label id="pf-consent-label" style="display:flex;gap:.5rem;align-items:flex-start;font-size:.75rem;line-height:1.5;color:var(--text2);margin:.9rem 0 .2rem;cursor:pointer">
+        <input type="checkbox" id="pf-consent" style="margin-top:.2rem;flex-shrink:0">
+        <span>Autorizo o uso dos meus dados para contato sobre o programa de parceiros.
+        Os dados trafegam pelo WhatsApp (Meta Platforms). Posso revogar a qualquer momento.
+        <button type="button" onclick="abrirPrivacidade()" style="background:none;border:0;padding:0;color:var(--gold1);text-decoration:underline;cursor:pointer;font:inherit">Política de Privacidade</button>.</span>
+      </label>
       <button class="pf-submit" type="button" onclick="enviarCadastro()">Enviar cadastro e começar a receber leads →</button>
       <div class="pf-privacy">🔒 Seus dados são protegidos e usados apenas para o programa de parceiros Valora. Você pode cancelar a qualquer momento.</div>
     </div>
@@ -1980,8 +1964,32 @@ const CONFIG = {
   // 1) WhatsApp que RECEBE os leads de avaliação (55 + DDD + número)
   WA_LEADS: '5548991916097',
 
-  // 2) WhatsApp comercial para parceiros/corretores (demo, planos)
-  WA_PARCEIROS: '5511999999999', // ← ⚠️ TROCAR pelo número real
+  // 2) WhatsApp comercial para parceiros/corretores
+  //    Mesmo número de WA_LEADS. Se um dia separar o atendimento comercial
+  //    do atendimento de leads, troque só esta linha.
+  WA_PARCEIROS: '5548991916097',
+
+  // 5) Domínio de produção — usado para canonical, og:url e JSON-LD.
+  //    É O ÚNICO LUGAR onde o domínio precisa ser editado.
+  SITE_URL: 'https://calculadoraimobiliaria.com',
+
+  // ── Constantes com prazo de validade — confira antes de publicar ──
+  // Antes estavam espalhadas pelo HTML e dentro das funções, o que
+  // fazia a página exibir datas e taxas diferentes entre si.
+
+  // 6) Competência do informe FIPEZAP usado na base de preços.
+  //    Atualize junto com FIPE_ABR_2026 quando sair informe novo.
+  FIPE_REF: 'abr/2026',
+
+  // 7) Taxas de financiamento (% a.a.). Consulte antes de cada deploy.
+  //    Última conferência: jul/2026.
+  TX_FGTS: 8.16,
+  TX_SBPE: 10.50,
+  SELIC_FALLBACK: 14.75,  // usado só se a API do BCB não responder
+
+  // 8) Social proof. Deixe em null para ocultar o item.
+  //    Só preencha com número que você consiga comprovar.
+  TOTAL_AVALIACOES: null,
 
   // 3) Google Tag Manager — formato 'GTM-XXXXXXX'
   //    Enquanto contiver "XXXX" o GTM NÃO carrega (fica desligado).
@@ -1997,6 +2005,52 @@ const CONFIG = {
    { p: R$/m² base, v: valorização anual %, d: demanda_score 1-10 }
    Fontes: FIPE/ZAP Índice, SECOVI, QuintoAndar, CBIC 2024
 ══════════════════════════════════════════════ */
+/* Se WA_PARCEIROS ficar com placeholder, cai para WA_LEADS em vez de
+   mandar o cadastro para um número inexistente. */
+function getWaParceiros(){
+  const n = (CONFIG.WA_PARCEIROS||'').replace(/\D/g,'');
+  const ehPlaceholder = !n || n.length < 12 || /9{6,}/.test(n);
+  if(ehPlaceholder){
+    console.warn('[Valora] CONFIG.WA_PARCEIROS não configurado — usando WA_LEADS como destino.');
+    return CONFIG.WA_LEADS;
+  }
+  return n;
+}
+
+/* Sincroniza canonical / og:url / JSON-LD com CONFIG.SITE_URL, para o
+   site publicado em outro domínio não apontar o canonical para fora. */
+/* Preenche os rótulos de competência do FIPEZAP a partir de um só lugar. */
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.fipezap-ref').forEach(el=>{
+    el.textContent = CONFIG.FIPE_REF;
+  });
+});
+
+(function sincronizarDominio(){
+  const base = (CONFIG.SITE_URL||'').replace(/\/+$/,'');
+  if(!base) return;
+  const set = (sel, attr) => {
+    const el = document.querySelector(sel);
+    if(el) el.setAttribute(attr, base + location.pathname.replace(/index\.html$/,''));
+  };
+  set('link[rel="canonical"]','href');
+  set('meta[property="og:url"]','content');
+  document.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"]')
+    .forEach(el=>{
+      const v = el.getAttribute(el.hasAttribute('content')?'content':'href')||'';
+      const file = v.split('/').pop();
+      el.setAttribute('content', base + '/' + file);
+    });
+  const ld = document.querySelector('script[type="application/ld+json"]');
+  if(ld){
+    try{
+      const j = JSON.parse(ld.textContent);
+      j.url = base; if(j.author) j.author.url = base;
+      ld.textContent = JSON.stringify(j);
+    }catch(e){}
+  }
+})();
+
 const DB = {
   'Acre':{cidades:{
     'Rio Branco':{p:4200,v:4.0,d:5},
@@ -2254,6 +2308,29 @@ const M_VAGAS   = [0,.040,.070,.095,.11];
 const M_SUITES  = [0,.030,.055,.075,.09];
 const M_BANHOS  = [0,.010,.020,.030,.035]; // FIX: banheiros agora impactam o cálculo
 const M_TIER    = {periferico:.68,popular:.82,medio:1,nobre:1.15,premium:1.35};
+
+/* ── Fator por tipo de imóvel ──────────────────────────────────────
+   A base (FIPEZAP) é de APARTAMENTOS; os demais tipos convertem a partir
+   dela.
+   · Studio/kitnet: R$/m² maior (área pequena, preço não cai proporcional)
+   · Casa de rua: R$/m² menor (menos densidade, mais área bruta)
+   · Cobertura: prêmio de exclusividade
+   · Sala comercial: mercado distinto, tipicamente abaixo do residencial
+   ⚠️ Fatores aproximados — calibrar com transações reais por praça. */
+const M_TIPO = {
+  apartamento: 1.00,
+  studio:      1.14,
+  cobertura:   1.28,
+  casa:        0.86,
+  casaCond:    1.04,
+  comercial:   0.90,
+};
+const TIPO_LABEL = {
+  apartamento:'Apartamento', studio:'Studio / Kitnet', cobertura:'Cobertura',
+  casa:'Casa (rua)', casaCond:'Casa em condomínio', comercial:'Sala comercial',
+};
+/* Tipos em que "andar" não faz sentido — o multiplicador é neutralizado. */
+const TIPO_SEM_ANDAR = ['casa','casaCond'];
 const FAIXA     = {simples:.08,medio:.12,alto:.18,luxo:.25};
 
 /* ── PREVISÃO DE VENDA: dias base por demanda (SECOVI 2024) ──
@@ -2276,6 +2353,24 @@ const VENDA_PADRAO = {simples:.85,medio:1,alto:1.4,luxo:2.8};
 /* Multiplicador de conservação */
 const VENDA_CONSERV = {'Excelente – reformado':.75,'Bom – conservado':1,'Regular – reparos leves':1.35,'Ruim – precisa reforma':2.0};
 
+/* ── Yield bruto estimado a partir do preço do m² da cidade ──────────
+   Relação inversa: quanto mais caro o m², menor o yield. Aferido contra
+   praças conhecidas:
+     Rio Branco  R$ 4.200/m²  → 7,5% (teto)
+     Fortaleza   R$ 9.350/m²  → 6,6%
+     Belo Horiz. R$10.663/m²  → 5,8%
+     São Paulo   R$12.019/m²  → 5,2%
+     Bal. Camb.  R$15.185/m²  → 4,2% (piso)
+   ⚠️ Heurística, não calibração estatística. O ajuste definitivo exige
+   uma base de aluguéis por cidade — hoje o arquivo não tem nenhuma. */
+const YIELD_PADRAO = {simples:1.06, medio:1.00, alto:0.94, luxo:0.87};
+
+function yieldEstimado(precoM2Cidade, padraoAcab){
+  const base = 62000 / Math.max(1500, precoM2Cidade || 6800);
+  const aj   = YIELD_PADRAO[padraoAcab] || 1;
+  return Math.min(8.5, Math.max(3.5, base * aj));
+}
+
 /* Multiplicador de score */
 function vendaScore(s){
   if(s>=85) return .7;
@@ -2290,9 +2385,6 @@ let cidadeKey=null, estadoKey=null;
 let lastResult=null;
 
 
-
-
-// ==== ATUALIZAÇÃO DE PREÇOS VIA FIPEZAP (venda residencial) ====
 // Permite atualizar rapidamente o campo p (R$/m²) do DB quando sair um novo informe oficial.
 
 /* ════════════════════════════════════════════════════════════
@@ -2300,224 +2392,46 @@ let lastResult=null;
    Base 1.00 = preço médio da cidade (FIPEZAP abr/2026)
    Fonte: FipeZAP, SINDUSCON-JOI, dados de portais 2025-2026
 ════════════════════════════════════════════════════════════ */
-const BAIRRO_FATOR = {
-
-  /* ── SÃO PAULO — base R$12.019/m² ────────────────────────
-     Fontes: FipeZAP jan/2026, Grupo SP Imóvel 2026            */
-  'vila nova conceição':2.27,'cidade jardim':2.09,
-  'jardim paulistano':2.04,'ibirapuera':1.88,
-  'itaim bibi':1.62,'vila olímpia':1.61,
-  'pinheiros':1.53,'jardim europa':1.51,
-  'berrini':1.46,'jardins':1.43,
-  'paraíso':1.18,'perdizes':1.10,
-  'higienópolis':1.08,'bela vista':1.04,
-  'moema':1.02,'brooklyn':1.00,
-  'campo belo':0.98,'vila madalena':0.97,
-  'consolação':0.96,'morumbi':0.95,
-  'lapa':0.90,'butantã':0.88,
-  'santana':0.74,'casa verde':0.79,
-  'tatuapé':0.70,'mooca':0.70,
-  'ipiranga':0.68,'saúde':0.67,
-  'jabaquara':0.58,'penha':0.54,
-  'capão redondo':0.45,'itaquera':0.48,
-  'cidade tiradentes':0.35,'heliópolis':0.30,
-
-  /* ── RIO DE JANEIRO — base R$10.939/m² ───────────────────
-     Fonte: FipeZAP, dados de mercado 2025-2026                */
-  'leblon':3.20,'ipanema':3.00,'são conrado':2.50,
-  'gávea':2.45,'lagoa':2.40,'jardim botânico':2.30,
-  'urca':2.20,'joá':2.10,
-  'barra da tijuca':1.60,'botafogo':1.55,
-  'recreio dos bandeirantes':1.45,'flamengo':1.40,
-  'laranjeiras':1.35,'humaitá':1.35,'copacabana':1.30,
-  'leme':1.20,'santa teresa':1.15,'cosme velho':1.15,
-  'tijuca':0.90,'vila isabel':0.88,'maracanã':0.85,
-  'andaraí':0.82,'grajaú':0.80,'todos os santos':0.75,
-  'méier':0.72,'engenho de dentro':0.68,'engenho novo':0.65,
-  'ramos':0.58,'penha rj':0.55,'campo grande rj':0.52,
-  'bangu':0.50,'realengo':0.45,'padre miguel':0.40,
-  'santa cruz':0.38,'cosmos':0.30,'pavuna':0.28,
-  'acari':0.26,'complexo do alemão':0.22,
-
-  /* ── CURITIBA — base R$11.694/m² ─────────────────────────
-     Fonte: SECOVI-PR, FipeZAP 2025-2026                       */
-  'batel':2.00,'champagnat':1.90,'juvevê':1.60,
-  'água verde':1.45,'alto da glória':1.40,'mercês':1.38,
-  'cabral':1.35,'bigorrilho':1.32,'hugo lange':1.30,
-  'ahú':1.28,'alto da xv':1.25,'ecoville':1.22,
-  'mossunguê':1.20,'seminário':1.18,'santa quitéria':1.05,
-  'centro cwb':0.98,'portão':0.92,'santa felicidade':0.90,
-  'boa vista cwb':0.88,'uberaba cwb':0.85,'bom retiro cwb':0.82,
-  'cajuru':0.72,'xaxim':0.68,'pinheirinho':0.60,
-  'sítio cercado':0.55,'cidade industrial cwb':0.52,
-  'tatuquara':0.42,'caximba':0.30,'ganchinho':0.30,
-
-  /* ── FLORIANÓPOLIS — base R$13.208/m² ────────────────────
-     Fonte: FipeZAP abr/2026, Habitus, Buzz Imobiliária 2026   */
-  'jurerê internacional':2.35,'cacupé':2.10,
-  'jurerê':1.90,'daniela':1.70,'agronômica':1.65,
-  'itacorubi':1.55,'joão paulo':1.50,
-  'lagoa da conceição':1.48,'coqueiros':1.45,
-  'canasvieiras':1.40,'ingleses':1.38,'santinho':1.35,
-  'barra da lagoa':1.32,'campeche':1.30,
-  'trindade':1.10,'pantanal':1.08,'santa mônica':1.05,
-  'córrego grande':1.02,'saco grande':1.00,
-  'centro fpolis':0.95,'estreito':0.92,
-  'balneário':0.88,'itaguaçu':0.85,'abraão':0.83,
-  'armação':0.82,'morro das pedras':0.80,'rio tavares':0.78,
-  'ribeirão da ilha':0.75,'carianos':0.65,
-  'tapera':0.62,'capoeiras':0.60,'coloninha':0.55,
-  'serrinha':0.52,'areias':0.45,'costeira do pirajubaé':0.50,
-
-  /* ── BALNEÁRIO CAMBORIÚ — base R$15.185/m² ───────────────
-     Fonte: FipeZAP abr/2026, portais 2025-2026               */
-  'barra sul':2.10,'barra norte':1.95,'praia central bc':1.80,
-  'pioneiros':1.50,'das nações':1.40,'municípios':1.35,
-  'centro bc':1.20,'tabuleiro bc':0.75,
-
-  /* ── ITAPEMA — base R$15.179/m² ──────────────────────────*/
-  'meia praia':1.80,'centro itapema':1.10,
-  'sertãozinho':0.75,'ilhota':0.55,'limoeiro itapema':0.50,
-
-  /* ── ITAJAÍ — base R$13.166/m² ───────────────────────────
-     Fonte: FipeZAP abr/2026, dados locais 2025-2026          */
-  'praia brava':1.80,'cabecudas':1.50,'fazenda itj':1.30,
-  'centro itj':0.95,'cordeiros':0.85,'espinheiros':0.65,
-  'imaruí':0.60,'limoeiro itj':0.55,
-
-  /* ── JOINVILLE — base R$8.237/m² (FIPEZAP) ──────────────
-     Nota: SINDUSCON-JOI 2025 aponta R$10.631 p/ novos.
-     Aqui usamos base FIPEZAP p/ consistência com DB.
-     Fontes: SINDUSCON-JOI 1T25, Brain Inteligência, 2025      */
-  // Nobres (R$11-14k em lançamentos)
-  'costa e silva':1.42,'atiradores':1.38,'boa vista joi':1.32,
-  'glória joi':1.28,'america joi':1.25,'anita garibaldi':1.20,
-  // Médios (R$8-11k)
-  'saguaçu':1.05,'bucarein':1.02,'centro joi':1.00,
-  'guanabara joi':0.98,'vila nova joi':0.95,
-  'jardim paraíso joi':0.92,'adhemar garcia':0.90,
-  'bom retiro joi':0.88,'jardim iririú':0.82,
-  // Populares (R$5-8k)
-  'comasa':0.72,'paranaguamirim':0.70,'fátima joi':0.68,
-  'nova brasília joi':0.65,'iririú':0.65,
-  'aventureiro':0.62,'profipo':0.60,'pirabeiraba':0.62,
-  'cubatão joi':0.60,'jardim america joi':0.58,
-  // Periféricos (<R$5k)
-  'itinga':0.40,'jardim sofia':0.38,'rio bonito joi':0.35,
-  'ulysses guimarães':0.35,'santa catarina joi':0.38,
-
-  /* ── BLUMENAU — base R$7.930/m² ──────────────────────────*/
-  'victor konder':1.45,'velha':1.35,'ponta aguda':1.30,
-  'centro blu':1.05,'itoupava norte':1.00,
-  'jardim blumenau':0.95,'fortaleza blu':0.90,
-  'progresso blu':0.72,'fidélis':0.68,'garcia blu':0.65,
-  'nova esperança blu':0.55,'monte castelo blu':0.42,
-
-  /* ── SÃO JOSÉ (SC) — base R$9.021/m² ────────────────────*/
-  'barreiros':1.30,'kobrasol':1.25,'campinas ssj':1.20,
-  'bela vista ssj':1.15,'centro ssj':1.00,'forquilhinha':0.88,
-  'potecas':0.72,'real parque ssj':0.62,'ipiranga ssj':0.60,
-  'são luís ssj':0.45,'colônia santana':0.42,
-
-  /* ── BELO HORIZONTE — base R$10.663/m² ───────────────────
-     Fonte: FipeZAP abr/2026, ZAP Imóveis BH 2025-2026        */
-  'savassi':2.05,'lourdes':1.95,'funcionários':1.85,
-  'belvedere':1.80,'vila da serra':1.75,
-  'mangabeiras':1.50,'sion':1.45,'santo agostinho':1.40,
-  'buritis':1.35,'gutierrez':1.30,'serra bh':1.28,
-  'anchieta bh':1.25,'pampulha':1.20,'jardim atlântico bh':1.15,
-  'santa inês bh':1.10,'coração eucarístico':1.05,
-  'centro bh':0.95,'floresta bh':0.90,'cidade nova bh':0.88,
-  'carlos prates':0.85,'santa efigênia bh':0.82,'caiçara bh':0.80,
-  'nova suíça':0.78,'barreiro':0.60,'contagem':0.62,
-  'venda nova':0.55,'taquaril':0.42,'ribeirão das neves':0.38,
-
-  /* ── PORTO ALEGRE — base R$8.500/m² (estimativa) ────────
-     Fonte: SECOVI-RS 2025                                     */
-  'moinhos de vento':1.85,'três figueiras':1.80,'auxiliadora':1.75,
-  'bela vista poa':1.60,'petrópolis poa':1.50,'mont serrat':1.45,
-  'boa vista poa':1.40,'rio branco poa':1.35,
-  'ipanema poa':1.30,'tristeza':1.28,'teresópolis poa':1.10,
-  'centro histórico poa':0.95,'cidade baixa':0.90,'santana poa':0.88,
-  'passo d\'areia':0.82,'cavalhada':0.78,'cristal':0.75,
-  'sarandi':0.58,'restinga':0.50,'rubem berta':0.52,
-  'belém novo poa':0.55,'lomba do pinheiro':0.40,
-
-  /* ── FORTALEZA — base R$9.350/m² ─────────────────────────
-     Fonte: FipeZAP abr/2026, portais locais 2025             */
-  'meireles':1.90,'aldeota':1.85,'mucuripe':1.55,
-  'cocó':1.45,'guararapes':1.40,'luciano cavalcante':1.38,
-  'varjota':1.32,'parquelândia':1.25,'dionísio torres':1.22,
-  'josé menino':1.05,'benfica for':0.95,'montese':0.85,
-  'fátima for':0.80,'conjunto ceará':0.55,
-  'bom jardim':0.48,'jangurussu':0.42,'mondubim':0.45,
-
-  /* ── RECIFE — base R$8.615/m² ────────────────────────────*/
-  'boa viagem':1.85,'pina':1.40,'espinheiro':1.35,
-  'graças rec':1.30,'casa forte':1.28,'parnamirim':1.25,
-  'aflitos':1.20,'santana rec':1.05,'derby':1.00,
-  'campo grande rec':0.65,'torrões':0.55,
-  'ibura':0.40,'coqueiral':0.38,
-
-  /* ── SALVADOR — base R$8.385/m² ──────────────────────────*/
-  'caminho das árvores':1.85,'barra ssa':1.80,'itaigara':1.75,
-  'pituba':1.50,'candeal':1.40,'federação':1.30,
-  'graça ssa':1.28,'rio vermelho ssa':1.22,'ondina':1.18,
-  'amaralina':1.10,'centro ssa':0.88,'garcia ssa':0.80,
-  'brotas':0.78,'cajazeiras':0.55,'liberdade ssa':0.50,
-  'subúrbio ferroviário':0.35,'são caetano ssa':0.38,
-
-  /* ── VITÓRIA (ES) — base R$14.818/m² ────────────────────
-     Fonte: FipeZAP abr/2026                                   */
-  'praia do canto':1.75,'enseada do suá':1.65,'bento ferreira':1.55,
-  'jardim camburi':1.35,'goiabeiras':1.25,'mata da praia':1.20,
-  'jardim da penha':1.18,'santa luíza':1.10,
-  'centro vit':0.90,'fradinhos':0.82,'santa clara vit':0.78,
-  'resistência vit':0.58,'forte são joão':0.52,
-
-  /* ── BRASÍLIA — base R$10.090/m² ─────────────────────────
-     Fonte: FipeZAP abr/2026                                   */
-  'lago sul':1.90,'lago norte':1.82,'park way':1.75,
-  'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,
-  'cruzeiro':1.12,'octogonal':1.10,
-  'águas claras bsb':0.95,'taguatinga bsb':0.82,'guará':0.78,
-  'samambaia':0.65,'ceilândia':0.52,
-  'estrutural':0.32,'itapoã bsb':0.38,'varjão':0.28,
-  /* ── NITERÓI (RJ) — base R$8.200/m² ────────────────────
-     Fonte: FipeZAP, ZAP Imóveis 2025-2026                    */
-  'icaraí':1.85,'ingá':1.75,'charitas':1.70,
-  'piratininga':1.55,'camboinhas':1.65,'itacoatiara':1.50,
-  'boa viagem ni':1.45,'santa rosa ni':1.20,'gragoatá':1.18,
-  'largo da batalha':1.10,'fonseca':0.82,'barreto':0.78,
-  'engenhoca':0.68,'cavalcante':0.65,'caramujo':0.58,
-  'baldeador':0.55,'cafubá':0.52,'pendotiba':0.50,
-
-  /* ── GOIÂNIA — base R$7.900/m² ───────────────────────────*/
-  'setor marista':1.95,'setor bueno':1.80,'setor oeste':1.65,
-  'setor sul':1.50,'jardim goiás':1.45,'aldeota go':1.40,
-  'setor aeroporto':1.20,'setor central go':0.90,'setor norte go':0.85,
-  'setor leste universitário':0.80,'vila nova go':0.75,'couto magalhães':0.65,
-
-  /* ── BELÉM (PA) — base R$5.800/m² ────────────────────────*/
-  'umarizal':1.80,'nazaré bel':1.55,'batista campos':1.45,
-  'são brás bel':1.30,'marco bel':1.20,'pedreira bel':1.10,
-  'fátima bel':0.95,'jurunas':0.65,'condor':0.55,
+/* Fator de bairro indexado POR CIDADE — nomes como "Centro" se repetem
+   entre cidades e precisam do escopo para não trocar de praça. */
+const BAIRRO_POR_CIDADE = {
+  'São Paulo (capital)':{'vila nova conceição':2.27,'cidade jardim':2.09,'jardim paulistano':2.04,'ibirapuera':1.88,'itaim bibi':1.62,'vila olímpia':1.61,'pinheiros':1.53,'jardim europa':1.51,'berrini':1.46,'jardins':1.43,'paraíso':1.18,'perdizes':1.10,'higienópolis':1.08,'bela vista':1.04,'moema':1.02,'brooklyn':1.00,'campo belo':0.98,'vila madalena':0.97,'consolação':0.96,'morumbi':0.95,'lapa':0.90,'butantã':0.88,'santana':0.74,'casa verde':0.79,'tatuapé':0.70,'mooca':0.70,'ipiranga':0.68,'saúde':0.67,'jabaquara':0.58,'penha':0.54,'capão redondo':0.45,'itaquera':0.48,'cidade tiradentes':0.35,'heliópolis':0.30},
+  'Rio de Janeiro (capital)':{'leblon':3.20,'ipanema':3.00,'são conrado':2.50,'gávea':2.45,'lagoa':2.40,'jardim botânico':2.30,'urca':2.20,'joá':2.10,'barra da tijuca':1.60,'botafogo':1.55,'recreio dos bandeirantes':1.45,'flamengo':1.40,'laranjeiras':1.35,'humaitá':1.35,'copacabana':1.30,'leme':1.20,'santa teresa':1.15,'cosme velho':1.15,'tijuca':0.90,'vila isabel':0.88,'maracanã':0.85,'andaraí':0.82,'grajaú':0.80,'todos os santos':0.75,'méier':0.72,'engenho de dentro':0.68,'engenho novo':0.65,'ramos':0.58,'penha':0.55,'campo grande':0.52,'bangu':0.50,'realengo':0.45,'padre miguel':0.40,'santa cruz':0.38,'cosmos':0.30,'pavuna':0.28,'acari':0.26,'complexo do alemão':0.22},
+  'Curitiba':{'batel':2.00,'champagnat':1.90,'juvevê':1.60,'água verde':1.45,'alto da glória':1.40,'mercês':1.38,'cabral':1.35,'bigorrilho':1.32,'hugo lange':1.30,'ahú':1.28,'alto da xv':1.25,'ecoville':1.22,'mossunguê':1.20,'seminário':1.18,'santa quitéria':1.05,'centro':0.98,'portão':0.92,'santa felicidade':0.90,'boa vista':0.88,'uberaba':0.85,'bom retiro':0.82,'cajuru':0.72,'xaxim':0.68,'pinheirinho':0.60,'sítio cercado':0.55,'cidade industrial':0.52,'tatuquara':0.42,'caximba':0.30,'ganchinho':0.30},
+  'Florianópolis':{'jurerê internacional':2.35,'cacupé':2.10,'jurerê':1.90,'daniela':1.70,'agronômica':1.65,'itacorubi':1.55,'joão paulo':1.50,'lagoa da conceição':1.48,'coqueiros':1.45,'canasvieiras':1.40,'ingleses':1.38,'santinho':1.35,'barra da lagoa':1.32,'campeche':1.30,'trindade':1.10,'pantanal':1.08,'santa mônica':1.05,'córrego grande':1.02,'saco grande':1.00,'centro':0.95,'estreito':0.92,'balneário':0.88,'itaguaçu':0.85,'abraão':0.83,'armação':0.82,'morro das pedras':0.80,'rio tavares':0.78,'ribeirão da ilha':0.75,'carianos':0.65,'tapera':0.62,'capoeiras':0.60,'coloninha':0.55,'serrinha':0.52,'areias':0.45,'costeira do pirajubaé':0.50},
+  'Balneário Camboriú':{'barra sul':2.10,'barra norte':1.95,'praia central':1.80,'pioneiros':1.50,'das nações':1.40,'municípios':1.35,'centro':1.20,'tabuleiro':0.75},
+  'Itapema':{'meia praia':1.80,'centro':1.10,'sertãozinho':0.75,'ilhota':0.55,'limoeiro':0.50},
+  'Itajaí':{'praia brava':1.80,'cabecudas':1.50,'fazenda':1.30,'centro':0.95,'cordeiros':0.85,'espinheiros':0.65,'imaruí':0.60,'limoeiro':0.55},
+  'Joinville':{'costa e silva':1.42,'atiradores':1.38,'boa vista':1.32,'glória':1.28,'america':1.25,'anita garibaldi':1.20,'saguaçu':1.05,'bucarein':1.02,'centro':1.00,'guanabara':0.98,'vila nova':0.95,'jardim paraíso':0.92,'adhemar garcia':0.90,'bom retiro':0.88,'jardim iririú':0.82,'comasa':0.72,'paranaguamirim':0.70,'fátima':0.68,'nova brasília':0.65,'iririú':0.65,'aventureiro':0.62,'profipo':0.60,'pirabeiraba':0.62,'cubatão':0.60,'jardim america':0.58,'itinga':0.40,'jardim sofia':0.38,'rio bonito':0.35,'ulysses guimarães':0.35,'santa catarina':0.38},
+  'Blumenau':{'victor konder':1.45,'velha':1.35,'ponta aguda':1.30,'centro':1.05,'itoupava norte':1.00,'jardim blumenau':0.95,'fortaleza':0.90,'progresso':0.72,'fidélis':0.68,'garcia':0.65,'nova esperança':0.55,'monte castelo':0.42},
+  'São José':{'barreiros':1.30,'kobrasol':1.25,'campinas':1.20,'bela vista':1.15,'centro':1.00,'forquilhinha':0.88,'potecas':0.72,'real parque':0.62,'ipiranga':0.60,'são luís':0.45,'colônia santana':0.42},
+  'Belo Horizonte':{'savassi':2.05,'lourdes':1.95,'funcionários':1.85,'belvedere':1.80,'vila da serra':1.75,'mangabeiras':1.50,'sion':1.45,'santo agostinho':1.40,'buritis':1.35,'gutierrez':1.30,'serra':1.28,'anchieta':1.25,'pampulha':1.20,'jardim atlântico':1.15,'santa inês':1.10,'coração eucarístico':1.05,'centro':0.95,'floresta':0.90,'cidade nova':0.88,'carlos prates':0.85,'santa efigênia':0.82,'caiçara':0.80,'nova suíça':0.78,'barreiro':0.60,'contagem':0.62,'venda nova':0.55,'taquaril':0.42,'ribeirão das neves':0.38},
+  'Porto Alegre':{'moinhos de vento':1.85,'três figueiras':1.80,'auxiliadora':1.75,'bela vista':1.60,'petrópolis':1.50,'mont serrat':1.45,'boa vista':1.40,'rio branco':1.35,'ipanema':1.30,'tristeza':1.28,'teresópolis':1.10,'centro histórico':0.95,'cidade baixa':0.90,'santana':0.88,'areia':0.82,'cavalhada':0.78,'cristal':0.75,'sarandi':0.58,'restinga':0.50,'rubem berta':0.52,'belém novo':0.55,'lomba do pinheiro':0.40},
+  'Fortaleza':{'meireles':1.90,'aldeota':1.85,'mucuripe':1.55,'cocó':1.45,'guararapes':1.40,'luciano cavalcante':1.38,'varjota':1.32,'parquelândia':1.25,'dionísio torres':1.22,'josé menino':1.05,'benfica':0.95,'montese':0.85,'fátima':0.80,'conjunto ceará':0.55,'bom jardim':0.48,'jangurussu':0.42,'mondubim':0.45},
+  'Recife':{'boa viagem':1.85,'pina':1.40,'espinheiro':1.35,'graças':1.30,'casa forte':1.28,'parnamirim':1.25,'aflitos':1.20,'santana':1.05,'derby':1.00,'campo grande':0.65,'torrões':0.55,'ibura':0.40,'coqueiral':0.38},
+  'Salvador':{'caminho das árvores':1.85,'barra':1.80,'itaigara':1.75,'pituba':1.50,'candeal':1.40,'federação':1.30,'graça':1.28,'rio vermelho':1.22,'ondina':1.18,'amaralina':1.10,'centro':0.88,'garcia':0.80,'brotas':0.78,'cajazeiras':0.55,'liberdade':0.50,'subúrbio ferroviário':0.35,'são caetano':0.38},
+  'Vitória':{'praia do canto':1.75,'enseada do suá':1.65,'bento ferreira':1.55,'jardim camburi':1.35,'goiabeiras':1.25,'mata da praia':1.20,'jardim da penha':1.18,'santa luíza':1.10,'centro vit':0.90,'fradinhos':0.82,'santa clara vit':0.78,'resistência vit':0.58,'forte são joão':0.52},
+  'Brasília (Lago Sul/Norte)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Asa Sul/Norte)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Plano Piloto)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Águas Claras)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Sobradinho)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Taguatinga)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Gama)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Ceilândia)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Brasília (Samambaia)':{'lago sul':1.90,'lago norte':1.82,'park way':1.75,'sudoeste':1.45,'noroeste':1.40,'asa sul':1.20,'asa norte':1.18,'cruzeiro':1.12,'octogonal':1.10,'águas claras':0.95,'taguatinga':0.82,'guará':0.78,'samambaia':0.65,'ceilândia':0.52,'estrutural':0.32,'itapoã':0.38,'varjão':0.28},
+  'Niterói':{'icaraí':1.85,'ingá':1.75,'charitas':1.70,'piratininga':1.55,'camboinhas':1.65,'itacoatiara':1.50,'boa viagem ni':1.45,'santa rosa ni':1.20,'gragoatá':1.18,'largo da batalha':1.10,'fonseca':0.82,'barreto':0.78,'engenhoca':0.68,'cavalcante':0.65,'caramujo':0.58,'baldeador':0.55,'cafubá':0.52,'pendotiba':0.50},
+  'Goiânia':{'setor marista':1.95,'setor bueno':1.80,'setor oeste':1.65,'setor sul':1.50,'jardim goiás':1.45,'aldeota go':1.40,'setor aeroporto':1.20,'setor central go':0.90,'setor norte go':0.85,'setor leste universitário':0.80,'vila nova go':0.75,'couto magalhães':0.65},
+  'Belém':{'umarizal':1.80,'nazaré':1.55,'batista campos':1.45,'são brás':1.30,'marco':1.20,'pedreira':1.10,'fátima':0.95,'jurunas':0.65,'condor':0.55}
 };
 
-/* normBairro e sugerirFatorBairro legados removidos — usar sugerirFatorBairroFast() */
 
 function aplicarFIPEZAP(novosValores){
   if(!novosValores || typeof novosValores !== 'object') return;
   Object.entries(novosValores).forEach(([cidadeAlvo, novoP])=>{
     if(!novoP || isNaN(novoP)) return;
-    let encontrado=false;
     Object.values(DB).forEach(estado=>{
-      if(!estado || !estado.cidades) return;
-      const cidades = estado.cidades;
-      if(cidades[cidadeAlvo]){
-        cidades[cidadeAlvo].p = novoP;
-        encontrado = true;
-      }
+      if(estado?.cidades?.[cidadeAlvo]) estado.cidades[cidadeAlvo].p = novoP;
     });
   });
 }
@@ -2558,6 +2472,7 @@ function onEstado(){
   const sel=document.getElementById('f-cidade');
   sel.innerHTML='<option value="">Selecione a cidade</option>';
   cidadeKey=null;
+  limparFatorBairro();
   if(DB[estadoKey]) Object.keys(DB[estadoKey].cidades).forEach(c=>{
     const o=document.createElement('option');
     o.textContent=c;o.value=c;sel.appendChild(o);
@@ -2567,6 +2482,9 @@ function onEstado(){
 }
 function onCidade(){
   cidadeKey=document.getElementById('f-cidade').value;
+  limparFatorBairro();
+  const b = document.getElementById('f-bairro');
+  if(b && b.value.trim()) onBairro(b.value);
   document.getElementById('fw-cidade').classList.remove('error');
   document.getElementById('form-err').style.display='none';
 }
@@ -2574,8 +2492,16 @@ function onCidade(){
 let _sugestaoTier = null;
 let _fatorBairro = null; // fator numérico do bairro reconhecido
 
+/* Precisa ser chamada sempre que estado/cidade mudarem. */
+function limparFatorBairro(){
+  _fatorBairro = null;
+  _sugestaoTier = null;
+  const box = document.getElementById('bairro-sugestao');
+  if(box) box.style.display = 'none';
+}
+
 function onBairro(val){
-  const result = sugerirFatorBairroFast(val);
+  const result = sugerirFatorBairroFast(val, cidadeKey);
   const box = document.getElementById('bairro-sugestao');
   const txt = document.getElementById('bairro-sugestao-txt');
   if(result){
@@ -2646,14 +2572,16 @@ function prevStep(cur){
 /* ── CALCULAR ── */
 function calcular(){
   const bairro  = document.getElementById('f-bairro').value.trim();
-  const area    = parseInt(document.getElementById('f-area').value)||80;
+  const areaRaw = parseInt(document.getElementById('f-area').value);
+  const area    = Math.min(2000, Math.max(15, isNaN(areaRaw)?80:areaRaw));
   const quartos = parseInt(document.getElementById('f-quartos').value)||3;
   const sR      = document.getElementById('f-suites').value;
   const suites  = sR==='4+'?4:parseInt(sR)||0;
   const vR      = document.getElementById('f-vagas').value;
   const vagas   = vR==='4+'?4:parseInt(vR)||0;
   const bR      = document.getElementById('f-banheiros').value;
-  const banhos  = bR==='5+'?4:Math.min(parseInt(bR)||2,4); // FIX: banheiros no cálculo
+  const banhos  = bR==='5+'?5:Math.min(parseInt(bR)||2,5);
+  const tipo    = document.getElementById('f-tipo')?.value || 'apartamento';
   const andar   = document.getElementById('f-andar').value;
   const conserv = document.getElementById('f-conserv').value;
   const idade   = document.getElementById('f-idade').value;
@@ -2661,7 +2589,10 @@ function calcular(){
 
   const {p:precoBase, v:valzBase, d:demanda} = DB[estadoKey].cidades[cidadeKey];
 
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.remove('on');
+    p.setAttribute('aria-hidden','true');
+  });
   document.getElementById('pg-result').classList.remove('show');
   const ld=document.getElementById('loading');ld.classList.add('show');
 
@@ -2684,18 +2615,26 @@ function calcular(){
 
     /* ── PREÇO ── */
     const mPad  = M_PADRAO[padrao]||1;
-    const mAnd  = M_ANDAR[andar]||1;
+    const mTipo = M_TIPO[tipo]||1;
+    // Casa não tem "andar" — neutraliza o multiplicador em vez de aplicar
+    // o fator de apartamento térreo (−10%), que penalizava casas.
+    const mAnd  = TIPO_SEM_ANDAR.includes(tipo) ? 1 : (M_ANDAR[andar]||1);
     const mCon  = M_CONSERV[conserv]||1;
     const mIda  = M_IDADE[idade]||1;
     const mVag  = 1+(M_VAGAS[Math.min(vagas,4)]||0);
     const mSui  = 1+(M_SUITES[Math.min(suites,4)]||0);
-    const idxBan = Math.max(0, Math.min((banhos||1)-1, 4));
-    const mBan  = 1 + (M_BANHOS[idxBan] || 0); // FIX banheiros
+    const idxBan = Math.max(0, Math.min((banhos||1)-1, M_BANHOS.length-1));
+    const mBan  = 1 + (M_BANHOS[idxBan] || 0);
     // Usa fator numérico do bairro quando reconhecido (mais preciso que M_TIER por tier)
     const mTier = (_fatorBairro!==null) ? _fatorBairro : (M_TIER[tier]||1);
     const mAmen = 1+Math.min(Math.log1p(chips)*0.025,0.075);
 
-    const m2    = Math.round(precoBase*mPad*mAnd*mCon*mIda*mVag*mSui*mBan*mTier*mAmen);
+    /* Os multiplicadores são independentes e se compõem: sem teto, o
+       extremo em SP chegava a 7,5x a base. Localização e atributos são
+       limitados em separado. Guarda-corpo heurístico, não calibração. */
+    const mAtributos = Math.min(1.85, Math.max(0.45, mPad*mTipo*mAnd*mCon*mIda*mVag*mSui*mBan*mAmen));
+    const mLocal     = Math.min(2.40, Math.max(0.40, mTier));
+    const m2    = Math.round(precoBase*mAtributos*mLocal);
     const total = m2*area;
     finTotal = total; // expose for financing calculator
     const faixa = FAIXA[padrao]||.12;
@@ -2706,9 +2645,10 @@ function calcular(){
     const scoreRaw = 44+(mPad-.76)*24+(mAnd-.90)*38+(mCon-.74)*20+(mIda-.79)*22+(mTier-.68)*18+chips*1.0;
     const score = Math.max(15, Math.min(98, Math.round(scoreRaw)));
 
-    const yF = padrao==='luxo'?.0036:padrao==='alto'?.0041:padrao==='medio'?.0044:.0047;
-    const aluguel    = Math.round(total*yF);
-    const yieldBruto = ((aluguel*12/total)*100).toFixed(2);
+
+    const yieldAnual = yieldEstimado(precoBase, padrao);
+    const aluguel    = Math.round(total*(yieldAnual/100)/12);
+    const yieldBruto = yieldAnual.toFixed(2);
 
     let slabel='Excelente',sdesc='Imóvel muito valorizado na região';
     if(score<40)      {slabel='Regular';    sdesc='Potencial de melhoria identificado'}
@@ -2743,8 +2683,6 @@ function calcular(){
     }
 
     /* Comparáveis estimados (baseado em demanda e padrão) */
-    const compVendidos = Math.round(demanda * 3.5 * (padrao==='simples'?1.4:padrao==='luxo'?.5:1));
-    const compDisponiveis = Math.round(compVendidos * (diasEst/30));
     const prazoMedio30d = Math.round(diasEst * .85);
     const negocMargin = padrao==='luxo'?12:padrao==='alto'?8:padrao==='medio'?6:4;
 
@@ -2771,7 +2709,7 @@ function calcular(){
     if (rAddrEl) rAddrEl.textContent = (bairro?bairro+' · ':'')+cidadeKey+' · '+estadoKey;
     document.getElementById('r-m2').textContent   = fmt(m2);
     const rValzEl = document.getElementById('r-valz');
-    if (rValzEl) rValzEl.textContent = '+'+valzBase.toFixed(1)+'% a.a.';
+    if (rValzEl) rValzEl.textContent = (valzBase>=0?'+':'')+valzBase.toFixed(1)+'%';
     const rAlugEl = document.getElementById('r-alug');
     if (rAlugEl) rAlugEl.textContent = fmt(aluguel)+'/mês';
     document.getElementById('r-yield').textContent= yieldBruto+'% a.a.';
@@ -2801,7 +2739,7 @@ function calcular(){
       document.getElementById('tempo-unit').textContent='meses para venda ao preço estimado';
     }
     document.getElementById('tempo-sub').textContent=
-      'Baseado em '+compVendidos+' vendas similares nos últimos 90 dias na região';
+      'Estimativa a partir da demanda regional ('+demanda+'/10), padrão e conservação do imóvel';
 
     // Cenários
     document.getElementById('cenarios-rows').innerHTML=cenarios.map(c=>{
@@ -2818,12 +2756,12 @@ function calcular(){
     // Comparáveis
     document.getElementById('comp-grid').innerHTML=`
       <div class="comp-item">
-        <div class="comp-val gold-txt">${compVendidos}</div>
-        <div class="comp-lbl">similares vendidos (90 dias)</div>
+        <div class="comp-val gold-txt">${demanda}/10</div>
+        <div class="comp-lbl">demanda regional</div>
       </div>
       <div class="comp-item">
-        <div class="comp-val">${compDisponiveis}</div>
-        <div class="comp-lbl">imóveis em oferta agora</div>
+        <div class="comp-val">± ${Math.round(faixa*100)}%</div>
+        <div class="comp-lbl">margem da estimativa</div>
       </div>
       <div class="comp-item">
         <div class="comp-val up">${prazoMedio30d} dias</div>
@@ -2842,14 +2780,17 @@ function calcular(){
     const mediaEstado=Math.round(Object.values(cids).reduce((s,c)=>s+c.p,0)/Object.keys(cids).length);
     const mediaBR=6800;
     const nc=s=>s.length>12?s.slice(0,12)+'…':s;
+    const m2BairroMediana = Math.round(precoBase*mTier);
     const barData=[
-      {n:nc(bairro||cidadeKey),v:m2,hi:true},
+      {n:nc(bairro||cidadeKey),v:m2BairroMediana,hi:true},
       {n:nc(cidadeKey),v:precoBase,hi:false},
       {n:'Média '+estadoKey.split(' ')[0],v:mediaEstado,hi:false},
       {n:'Média Brasil',v:mediaBR,hi:false},
     ];
     const maxV=Math.max(...barData.map(b=>b.v));
     // FIX: formatação correta de R$/m² no gráfico
+    const barSub=document.getElementById('r-bars-sub');
+    if(barSub) barSub.textContent='Preço mediano por m² — seu imóvel específico foi estimado em '+fmt(m2)+'/m².';
     document.getElementById('r-bars').innerHTML=barData.map(b=>`
       <div class="bar-row">
         <span class="bar-lbl">${esc(b.n)}</span>
@@ -2859,11 +2800,14 @@ function calcular(){
 
     /* DETALHE */
     const rows=[
+      {k:'Tipo de imóvel',          v:TIPO_LABEL[tipo]||'Apartamento'},
       {k:'Área avaliada',           v:area+'m²'},
       {k:'Quartos / Suítes',        v:quartos+' qtos / '+(suites===0?'sem suíte':suites+' suíte(s)')},
       {k:'Banheiros / Vagas',       v:banhos+' banh. / '+(vagas===0?'sem vaga':vagas+(vagas===1?' vaga':' vagas'))},
       {k:'Padrão de acabamento',    v:padrao.charAt(0).toUpperCase()+padrao.slice(1)},
-      {k:'Tier do bairro',          v:tier.charAt(0).toUpperCase()+tier.slice(1)},
+      {k:'Fator de localização',    v:(_fatorBairro!==null
+            ? mTier.toFixed(2)+' (bairro reconhecido)'
+            : mTier.toFixed(2)+' (tier '+tier+')')},
       {k:'Diferenciais ativos',     v:chips+' item(ns)'},
       {k:'Faixa de variação',       v:'± '+Math.round(faixa*100)+'%'},
       {k:'Demanda regional (0-10)', v:demanda+'/10'},
@@ -2877,8 +2821,7 @@ function calcular(){
     /* SALVA RESULTADO PARA REVISITA DO NAV */
     lastResult=true;
 
-    /* ── MAPA + CHART + COMPARADOR (lazy load libs) ── */
-    renderComparador();
+    /* ── MAPA + CHART (lazy load libs) ── */
     ensureLeaflet(()=> initMapa(cidadeKey, m2, demanda));
     ensureChart(()=> initChart(cidadeKey, m2, valzBase));
 
@@ -2889,6 +2832,7 @@ function calcular(){
     document.querySelectorAll('.nav-step').forEach(s=>s.classList.remove('on'));
     document.getElementById('ns-result').classList.add('on');
     document.getElementById('pg-result').classList.add('show');
+    atualizarRota('result');
     window.scrollTo({top:0,behavior:'smooth'});
   },2700);
 }
@@ -2966,14 +2910,13 @@ function recalcFin(){
   const meses   = parseInt(document.getElementById('fin-prazo').value);
   const P       = finTotal*(1-entrada); // valor financiado
 
-  // Rates: FGTS fixed, CEF SBPE fixed, market based on Selic
-  const selicRate = BCB.selic||14.75;
-  const txMercado = parseFloat(Math.min(14.5, Math.max(10.5, selicRate*0.55+5.8)).toFixed(2));
+  const selicRate = BCB.selic||CONFIG.SELIC_FALLBACK;
+  const txMercado = parseFloat(Math.min(14.5, Math.max(CONFIG.TX_SBPE, selicRate*0.55+5.8)).toFixed(2));
 
   const scenarios = [
-    {nm:'FGTS / Habitação',      taxa:8.16,       rec:false},
-    {nm:'Caixa Econômica (SBPE)',taxa:10.5,        rec:true},
-    {nm:'Banco privado',         taxa:txMercado,  rec:false},
+    {nm:'FGTS / Habitação',      taxa:CONFIG.TX_FGTS, rec:false},
+    {nm:'Caixa Econômica (SBPE)',taxa:CONFIG.TX_SBPE, rec:true},
+    {nm:'Banco privado',         taxa:txMercado,      rec:false},
   ];
 
   document.getElementById('fin-scens').innerHTML = scenarios.map(s=>{
@@ -3028,8 +2971,6 @@ function fmtK(v){
   return fmt(Math.round(v));
 }
 
-/* Inicializa BCB ao carregar */
-
 function safeOpen(url){
   // Whitelist de domínios permitidos para evitar Open Redirect
   const allowed = ['https://wa.me/', 'https://api.whatsapp.com/'];
@@ -3045,15 +2986,80 @@ window.addEventListener('load', ()=>{ if('requestIdleCallback' in window){ reque
 function fmt(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0})}
 
 function showResult(){
-  // FIX: ns-result agora funciona para rever o resultado
   if(!lastResult)return;
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.remove('on');
+    p.setAttribute('aria-hidden','true');
+  });
   document.getElementById('loading').classList.remove('show');
   document.querySelectorAll('.nav-step').forEach(s=>s.classList.remove('on'));
   document.getElementById('ns-result').classList.add('on');
   document.getElementById('pg-result').classList.add('show');
+  atualizarRota('result');
   window.scrollTo({top:0,behavior:'smooth'});
 }
+
+/* ── Roteamento por hash ───────────────────────────────────────────
+   Hash (#avaliar) e não caminho (/avaliar) de propósito: funciona em
+   hospedagem estática sem regra de rewrite.
+
+   ⚠️ Dá URL compartilhável e botão "voltar", mas NÃO resolve SEO por
+   cidade — isso exige páginas HTML separadas. */
+const ROTAS = {
+  home:     {hash:'',                    titulo:'Calculadora Imobiliária — Avalie seu imóvel online grátis',
+             desc:'Descubra quanto vale seu imóvel em minutos. Avaliação online grátis com dados FipeZAP, Banco Central e mais de 150 cidades brasileiras.'},
+  calc:     {hash:'#avaliar',            titulo:'Avaliar imóvel — Calculadora Imobiliária',
+             desc:'Informe cidade, bairro e características do imóvel e receba uma estimativa de valor com faixa de preço e previsão de venda.'},
+  result:   {hash:'#resultado',          titulo:'Resultado da avaliação — Calculadora Imobiliária',
+             desc:'Valor estimado, faixa de preço, score, yield bruto e previsão de tempo de venda do seu imóvel.'},
+  planos:   {hash:'#corretores',         titulo:'Para corretores — Calculadora Imobiliária',
+             desc:'Cadastro gratuito no programa de parceiros. Receba leads de proprietários com laudo de avaliação junto.'},
+  parceiro: {hash:'#cadastro-parceiro',  titulo:'Cadastro de parceiro — Calculadora Imobiliária',
+             desc:'Cadastre seu CRECI e comece a receber contatos de proprietários interessados em vender.'},
+};
+const HASH_PARA_PG = Object.fromEntries(
+  Object.entries(ROTAS).filter(([,r])=>r.hash).map(([pg,r])=>[r.hash, pg])
+);
+let _navegandoPorHash = false;
+
+function atualizarRota(pg){
+  const r = ROTAS[pg];
+  if(!r) return;
+  document.title = r.titulo;
+  const md = document.querySelector('meta[name="description"]');
+  if(md) md.setAttribute('content', r.desc);
+  const ogt = document.querySelector('meta[property="og:title"]');
+  if(ogt) ogt.setAttribute('content', r.titulo);
+  if(_navegandoPorHash) return;                 // evita loop de hashchange
+  const alvo = r.hash || location.pathname + location.search;
+  if(r.hash){
+    if(location.hash !== r.hash) history.pushState(null,'',alvo);
+  } else if(location.hash){
+    history.pushState(null,'',location.pathname + location.search);
+  }
+}
+
+function irParaHashAtual(){
+  const pg = HASH_PARA_PG[location.hash] || 'home';
+  _navegandoPorHash = true;
+  try{
+    if(pg==='result'){
+      // Sem resultado calculado não há o que mostrar — cai na calculadora.
+      if(lastResult) showResult(); else goTo('calc');
+    } else {
+      goTo(pg);
+    }
+  } finally {
+    _navegandoPorHash = false;
+  }
+}
+
+window.addEventListener('popstate', irParaHashAtual);
+window.addEventListener('hashchange', irParaHashAtual);
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(location.hash) irParaHashAtual();
+  else atualizarRota('home');
+});
 
 function goTo(pg){
   document.querySelectorAll('.page').forEach(p=>{
@@ -3078,6 +3084,7 @@ function goTo(pg){
     ns.classList.add('on');
     ns.setAttribute('aria-current','page');
   }
+  atualizarRota(pg);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -3088,24 +3095,27 @@ function resetForm(){
   document.getElementById('f-estado').value='';
   document.getElementById('f-cidade').innerHTML='<option value="">Selecione a cidade</option>';
   document.getElementById('f-bairro').value='';
+  limparFatorBairro();
   document.getElementById('f-area').value=80;
   document.getElementById('v-area').textContent='80m²';
   document.getElementById('f-quartos').value='3';
   document.getElementById('f-suites').value='1';
   document.getElementById('f-banheiros').value='2';
   document.getElementById('f-vagas').value='2';
+  const tipoReset=document.getElementById('f-tipo'); if(tipoReset) tipoReset.value='apartamento';
   document.getElementById('f-andar').selectedIndex=2;
   document.getElementById('f-conserv').selectedIndex=1;
   document.getElementById('f-idade').selectedIndex=2;
-  document.querySelectorAll('#chips .chip').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('#chips .chip').forEach(c=>{
+    c.classList.remove('on');
+    c.setAttribute('aria-checked','false');
+  });
   selPadrao('medio');selTier('medio');
   estadoKey=null;cidadeKey=null;
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   document.getElementById('form-err').style.display='none';
   goTo('calc');
 }
-
-/* theme init is in the head script */
 
 function updateRingGradient(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -3120,48 +3130,26 @@ function toggleTheme(){
   const isL=document.documentElement.getAttribute('data-theme')==='light';
   const newTheme=isL?'dark':'light';
   document.documentElement.setAttribute('data-theme',newTheme);
-  const btnTema=document.getElementById('btn-tema');
-  if(btnTema)btnTema.textContent=newTheme==='dark'?'◐ Tema':'● Tema';
+  try{ localStorage.setItem('valora_tema', newTheme); }catch(e){}
+  sincronizarBotaoTema();
   updateRingGradient();
 }
 
-/* ── LEAD CAPTURE ── */
-
-
-/* ── PLANS PAGE ── */
-function switchPlanTab(tab){
-  ['corretor','imob'].forEach(t=>{
-    document.getElementById('ptab-'+t).classList.toggle('on',t===tab);
-    document.getElementById('pp-'+t).classList.toggle('on',t===tab);
-  });
+/* Mantém o ícone do botão coerente com o tema ativo. */
+function sincronizarBotaoTema(){
+  const btn=document.getElementById('btn-tema');
+  if(!btn) return;
+  const dark=document.documentElement.getAttribute('data-theme')!=='light';
+  btn.textContent = dark ? '◐ Tema' : '● Tema';
+  btn.setAttribute('aria-label', dark ? 'Mudar para tema claro' : 'Mudar para tema escuro');
 }
+document.addEventListener('DOMContentLoaded', ()=>{ sincronizarBotaoTema(); updateRingGradient(); });
 
 function goToPartnerForm(plano){
-  const titles={
-    parceiro:'Plano Parceiro — Gratuito',
-    verificado:'Plano Verificado — R$ 89/mês',
-    premium:'Plano Premium — R$ 229/mês',
-  };
-  document.getElementById('pf-plan-title').textContent = titles[plano] || 'Cadastro de Parceiro';
+  document.getElementById('pf-plan-title').textContent = 'Cadastro de parceiro — gratuito';
   document.getElementById('pf-form-wrap').style.display  = 'block';
   document.getElementById('pf-success').style.display    = 'none';
   goTo('parceiro');
-}
-
-function solicitarDemo(plano){
-  // Monta mensagem para WhatsApp comercial Valora
-  const numeroWhatsApp = CONFIG.WA_PARCEIROS;
-  const planos = {
-    starter:'Starter (R$349/mês)',
-    business:'Business (R$799/mês)',
-    enterprise:'Enterprise (sob consulta)',
-  };
-  const msg = encodeURIComponent(
-    `*Solicitação de Demo — Valora para Imobiliárias*\n\n`+
-    `Tenho interesse no plano: *${planos[plano]||plano}*\n\n`+
-    `Poderia agendar uma demonstração?`
-  );
-  safeOpen(`https://wa.me/${numeroWhatsApp}?text=${msg}`);
 }
 
 /* ── PARTNER REGISTRATION ── */
@@ -3187,10 +3175,16 @@ function enviarCadastro(){
     document.getElementById(c.el).style.borderColor = c.ok ? '' : 'var(--red)';
     if(!c.ok) valido = false;
   });
+
+  const consentEl = document.getElementById('pf-consent');
+  const consentLabel = document.getElementById('pf-consent-label');
+  const consentOk = consentEl && consentEl.checked;
+  if(consentLabel) consentLabel.style.color = consentOk ? '' : 'var(--red)';
+  if(!consentOk) valido = false;
+
   if(!valido) return;
 
-  // Envia via WhatsApp
-  const numeroWhatsApp = CONFIG.WA_PARCEIROS;
+  const numeroWhatsApp = getWaParceiros();
   const msg = encodeURIComponent(
     `*Novo Cadastro de Parceiro — Valora*\n\n`+
     `📋 Plano: ${plano}\n\n`+
@@ -3202,11 +3196,42 @@ function enviarCadastro(){
     `🏙 Cidade: ${cidade}\n`+
     `🏠 Especialidade: ${espec}`
   );
-  safeOpen(`https://wa.me/${numeroWhatsApp}?text=${msg}`);
+  const urlWa = `https://wa.me/${numeroWhatsApp}?text=${msg}`;
+  safeOpen(urlWa);
 
-  // Mostra sucesso
-  document.getElementById('pf-form-wrap').style.display = 'none';
-  document.getElementById('pf-success').style.display   = 'block';
+  mostrarPendenteEnvio(urlWa, 'pf-form-wrap', 'pf-success');
+}
+
+/* ── Estado "abrimos o WhatsApp, confirme o envio" ──────────────────
+   O navegador não consegue saber se a mensagem foi enviada. Enquanto não
+   houver backend gravando o lead antes do redirect, não contamos como
+   enviado o que não foi. */
+function mostrarPendenteEnvio(urlWa, idFormWrap, idSuccess){
+  const wrap = document.getElementById(idFormWrap);
+  if(!wrap) return;
+  let box = document.getElementById('pendente-envio');
+  if(box) box.remove();
+  box = document.createElement('div');
+  box.id = 'pendente-envio';
+  box.style.cssText='margin-top:1rem;padding:.9rem 1rem;border:1px solid var(--gborder);'+
+    'border-radius:var(--rsm);background:var(--bg3);font-size:.82rem;line-height:1.55';
+  box.innerHTML =
+    '<strong>Abrimos o WhatsApp com sua mensagem.</strong><br>'+
+    '<span style="color:var(--text2)">Toque em <b>enviar</b> lá para concluir o cadastro. '+
+    'Se a janela não abriu, use o botão abaixo.</span>'+
+    '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem">'+
+      '<button type="button" class="btn-gold" id="pe-reabrir">Reabrir WhatsApp</button>'+
+      '<button type="button" class="btn-ghost" id="pe-confirmar">Já enviei</button>'+
+    '</div>';
+  wrap.appendChild(box);
+  document.getElementById('pe-reabrir').onclick = ()=> safeOpen(urlWa);
+  document.getElementById('pe-confirmar').onclick = ()=>{
+    box.remove();
+    wrap.style.display = 'none';
+    const ok = document.getElementById(idSuccess);
+    if(ok) ok.style.display = 'block';
+  };
+  box.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 
@@ -3268,7 +3293,6 @@ const CITY_COORDS = {
 /* ── Estado compartilhado ── */
 let valoraMap          = null;
 let valoraChartIns     = null;
-let avaliacoesSalvas   = []; // inicializado no DOMContentLoaded abaixo
 let mapaFiltro         = 'ambos'; // 'vendido' | 'oferta' | 'ambos'
 
 /* ════════════════════════════════════════════════
@@ -3341,8 +3365,8 @@ function initMapa(cidade, precoM2, demanda){
     const marker = L.marker([coords[0]+dlat,coords[1]+dlng],{icon})
       .addTo(valoraMap)
       .bindPopup(`<div style="min-width:170px;font-size:.82rem">
-        <b>${status==='vendido'?'✅ Vendido':'🔵 À venda'}</b>
-        <span style="float:right;color:#888">${status==='vendido'?diasAtras+' dias atrás':'anunciado'}</span><br>
+        <b>${status==='vendido'?'🟢 Faixa inferior':'🔵 Faixa superior'}</b>
+        <span style="float:right;color:#888">simulado</span><br>
         <span style="color:#888">${cidade}</span><br>
         <span style="font-weight:600">R$${compM2.toLocaleString('pt-BR')}/m²</span> · ${compArea}m²<br>
         ${quartos} qto${quartos>1?'s':''}${vagas?' · '+vagas+' vaga'+(vagas>1?'s':''):''}<br>
@@ -3359,9 +3383,9 @@ function initMapa(cidade, precoM2, demanda){
     d.id='mapa-legend';
     const render = ()=>{
       d.innerHTML=`
-        <span style="opacity:${mapaFiltro==='ambos'||mapaFiltro==='vendido'?1:.4}">🟢 Vendidos</span>
+        <span style="opacity:${mapaFiltro==='ambos'||mapaFiltro==='vendido'?1:.4}">🟢 Abaixo da média</span>
         <span style="margin:0 6px;opacity:.4">|</span>
-        <span style="opacity:${mapaFiltro==='ambos'||mapaFiltro==='oferta'?1:.4}">🔵 À venda</span>
+        <span style="opacity:${mapaFiltro==='ambos'||mapaFiltro==='oferta'?1:.4}">🔵 Acima da média</span>
         <span style="margin:0 6px;opacity:.4">|</span>
         <span style="opacity:${mapaFiltro==='ambos'?1:.7}">🟡 Meu imóvel</span>`;
     };
@@ -3388,8 +3412,9 @@ function initMapa(cidade, precoM2, demanda){
 function initChart(cidade, precoAtual, variacaoAnual){
   const box = document.getElementById('box-chart');
   box.style.display = 'block';
-  document.getElementById('chart-city-label').textContent =
-    `Evolução estimada do preço/m² em ${cidade} nos últimos 24 meses · variação de referência: +${variacaoAnual.toFixed(1)}%/a.a. (FIPEZAP)`;
+  document.getElementById('chart-city-label').innerHTML =
+    `<strong>Curva calculada, não observada.</strong> Projeção retroativa para ${esc(cidade)} `+
+    `aplicando a variação de referência de +${variacaoAnual.toFixed(1)}%/a.a. sobre o preço atual estimado.`;
 
   const months=[]; const values=[]; const now = new Date();
   const mRate = Math.pow(1+variacaoAnual/100,1/12)-1;
@@ -3464,7 +3489,6 @@ function initChart(cidade, precoAtual, variacaoAnual){
             }
           }
         },
-        annotation:{} // placeholder
       },
       scales:{
         x:{ticks:{color:tc,maxTicksLimit:7,font:{size:10}},grid:{color:gc}},
@@ -3477,149 +3501,8 @@ function initChart(cidade, precoAtual, variacaoAnual){
   });
 }
 
-/* ════════════════════════════════════════════════
-   COMPARADOR DE AVALIAÇÕES — com localStorage
-════════════════════════════════════════════════ */
-
-/* ════════════════════════════════════════════
-   SECURITY — HTML Sanitizer (anti-XSS)
-════════════════════════════════════════════ */
-function sanitizeHTML(str){
-  const d=document.createElement('div');
-  d.appendChild(document.createTextNode(String(str==null?'':str)));
-  return d.innerHTML;
-}
-function sanitizeLocalStorageData(obj){
-  if(!obj||typeof obj!=='object') return {};
-  return Object.fromEntries(
-    Object.entries(obj).map(([k,v])=>[k, typeof v==='string'?sanitizeHTML(v):v])
-  );
-}
-
-function coletarResultadoAtual(){
-  const get = id => (document.getElementById(id)||{}).textContent||'—';
-  return {
-    val   : get('r-val'),
-    range : get('r-range').replace('Faixa: ',''),
-    addr  : get('r-addr'),
-    m2    : get('r-m2'),
-    score : get('r-score'),
-    valz  : get('r-valz'),
-    alug  : get('r-alug'),
-    yld   : get('r-yield'),
-    ts    : new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
-    date  : new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})
-  };
-}
-
-function salvarAvaliacao(){
-  const novo = coletarResultadoAtual();
-  if(novo.val==='—'){
-    alert('Calcule uma avaliação antes de salvar.'); return;
-  }
-  if(avaliacoesSalvas.length>=2){
-    if(!confirm('Já existem 2 avaliações salvas.\nSubstituir a mais antiga?')) return;
-    avaliacoesSalvas.shift();
-  }
-  avaliacoesSalvas.push(novo);
-  localStorage.setItem('valora_comp', JSON.stringify(avaliacoesSalvas));
-  renderComparador();
-
-  // Toast feedback
-  const t=document.createElement('div');
-  t.textContent='✅ Avaliação salva no comparador!';
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--gold1);color:#fff;padding:.55rem 1.2rem;border-radius:99px;font-size:.82rem;font-weight:600;z-index:9999;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .4s';
-  document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},2200);
-}
-
-function limparComparador(){
-  if(avaliacoesSalvas.length && !confirm('Apagar todas as avaliações salvas?')) return;
-  avaliacoesSalvas=[];
-  localStorage.removeItem('valora_comp');
-  renderComparador();
-}
-
-function renderComparador(){
-  const saved = avaliacoesSalvas || [];
-  // Update badge
-  const badge = document.getElementById('comp-badge');
-  if(badge){ badge.style.display=saved.length?'inline':'none'; badge.textContent=saved.length+'/2'; }
-
-  const grid = document.getElementById('comparador-grid');
-  const hint = document.getElementById('comparador-hint');
-
-  // Comparador removido da página — sem elementos, nada a renderizar
-  if(!grid || !hint) return;
-
-  // Update button label
-  const saveBtn = document.querySelector('[onclick="salvarAvaliacao()"]');
-  if(saveBtn) saveBtn.innerHTML = saved.length>=2
-    ? '🔄 Substituir avaliação mais antiga'
-    : saved.length===1 ? '💾 Salvar 2ª avaliação para comparar' : '💾 Salvar esta avaliação';
-
-  if(saved.length===0){
-    grid.innerHTML=''; hint.style.display='block';
-    hint.textContent='Nenhuma avaliação salva. Calcule um imóvel e clique em "Salvar" para começar.';
-    return;
-  }
-
-  hint.style.display = saved.length<2 ? 'block':'none';
-  hint.textContent   = 'Salve mais uma avaliação para comparar lado a lado.';
-
-  const numVal = s => parseFloat((s||'').replace(/[R$.\s\xa0]/g,'').replace(',','.'))||0;
-
-  const CAMPOS = [
-    {k:'Endereço / Cidade', fn:a=>a.addr, style:'font-size:.7rem;max-width:130px;text-align:right'},
-    {k:'Valor estimado',    fn:a=>a.val,  bold:true},
-    {k:'Faixa de preço',   fn:a=>a.range, style:'font-size:.72rem'},
-    {k:'R$/m²',            fn:a=>a.m2,   diff:true},
-    {k:'Score Valora',     fn:a=>a.score+'/100', diff:true, raw:a=>parseInt(a.score)||0},
-    {k:'Valorização a.a.', fn:a=>a.valz},
-    {k:'Aluguel estimado', fn:a=>a.alug},
-    {k:'Yield bruto',      fn:a=>a.yld},
-    {k:'Salvo em',         fn:a=>`${a.date} às ${a.ts}`, style:'color:var(--text2)'},
-  ];
-
-  grid.innerHTML = saved.map((a,i)=>{
-    const other = saved[1-i];
-    const rows = CAMPOS.map(c=>{
-      let diffHtml='';
-      if(c.diff && other){
-        const va = c.raw ? c.raw(a)      : numVal(c.fn(a));
-        const vb = c.raw ? c.raw(other)  : numVal(c.fn(other));
-        const d  = va-vb;
-        if(d>0) diffHtml=`<span class="comp-diff-better" style="font-size:.72rem;margin-left:.3rem">▲ +${d.toFixed ? Math.abs(d).toFixed(0) : Math.abs(d)}</span>`;
-        if(d<0) diffHtml=`<span class="comp-diff-worse" style="font-size:.72rem;margin-left:.3rem">▼ ${d.toFixed ? d.toFixed(0) : d}</span>`;
-      }
-      return `<div class="comp-side-row">
-        <span>${c.k}</span>
-        <span ${c.style?'style="'+c.style+'"':''} ${c.bold?'style="font-weight:700"':''}>${c.fn(a)}${diffHtml}</span>
-      </div>`;
-    }).join('');
-
-    // Winner badge
-    const getScore = av => parseInt(av.score)||0;
-    const winner = saved.length===2 && i===saved.indexOf(saved.reduce((best,av)=>getScore(av)>getScore(best)?av:best,saved[0]));
-
-    return `<div class="comp-side-card">
-      <h4>
-        Avaliação ${i+1}
-        ${winner?'<span style="background:var(--gold1);color:#fff;font-size:.65rem;padding:.1rem .45rem;border-radius:99px;margin-left:.4rem">✦ Melhor score</span>':''}
-        <small style="font-weight:400;color:var(--text2);float:right">${a.date}</small>
-      </h4>
-      ${rows}
-    </div>`;
-  }).join('');
-}
-
-// Restore comparador from localStorage on page load
 document.addEventListener('DOMContentLoaded', ()=>{
-  // Restaura comparador salvo
-  avaliacoesSalvas = (JSON.parse(localStorage.getItem('valora_comp')||'[]')).map(sanitizeLocalStorageData);
-  if(avaliacoesSalvas.length) renderComparador();
-
-  // Contadores animados de social proof — só rodar após DOM pronto
+  // Contadores animados de social proof
   const spObs = new IntersectionObserver(entries=>{
     entries.forEach(e=>{
       if(e.isIntersecting){
@@ -3637,7 +3520,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 <!-- ══ COOKIE CONSENT ══ -->
 <div id="cookie-banner" class="cookie-flex" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:var(--bg2);border-top:1px solid var(--gborder);padding:.85rem 1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,.2)">
   <p style="font-size:.78rem;color:var(--text2);margin:0;flex:1;min-width:200px">
-    🍪 Usamos cookies para melhorar sua experiência e analisar o uso do site. 
+    🍪 Usamos cookies para melhorar sua experiência e analisar o uso do site.
     <a href="#" onclick="abrirPrivacidade();return false;" style="color:var(--gold1);text-decoration:underline">Política de privacidade</a>
   </p>
   <div style="display:flex;gap:.6rem;flex-shrink:0">
