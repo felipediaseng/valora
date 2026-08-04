@@ -31,47 +31,69 @@ function esc(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function enviarLead(){
+async function enviarLead(){
   const nome  = document.getElementById('lead-nome').value.trim();
   const tel   = document.getElementById('lead-tel').value.trim();
   const email = document.getElementById('lead-email').value.trim();
   const intentEl = document.querySelector('input[name="lead-intent"]:checked');
-  const intent = intentEl ? (intentEl.value==='venda' ? '🏷️ Vender imóvel' : '🔑 Comprar imóvel') : 'não informado';
+  const intentKey = intentEl ? intentEl.value : null;
+  const intent = intentKey === 'venda' ? 'Vender'
+               : intentKey === 'compra' ? 'Comprar'
+               : null;
 
-  // Validação
+  /* ── Validação (espelha a regra de bloqueio 2.7 do backend) ──
+     O e-mail deixou de ser opcional: é o destino da via do cliente do
+     documento. Sem ele o backend recusa a geração. */
   let valido = true;
   const setErr = (id, ok) => {
     document.getElementById(id).style.borderColor = ok ? '' : 'var(--red)';
     if(!ok) valido = false;
   };
-  // Nome: obrigatório, mínimo 2 caracteres
-  setErr('lead-nome', nome.length >= 2);
-  // Telefone: obrigatório, precisa ter 10 ou 11 dígitos (DDD + número)
-  const telDigitos = tel.replace(/\D/g, '');
-  setErr('lead-tel', telDigitos.length >= 10 && telDigitos.length <= 11);
-  // E-mail: opcional, mas se preenchido precisa ter formato válido
   const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  setErr('lead-email', !email || emailRx.test(email));
-  // Consentimento LGPD: obrigatório marcar antes de enviar os dados
+  const telDigitos = tel.replace(/\D/g, '');
+
+  setErr('lead-nome',  nome.length >= 2);
+  setErr('lead-tel',   telDigitos.length >= 10 && telDigitos.length <= 11);
+  setErr('lead-email', emailRx.test(email));
+
   const consentEl = document.getElementById('lead-consent');
   const consentOk = consentEl && consentEl.checked;
   const consentLabel = document.getElementById('lead-consent-label');
   if(consentLabel) consentLabel.style.color = consentOk ? '' : 'var(--red)';
   if(!consentOk) valido = false;
+
+  if(!intent) valido = false;
   if(!valido) return;
 
-  const numeroWhatsApp = CONFIG.WA_LEADS;
-  const cidade  = cidadeKey  || 'não informada';
-  const estado  = estadoKey  || '';
-  const valor   = document.getElementById('r-val')?.textContent || 'não calculado';
-  const score   = document.getElementById('r-score')?.textContent || '-';
+  const btn = document.querySelector('.lead-submit');
+  const btnTxt = btn ? btn.textContent : '';
+  const trava = on => {
+    if(!btn) return;
+    btn.disabled = on;
+    btn.textContent = on ? 'Gerando sua avaliação…' : btnTxt;
+  };
 
-  const msg = encodeURIComponent(
+  const solicitante = {
+    nome: nome,
+    email: email,
+    whatsapp: tel,
+    intencao: intent,
+    consentimento_lgpd: true,
+    data_hora: new Date().toISOString(),
+    origem: document.referrer || 'direto'
+  };
+
+  const numeroWhatsApp = CONFIG.WA_LEADS;
+  const cidade = cidadeKey || 'não informada';
+  const estado = estadoKey || '';
+  const valor  = document.getElementById('r-val')?.textContent || 'não calculado';
+  const score  = document.getElementById('r-score')?.textContent || '-';
+
+  const urlWa = `https://wa.me/${numeroWhatsApp}?text=` + encodeURIComponent(
     `*Novo Lead — Valora*\n\n`+
     `👤 Nome: ${nome}\n`+
     `📱 WhatsApp: ${tel}\n`+
-    `📧 E-mail: ${email||'não informado'}\n`+
-    /* CPF removido por segurança LGPD */
+    `📧 E-mail: ${email}\n`+
     `🎯 Interesse: ${intent}\n\n`+
     `🏠 *Imóvel avaliado*\n`+
     `📍 ${cidade}${estado?' / '+estado:''}\n`+
@@ -80,10 +102,65 @@ function enviarLead(){
     `Aguardando contato de corretor parceiro.`
   );
 
-  const urlWa = `https://wa.me/${numeroWhatsApp}?text=${msg}`;
-  safeOpen(urlWa);
+  /* Sem endpoint configurado ou sem resultado calculado, mantém o
+     comportamento antigo: abre o WhatsApp e encerra. */
+  if(!CONFIG.API_AVALIACAO || !lastResult || typeof lastResult !== 'object'){
+    safeOpen(urlWa);
+    mostrarPendenteEnvio(urlWa, 'lead-form', 'lead-success');
+    return;
+  }
 
-  mostrarPendenteEnvio(urlWa, 'lead-form', 'lead-success');
+  trava(true);
+  try {
+    const resp = await fetch(CONFIG.API_AVALIACAO, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ solicitante: solicitante, imovel: lastResult })
+    });
+    const data = await resp.json().catch(()=>({}));
+
+    if(data.status === 'dados_incompletos'){
+      trava(false);
+      const mapa = {nome:'lead-nome', email:'lead-email', whatsapp:'lead-tel'};
+      const alvo = mapa[data.campo_faltante];
+      if(alvo) setErr(alvo, false);
+      alert(data.mensagem_usuario || 'Revise os dados e tente novamente.');
+      return;
+    }
+
+    if(!resp.ok) throw new Error('Falha na geração da avaliação');
+
+    trava(false);
+    mostrarSucessoAvaliacao(data);
+
+  } catch(e){
+    /* O backend caiu, mas o lead não pode ser perdido: cai para o
+       WhatsApp e avisa que a avaliação chega por e-mail. */
+    console.error('[Valora] falha ao gerar avaliação:', e);
+    trava(false);
+    safeOpen(urlWa);
+    mostrarPendenteEnvio(urlWa, 'lead-form', 'lead-success');
+  }
+}
+
+/* Substitui o formulário pelo cartão de sucesso, com link do PDF quando
+   o backend devolver um. */
+function mostrarSucessoAvaliacao(data){
+  const form = document.getElementById('lead-form');
+  const ok   = document.getElementById('lead-success');
+  if(form) form.style.display = 'none';
+  if(!ok) return;
+
+  const link = data && data.link_pdf
+    ? `<p style="margin-top:.7rem"><a class="gold-txt" href="${esc(data.link_pdf)}" target="_blank" rel="noopener"><strong>Baixar a avaliação em PDF →</strong></a></p>`
+    : '';
+
+  ok.innerHTML = `
+    <div class="ls-icon">📄</div>
+    <h4>Avaliação gerada!</h4>
+    <p>Enviamos sua Avaliação Mercadológica Referencial em PDF para o e-mail informado. Um corretor parceiro entrará em contato pelo WhatsApp em até 2 horas.</p>
+    ${link}`;
+  ok.style.display = 'block';
 }
 
 
@@ -1696,8 +1773,8 @@ footer strong{color:var(--text2)}
       <label for="lead-nome" class="sr-only">Seu nome completo</label>
       <input class="lead-input" type="text" id="lead-nome" placeholder="Seu nome completo *" autocomplete="name">
 
-      <label for="lead-email" class="sr-only">E-mail (opcional)</label>
-      <input class="lead-input" type="email" id="lead-email" placeholder="E-mail (opcional)" autocomplete="email">
+      <label for="lead-email" class="sr-only">Seu melhor e-mail</label>
+      <input class="lead-input" type="email" id="lead-email" placeholder="Seu melhor e-mail *" autocomplete="email">
 
       <label for="lead-tel" class="sr-only">WhatsApp com DDD *</label>
       <input class="lead-input" type="tel" id="lead-tel" placeholder="WhatsApp com DDD (ex: 48 99191-6097) *" inputmode="numeric" pattern="[\d\s\-\(\)]{10,15}" autocomplete="tel">
@@ -1718,7 +1795,7 @@ footer strong{color:var(--text2)}
 
       <label class="lead-consent" for="lead-consent" id="lead-consent-label">
         <input type="checkbox" id="lead-consent">
-        <span>Li e concordo com a <a href="#" onclick="abrirPrivacidade();return false;">Política de Privacidade</a> e autorizo o compartilhamento dos meus dados (nome, WhatsApp e e-mail) com um corretor parceiro para que entre em contato. *</span>
+        <span>Li e concordo com a <a href="#" onclick="abrirPrivacidade();return false;">Política de Privacidade</a>, autorizo o envio da minha Avaliação Mercadológica Referencial por e-mail e o compartilhamento dos meus dados (nome, WhatsApp e e-mail) com um corretor parceiro para que entre em contato. *</span>
       </label>
 
       <button class="lead-submit" type="button" onclick="enviarLead()">Quero ser contatado por um corretor →</button>
@@ -1972,6 +2049,11 @@ const CONFIG = {
   // 5) Domínio de produção — usado para canonical, og:url e JSON-LD.
   //    É O ÚNICO LUGAR onde o domínio precisa ser editado.
   SITE_URL: 'https://calculadoraimobiliaria.com',
+
+  // 5b) Endpoint do backend que gera a Avaliação Mercadológica Referencial.
+  //     Deixe em null para desligar a integração — o site volta ao
+  //     comportamento antigo (só abre o WhatsApp com o resumo do lead).
+  API_AVALIACAO: 'https://api.calculadoraimobiliaria.com/api/avaliacao',
 
   // ── Constantes com prazo de validade — confira antes de publicar ──
   // Antes estavam espalhadas pelo HTML e dentro das funções, o que
@@ -2818,8 +2900,76 @@ function calcular(){
         <span class="dk">${r.k}</span><span class="dv">${r.v}</span>
       </div>`).join('');
 
-    /* SALVA RESULTADO PARA REVISITA DO NAV */
-    lastResult=true;
+    /* SALVA RESULTADO PARA REVISITA DO NAV
+       Antes guardava só `true`. Agora guarda o payload completo que o
+       backend precisa para gerar a Avaliação Mercadológica Referencial —
+       assim enviarLead() não precisa raspar texto formatado do DOM. */
+    const chipsLabels = Array.from(document.querySelectorAll('#chips .chip.on'))
+      .map(c => c.textContent.trim());
+
+    lastResult = {
+      /* Etapa 1 — Localização */
+      estado: estadoKey,
+      cidade: cidadeKey,
+      bairro: bairro || '',
+      tipo_imovel: TIPO_LABEL[tipo] || 'Apartamento',
+      tipo_imovel_key: tipo,
+      padrao_bairro: tier,
+      fator_bairro: mTier,
+      fator_bairro_reconhecido: (_fatorBairro !== null),
+
+      /* Etapa 2 — Imóvel */
+      metragem_util: area,
+      quartos: document.getElementById('f-quartos').value,
+      suites: document.getElementById('f-suites').value,
+      vagas: document.getElementById('f-vagas').value,
+      banheiros: document.getElementById('f-banheiros').value,
+      andar: andar,
+      padrao_acabamento: padrao,
+
+      /* Etapa 3 — Detalhes */
+      idade: idade,
+      conservacao: conserv,
+      infraestrutura: chipsLabels,
+
+      /* Saídas do motor */
+      valor_estimado: total,
+      valor_min: low,
+      valor_max: high,
+      faixa_pct: +(faixa * 100).toFixed(1),
+      valor_m2: m2,
+      score: score,
+      score_label: slabel,
+      variacao_12m: valzBase,
+      aluguel_bruto: aluguel,
+      yield_bruto: +yieldBruto,
+      liquidez: liqLabel,
+      dias_venda: diasEst,
+      demanda_regional: demanda,
+      margem_negociacao_pct: negocMargin,
+      referencia_regional_m2: precoBase,
+      mediana_bairro_m2: Math.round(precoBase * mTier),
+      fator_atributos: +mAtributos.toFixed(4),
+      cenarios_preco: cenarios.map(c => ({
+        rotulo: c.label,
+        pct: c.pct,
+        preco: c.preco,
+        dias: Math.round(diasEst * c.mult),
+        recomendado: !!c.rec
+      })),
+
+      /* Indicadores e financiamento (preenchidos por snapshotFinanciamento) */
+      selic: BCB.selic,
+      ipca: BCB.ipca,
+      igpm: BCB.igpm,
+      data_indicadores: BCB.data || null,
+      financiamento: null,
+
+      /* Metadados */
+      fipe_ref: CONFIG.FIPE_REF,
+      origem: document.referrer || 'direto',
+      data_hora: new Date().toISOString()
+    };
 
     /* ── MAPA + CHART (lazy load libs) ── */
     ensureLeaflet(()=> initMapa(cidadeKey, m2, demanda));
@@ -2838,7 +2988,7 @@ function calcular(){
 }
 
 /* ── BCB + FINANCING API ── */
-let BCB = {selic:null, ipca:null, igpm:null, loaded:false};
+let BCB = {selic:null, ipca:null, igpm:null, data:null, loaded:false};
 let finTotal = 0;
 
 async function fetchBCB(){
@@ -2860,6 +3010,14 @@ async function fetchBCB(){
     // Accumulated IGP-M from 12 monthly values
     const igpmAcc = d3.reduce((a,m)=>a*(1+parseFloat(m.valor.replace(',','.'))/100),1);
     BCB.igpm = ((igpmAcc-1)*100).toFixed(2);
+
+    // Datas-base devolvidas pela própria API — o prompt exige declarar a
+    // competência de cada indicador, e elas não coincidem entre as séries.
+    BCB.data = {
+      selic: d1[0].data || null,
+      ipca:  d2.length ? d2[d2.length-1].data : null,
+      igpm:  d3.length ? d3[d3.length-1].data : null
+    };
 
     BCB.loaded = true;
     renderIndicators();
@@ -2953,6 +3111,31 @@ function recalcFin(){
       </div>
     </div>`;
   }).join('');
+
+  // Snapshot do financiamento para o payload do backend. Recalcula os
+  // mesmos números exibidos acima, em forma de dado e não de HTML.
+  if(lastResult && typeof lastResult === 'object'){
+    lastResult.financiamento = {
+      entrada_pct: +(entrada*100).toFixed(1),
+      entrada_valor: Math.round(finTotal*entrada),
+      valor_financiado: Math.round(P),
+      prazo_meses: meses,
+      sistema: 'Price',
+      linhas: scenarios.map(s=>{
+        const r = s.taxa/100/12;
+        const fac = Math.pow(1+r, meses);
+        const parcela = r===0 ? P/meses : P*(r*fac)/(fac-1);
+        return {
+          nome: s.nm,
+          taxa_aa: +s.taxa.toFixed(2),
+          parcela_price: Math.round(parcela),
+          primeira_parcela_sac: Math.round(P/meses + P*r),
+          juros_totais: Math.round(parcela*meses - P),
+          recomendada: !!s.rec
+        };
+      })
+    };
+  }
 
   // Update selic note if loaded
   if(BCB.loaded){
