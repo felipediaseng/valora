@@ -2908,6 +2908,12 @@ function calcular(){
       .map(c => c.textContent.trim());
 
     lastResult = {
+      /* Identificador da simulação. Serve só para o backend saber que
+         este lead veio daquela simulação e não contá-la como abandono.
+         Não identifica a pessoa — é gerado a cada cálculo. */
+      simulacao_id: (crypto.randomUUID ? crypto.randomUUID()
+                     : 'sim-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10)),
+
       /* Etapa 1 — Localização */
       estado: estadoKey,
       cidade: cidadeKey,
@@ -2984,7 +2990,43 @@ function calcular(){
     document.getElementById('pg-result').classList.add('show');
     atualizarRota('result');
     window.scrollTo({top:0,behavior:'smooth'});
+
+    /* Registra a simulação no backend. Sem nome, e-mail ou telefone —
+       o formulário de contato nem apareceu ainda. Serve para medir quanto
+       tráfego qualificado conclui a simulação e vai embora sem deixar
+       contato. Falha aqui é silenciosa: é telemetria, não pode atrapalhar
+       quem está usando a calculadora. */
+    registrarSimulacao();
   },2700);
+}
+
+/* ── TELEMETRIA DE SIMULAÇÃO ──────────────────────────────────────────
+   Avisa o backend que uma simulação foi concluída. O payload é o mesmo
+   lastResult, que por construção não contém dado pessoal: neste ponto do
+   fluxo o formulário de contato ainda não foi preenchido.
+   Se o lead for enviado depois, o backend cruza pelo simulacao_id e não
+   conta esta simulação como abandono. */
+let _simulacaoRegistrada = null;
+
+function registrarSimulacao(){
+  if(!CONFIG.API_AVALIACAO) return;
+  if(!lastResult || typeof lastResult !== 'object') return;
+  if(_simulacaoRegistrada === lastResult.simulacao_id) return;
+  _simulacaoRegistrada = lastResult.simulacao_id;
+
+  const url = CONFIG.API_AVALIACAO.replace(/\/avaliacao\/?$/, '/simulacao');
+
+  try {
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      keepalive: true,
+      body: JSON.stringify({
+        simulacao_id: lastResult.simulacao_id,
+        imovel: lastResult
+      })
+    }).catch(()=>{});
+  } catch(e){ /* telemetria nunca interrompe o fluxo do usuário */ }
 }
 
 /* ── BCB + FINANCING API ── */
