@@ -2496,19 +2496,39 @@ const VENDA_PADRAO = {simples:.85,medio:1,alto:1.4,luxo:2.8};
 const VENDA_CONSERV = {'Excelente – reformado':.75,'Bom – conservado':1,'Regular – reparos leves':1.35,'Ruim – precisa reforma':2.0};
 
 /* ── Yield bruto estimado a partir do preço do m² da cidade ──────────
-   Relação inversa: quanto mais caro o m², menor o yield. Aferido contra
-   praças conhecidas:
-     Rio Branco  R$ 4.200/m²  → 7,5% (teto)
-     Fortaleza   R$ 9.350/m²  → 6,6%
-     Belo Horiz. R$10.663/m²  → 5,8%
-     São Paulo   R$12.019/m²  → 5,2%
-     Bal. Camb.  R$15.185/m²  → 4,2% (piso)
-   ⚠️ Heurística, não calibração estatística. O ajuste definitivo exige
-   uma base de aluguéis por cidade — hoje o arquivo não tem nenhuma. */
+   Relação inversa: quanto mais caro o m², menor o yield (%). Aferido
+   contra praças conhecidas (aprox.):
+     Rio Branco  R$ 4.200/m²  → ~7,3–8,5%
+     Fortaleza   R$ 9.350/m²  → ~5,3%
+     Belo Horiz. R$10.663/m²  → ~5,0%
+     São Paulo   R$12.019/m²  → ~4,7%
+     Bal. Camb.  R$15.185/m²  → ~4,3% (piso)
+
+   ⚠️ Heurística, não calibração estatística — mesmo aviso de antes.
+
+   FIX (24/08/2026): a versão anterior usava yield = 62000/precoM2Cidade,
+   uma proporção INVERSA EXATA ao preço-base. Como o valor total do imóvel
+   (`total` em calcular()) já é proporcional a precoM2Cidade, multiplicar
+   total pelo yield cancelava o preço-base por completo — o aluguel
+   estimado saía IDÊNTICO em qualquer cidade, para o mesmo imóvel (só
+   variava por metragem/padrão). Bug real, confirmado testando o mesmo
+   imóvel-padrão em 4 capitais: os 4 resultados de aluguel bateram no
+   mesmo valor em R$.
+
+   Correção: expoente ALPHA < 1 em vez de proporção inversa pura (que
+   equivale a expoente 1). Isso preserva a relação "cidade mais cara →
+   yield % menor", mas sem cancelar matematicamente o preço-base do
+   `total` — o aluguel estimado volta a crescer com o valor do imóvel,
+   só que de forma sub-linear (o que também é mais realista: o aluguel
+   não sobe na mesma proporção do preço de compra). */
 const YIELD_PADRAO = {simples:1.06, medio:1.00, alto:0.94, luxo:0.87};
+const YIELD_REF_PRECO_M2 = 6800;  // preço-base de referência (~média Brasil)
+const YIELD_REF_PCT      = 6.0;   // yield (%) nesse preço de referência
+const YIELD_ALPHA         = 0.42; // 1 = proporção inversa pura (causava o bug); quanto menor, menos o preço-base "puxa" o yield para baixo
 
 function yieldEstimado(precoM2Cidade, padraoAcab){
-  const base = 62000 / Math.max(1500, precoM2Cidade || 6800);
+  const precoM2 = Math.max(1500, precoM2Cidade || YIELD_REF_PRECO_M2);
+  const base = YIELD_REF_PCT * Math.pow(YIELD_REF_PRECO_M2 / precoM2, YIELD_ALPHA);
   const aj   = YIELD_PADRAO[padraoAcab] || 1;
   return Math.min(8.5, Math.max(3.5, base * aj));
 }
