@@ -1324,6 +1324,66 @@ footer strong{color:var(--text2)}
     }
   }
   </script>
+
+  <!-- FAQPage: espelha exatamente as perguntas/respostas da seção #faq
+       visível no corpo da página. Se o texto do FAQ mudar, atualize aqui
+       também — o Google penaliza schema que diverge do conteúdo exibido. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Quanto vale meu imóvel?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A Valora estima uma faixa de preço com base em FIPEZAP, Banco Central e características do seu imóvel. Você vê valor mínimo, médio e máximo para decidir como anunciar."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "A avaliação online é confiável?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ela é ótima para ter uma referência rápida e comparar cenários de preço. Para laudo judicial ou negociações complexas, um corretor ou perito ainda é necessário."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "De onde vêm os dados da Valora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Usamos preços médios do FIPEZAP, taxas do Banco Central e ajustes por cidade, padrão de bairro e perfil do imóvel. Nada de \"chute\" baseado em um único anúncio."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Em quanto tempo meu apê pode vender?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "O resultado mostra previsão de tempo de venda em três cenários de preço: mais agressivo, de mercado e conservador, com base em demanda da região."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Preciso falar com corretor para usar a Valora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Não. Você pode usar a ferramenta de forma 100% online e gratuita. Se quiser avançar, aí sim pode se conectar com um corretor parceiro."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "A Valora serve para qualquer cidade?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Hoje focamos em 150+ cidades com dados sólidos de mercado. Isso garante estimativas mais consistentes. Estamos expandindo a base com o tempo."
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
