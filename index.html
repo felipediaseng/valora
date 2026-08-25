@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <!-- frame-ancestors e X-Frame-Options são ignorados em <meta>.
      Configure-os como header HTTP no servidor/CDN. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://unpkg.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.bcb.gov.br; child-src blob:; frame-ancestors 'none';">
+<!-- connect-src inclui api.calculadoraimobiliaria.com porque CONFIG.API_AVALIACAO
+     (mais abaixo) aponta pra esse subdomínio — 'self' NÃO cobre subdomínios
+     diferentes. Se o domínio do backend mudar, atualize os dois lugares
+     juntos (achado de auditoria de segurança, 24/08/2026: sem isso, o
+     fetch() de enviarLead() era bloqueado silenciosamente pelo CSP e o
+     site sempre caía no fallback de WhatsApp, mesmo com backend no ar). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://unpkg.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.bcb.gov.br https://api.calculadoraimobiliaria.com; child-src blob:; frame-ancestors 'none';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valora — Avaliar imóvel online grátis com dados FIPEZAP e Banco Central</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b8902a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='20' fill='%23ede9e0'>v</text></svg>">
@@ -32,6 +38,15 @@ function esc(s){
 }
 
 async function enviarLead(){
+  /* Honeypot: campo invisível que só um bot preencheria. Se vier com
+     conteúdo, finge sucesso (não dá pista pro bot de que foi bloqueado)
+     e encerra sem enviar nada de verdade. */
+  const honeypot = document.getElementById('lead-website');
+  if(honeypot && honeypot.value.trim() !== ''){
+    mostrarSucessoAvaliacao({});
+    return;
+  }
+
   const nome  = document.getElementById('lead-nome').value.trim();
   const tel   = document.getElementById('lead-tel').value.trim();
   const email = document.getElementById('lead-email').value.trim();
@@ -151,8 +166,16 @@ function mostrarSucessoAvaliacao(data){
   if(form) form.style.display = 'none';
   if(!ok) return;
 
-  const link = data && data.link_pdf
-    ? `<p style="margin-top:.7rem"><a class="gold-txt" href="${esc(data.link_pdf)}" target="_blank" rel="noopener"><strong>Baixar a avaliação em PDF →</strong></a></p>`
+  /* Só aceita link_pdf começando com https:// — esc() neutraliza caracteres
+     de HTML, mas não impede um esquema tipo "javascript:..." num href. Isso
+     só seria explorável se o backend fosse comprometido, mas é fácil de
+     fechar (achado de auditoria de segurança, 24/08/2026). rel="noopener
+     noreferrer" evita tanto o vazamento de window.opener quanto o envio
+     do Referer completo pro domínio de destino. */
+  const linkPdfSeguro = (data && typeof data.link_pdf === 'string' && /^https:\/\//i.test(data.link_pdf))
+    ? data.link_pdf : null;
+  const link = linkPdfSeguro
+    ? `<p style="margin-top:.7rem"><a class="gold-txt" href="${esc(linkPdfSeguro)}" target="_blank" rel="noopener noreferrer"><strong>Baixar a avaliação em PDF →</strong></a></p>`
     : '';
 
   ok.innerHTML = `
@@ -256,11 +279,52 @@ function ensureChart(cb){
   document.head.appendChild(s);
 }
 
-// 5) Construir índice no idle (não bloqueia first paint)
+/* ── 6) DADOS REAIS DE TRANSAÇÃO (ITBI aberto) — opcional, same-origin ──
+   Se um arquivo `itbi-referencias.json` existir ao lado deste index.html
+   (mesma origem — o CSP já libera connect-src 'self'), ele é carregado e
+   usado para ajustar o m² estimado com dado real de mercado (transações
+   de ITBI de prefeituras que publicam dados abertos), em vez de depender
+   só do índice agregado FipeZap por cidade.
+
+   Se o arquivo não existir, estiver vazio, ou a cidade/bairro não tiver
+   entrada: o cálculo simplesmente ignora esta etapa. Nada quebra — o
+   comportamento é idêntico ao de hoje. Este arquivo NÃO é gerado
+   automaticamente pelo site (ele não faz scraping nem raspagem de nada):
+   é alimentado por um processo separado (ver coleta_itbi.py) que baixa
+   e processa os portais oficiais de dados abertos das prefeituras.
+   Formato esperado: ver itbi-referencias.example.json. */
+let ITBI_DATA = {};
+let _itbiCarregado = false;
+
+function carregarItbi(){
+  if(_itbiCarregado) return;
+  _itbiCarregado = true;
+  fetch('./itbi-referencias.json', {cache:'no-store'})
+    .then(r => r.ok ? r.json() : null)
+    .then(data => { if(data && typeof data === 'object') ITBI_DATA = data; })
+    .catch(()=>{ /* arquivo ausente ou rede indisponível — segue sem dado real */ });
+}
+
+/* Busca uma referência real de transação para a cidade (e, se possível,
+   o bairro informado). Prioriza o nível de bairro; cai para o nível de
+   cidade quando o bairro não é reconhecido na base carregada. */
+function buscarReferenciaItbi(cidade, bairroTexto){
+  const entradaCidade = ITBI_DATA && ITBI_DATA[cidade];
+  if(!entradaCidade) return null;
+  if(bairroTexto && entradaCidade.bairros){
+    const chave = normBairroCached(bairroTexto);
+    if(entradaCidade.bairros[chave]) return entradaCidade.bairros[chave];
+  }
+  return entradaCidade._cidade || null;
+}
+
+// 5) Construir índice / carregar dados no idle (não bloqueia first paint)
 if('requestIdleCallback' in window){
   requestIdleCallback(()=> buildBairroIndex(), {timeout:2000});
+  requestIdleCallback(()=> carregarItbi(), {timeout:2000});
 } else {
   setTimeout(()=> buildBairroIndex(), 800);
+  setTimeout(()=> carregarItbi(), 800);
 }
 
 /* ════════════════════════════════════════════════════════
@@ -629,6 +693,29 @@ function gerarPDFResultado(){
     <div class="row"><span class="label">Tempo estimado</span>
       <span class="val">${get('tempo-num')} ${get('tempo-unit')}</span></div>
 
+    ${(lastResult && (lastResult.comparavel_informado || lastResult.itbi_referencia)) ? `
+    <!-- AJUSTES APLICADOS -->
+    <h2>🔎 Ajustes aplicados a este resultado</h2>
+    <div style="font-size:.82rem;color:#555;line-height:1.75;padding:.25rem 0">
+      ${lastResult.comparavel_informado ? `
+      <p style="margin-bottom:.5rem">
+        <strong>Comparável informado pelo solicitante:</strong>
+        ${fmt(lastResult.comparavel_informado.valor)}${lastResult.comparavel_informado.area_estimada?' (área não informada — usamos a área do imóvel avaliado como referência)':' para '+lastResult.comparavel_informado.area+'m²'},
+        equivalente a ${fmt(lastResult.comparavel_informado.m2_implicito)}/m².
+        Peso aplicado no cálculo final: ${Math.round(lastResult.comparavel_informado.peso_aplicado*100)}%
+        ${lastResult.comparavel_informado.divergente_do_modelo?' (peso reduzido — valor bem distante da referência regional; trate como indício, não como confirmação).':'.'}
+        ${lastResult.comparavel_informado.observacao?' Observação do solicitante: “'+esc(lastResult.comparavel_informado.observacao)+'”.':''}
+      </p>` : ''}
+      ${lastResult.itbi_referencia ? `
+      <p>
+        <strong>Dado real de transação (ITBI aberto):</strong>
+        mediana de ${fmt(lastResult.itbi_referencia.m2_mediana)}/m²
+        ${lastResult.itbi_referencia.fonte?' — fonte: '+esc(lastResult.itbi_referencia.fonte):''}
+        ${lastResult.itbi_referencia.periodo?' ('+esc(lastResult.itbi_referencia.periodo)+')':''}.
+        Peso aplicado no cálculo final: ${Math.round(lastResult.itbi_referencia.peso_aplicado*100)}%.
+      </p>` : ''}
+    </div>` : ''}
+
     <!-- NOTA DO AVALIADOR -->
     <h2>📝 Observações</h2>
     <div style="font-size:.82rem;color:#555;line-height:1.75;padding:.5rem 0">
@@ -982,7 +1069,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .liq-alta .liquidez-icon{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3)}
 .liq-media .liquidez-icon{background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25)}
 .liq-baixa .liquidez-icon{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25)}
-.liquidez-info{}
 .liquidez-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem}
 .liq-alta .liquidez-label{color:#4ade80}
 .liq-media .liquidez-label{color:#fb923c}
@@ -1294,7 +1380,19 @@ footer strong{color:var(--text2)}
 #exit-modal{animation:slideUp .3s ease}
 @keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
 
-/* ── Testimonials ── */
+/* ── Modal Política de Privacidade (LGPD) — consolidado aqui em
+   25/08/2026; antes vivia num segundo <style> solto perto do HTML do
+   modal, mais abaixo no arquivo. ── */
+.lead-consent{display:flex;gap:.55rem;align-items:flex-start;margin:.4rem 0 .9rem;font-size:.74rem;line-height:1.35;color:var(--text2);cursor:pointer;text-align:left}
+.lead-consent input[type=checkbox]{margin-top:.15rem;flex-shrink:0;width:1rem;height:1rem;accent-color:var(--gold1);cursor:pointer}
+.lead-consent a{color:var(--gold1);text-decoration:underline}
+#priv-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:10001;align-items:center;justify-content:center;padding:1rem}
+#priv-modal{background:var(--bg2);border:1px solid var(--gborder);border-radius:var(--r);max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:2rem;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+#priv-modal h3{font-size:1.3rem;margin-bottom:1rem}
+#priv-modal h4{font-size:.95rem;margin:1.1rem 0 .35rem;color:var(--text)}
+#priv-modal p,#priv-modal li{font-size:.83rem;color:var(--text2);line-height:1.5}
+#priv-modal ul{padding-left:1.2rem;margin:.3rem 0}
+.priv-todo{background:rgba(184,144,42,.12);border:1px dashed var(--gold1);border-radius:var(--rsm);padding:.6rem .8rem;font-size:.78rem;color:var(--text);margin-bottom:1rem}
 </style>
   <!-- Leaflet CSS — leve, carrega sempre para evitar flash no mapa -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
@@ -1630,6 +1728,24 @@ footer strong{color:var(--text2)}
           <span class="chip" role="checkbox" aria-checked="false" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">Depósito/Armários Embutidos</span>
         </div>
       </div>
+      <div class="fg">
+        <div class="fg-title">◆ Conhece um comparável? (opcional)</div>
+        <p style="font-size:.76rem;color:var(--text2);line-height:1.6;margin-bottom:.85rem">
+          Viu outro imóvel parecido (mesmo prédio, mesmo bairro, características semelhantes) anunciado
+          ou vendido recentemente? Isso ajuda a refinar a estimativa — sem obrigação, é só um ajuste fino.
+        </p>
+        <div class="field-row">
+          <div class="field"><label for="f-comp-valor">Valor do comparável (R$)</label>
+            <input type="number" id="f-comp-valor" placeholder="ex: 850000" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field"><label for="f-comp-area">Área do comparável (m²)</label>
+            <input type="number" id="f-comp-area" placeholder="se não souber, deixe em branco" min="1" step="1" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <label for="f-comp-obs">De onde você viu esse imóvel? <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
+          <input type="text" id="f-comp-obs" placeholder="ex: anúncio no mesmo prédio, vizinho vendeu, corretor comentou…" maxlength="140" autocomplete="off">
+        </div>
+        <div class="err-msg" id="comp-err" style="display:none;margin-top:.4rem">Esse valor está muito distante da nossa referência de mercado para a região — vamos usá-lo com peso reduzido no cálculo.</div>
+      </div>
       <div class="form-nav">
         <button class="btn-prev" onclick="prevStep(3)">← Voltar</button>
         <button class="btn-next" onclick="calcular()">✦ Calcular valor e previsão</button>
@@ -1659,6 +1775,7 @@ footer strong{color:var(--text2)}
     <div class="rh-value" id="r-val">—</div>
     <div class="rh-range" id="r-range">—</div>
     <div class="rh-address" id="r-addr">—</div>
+    <div class="rh-ajustes" id="r-ajustes" style="display:none;font-size:.72rem;color:var(--gold2);margin-top:.4rem"></div>
     <div style="display:flex;gap:.6rem;justify-content:center;margin-top:1rem;flex-wrap:wrap">
       <button class="share-btn" onclick="compartilharResultado('whatsapp')" aria-label="Compartilhar no WhatsApp">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
@@ -1807,7 +1924,15 @@ footer strong{color:var(--text2)}
     <div class="box-title">📍 Distribuição de preços na região
       <span style="float:right;font-size:.72rem;font-weight:400;color:var(--text2)">Clique na legenda para filtrar</span>
     </div>
-    <p class="box-sub"><strong>Simulação ilustrativa.</strong> Os pontos representam a
+    <!-- Aviso reforçado como badge visual (não só texto corrido) — os
+         pontos do mapa são simulados matematicamente a partir do preço
+         estimado, não são transações reais. Deixar isso claro evita que o
+         mapa seja confundido com prova de mercado real ao lado do valor
+         calculado (achado de auditoria, 24/08/2026). -->
+    <div style="display:inline-flex;align-items:center;gap:.4rem;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.3);border-radius:var(--radius-full);padding:.3rem .8rem;font-size:.72rem;font-weight:600;color:#fb923c;margin-bottom:.6rem">
+      ⚠️ Dados simulados — não são transações reais
+    </div>
+    <p class="box-sub">Os pontos representam a
       dispersão de preço/m² esperada na região, gerada a partir do preço estimado do seu
       imóvel — não são transações registradas. Comparáveis verificados entram nas próximas versões.</p>
     <div id="valora-map" style="height:280px;border-radius:var(--r);overflow:hidden;margin-top:.75rem;background:var(--bg3)"></div>
@@ -1830,6 +1955,17 @@ footer strong{color:var(--text2)}
     <div class="lead-eyebrow">Quer comprar ou vender um imóvel?</div>
     <h3>Conecte com um corretor<br>parceiro Valora</h3>
     <div class="lead-form" id="lead-form">
+      <!-- Honeypot anti-bot: invisível pra gente (aria-hidden + fora da
+           ordem de tab), mas bots simples que preenchem todo input do
+           formulário caem aqui. Se vier preenchido, enviarLead() finge
+           sucesso e não envia nada (achado de auditoria de segurança,
+           24/08/2026 — mitigação leve de spam, não substitui rate-limit
+           no backend). NÃO remova nem exiba este campo. -->
+      <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+        <label for="lead-website">Deixe em branco</label>
+        <input type="text" id="lead-website" name="website" tabindex="-1" autocomplete="off">
+      </div>
+
       <label for="lead-nome" class="sr-only">Seu nome completo</label>
       <input class="lead-input" type="text" id="lead-nome" placeholder="Seu nome completo *" autocomplete="name">
 
@@ -2113,6 +2249,22 @@ const CONFIG = {
   // 5b) Endpoint do backend que gera a Avaliação Mercadológica Referencial.
   //     Deixe em null para desligar a integração — o site volta ao
   //     comportamento antigo (só abre o WhatsApp com o resumo do lead).
+  //
+  //     ⚠️ REQUISITO DE SEGURANÇA PRA QUEM CONSTRUIR ESSE BACKEND (achado
+  //     de auditoria, 24/08/2026): todo o cálculo em calcular() roda no
+  //     navegador. O payload `imovel` que enviarLead() manda pra cá é só
+  //     um objeto JavaScript comum — qualquer pessoa com DevTools pode
+  //     editar `lastResult.valor_estimado`/`score` antes de clicar em
+  //     enviar. O backend NUNCA deve confiar nesses campos prontos — ele
+  //     precisa RECALCULAR o valor a partir dos dados brutos do imóvel
+  //     (cidade, bairro, área, padrão, idade, etc., que também vêm no
+  //     payload) usando a mesma tabela de multiplicadores do site, e só
+  //     então gerar a Avaliação Mercadológica Referencial. Se o backend
+  //     só formatar em PDF o que recebeu, um valor fabricado no console
+  //     vira um "laudo" oficial repassado a um corretor parceiro.
+  //     Se um dia o domínio deste endpoint mudar, atualize também o
+  //     connect-src da Content-Security-Policy no <head> — os dois
+  //     precisam ficar em sincronia.
   API_AVALIACAO: 'https://api.calculadoraimobiliaria.com/api/avaliacao',
 
   // ── Constantes com prazo de validade — confira antes de publicar ──
@@ -2796,7 +2948,56 @@ function calcular(){
        limitados em separado. Guarda-corpo heurístico, não calibração. */
     const mAtributos = Math.min(1.85, Math.max(0.45, mPad*mTipo*mAnd*mCon*mIda*mVag*mSui*mBan*mAmen));
     const mLocal     = Math.min(2.40, Math.max(0.40, mTier));
-    const m2    = Math.round(precoBase*mAtributos*mLocal);
+    const m2Modelo   = Math.round(precoBase*mAtributos*mLocal);
+
+    /* ── AJUSTE 1: comparável informado pelo usuário (opcional) ──
+       Um único imóvel citado por quem preenche o formulário é dado
+       anedótico, não estatístico — por isso nunca substitui o modelo,
+       só o "puxa" com peso limitado. Se o valor divergir muito (>60%)
+       do que o modelo já estima pra região, reduzimos ainda mais o
+       peso em vez de descartar (pode ser um outlier real, tipo reforma
+       completa ou vista privilegiada — mas não deixamos um dado não
+       verificado dominar o resultado). */
+    const compValorRaw = parseFloat(document.getElementById('f-comp-valor')?.value);
+    const compAreaRaw  = parseFloat(document.getElementById('f-comp-area')?.value);
+    let m2Comparavel = null, m2ComparavelBruto = null, comparavelCapado = false,
+        pesoComparavel = 0, comparavelDivergente = false;
+    if(compValorRaw > 0){
+      const areaComp = (compAreaRaw > 0) ? compAreaRaw : area;
+      m2ComparavelBruto = compValorRaw / areaComp;
+      const desvio = Math.abs(m2ComparavelBruto - m2Modelo) / m2Modelo;
+      comparavelDivergente = desvio > 0.6;
+      pesoComparavel = comparavelDivergente ? 0.15 : 0.35;
+      /* ── TETO DE SANIDADE (achado de auditoria de segurança, 24/08/2026) ──
+         Reduzir o peso não bastava: um valor absurdo digitado aqui ainda
+         dominava a média ponderada, porque o peso multiplica o valor BRUTO,
+         sem limite de magnitude. Isso permitia inflar ou deflacionar o
+         resultado final — que pode virar uma "Avaliação Mercadológica
+         Referencial" repassada a um corretor parceiro — só preenchendo um
+         campo comum do formulário, sem precisar de DevTools. Agora o valor
+         que efetivamente entra na conta é limitado a uma faixa plausível
+         em torno do modelo (0,3x–3x), então mesmo no pior caso o desvio
+         final fica contido. O valor bruto informado continua sendo
+         registrado em lastResult para transparência com o corretor. */
+      m2Comparavel = Math.max(m2Modelo * 0.3, Math.min(m2Modelo * 3, m2ComparavelBruto));
+      comparavelCapado = Math.abs(m2Comparavel - m2ComparavelBruto) > 1;
+    }
+    const compErrEl = document.getElementById('comp-err');
+    if(compErrEl) compErrEl.style.display = comparavelDivergente ? 'block' : 'none';
+
+    /* ── AJUSTE 2: dado real de transação (ITBI aberto), quando disponível ──
+       Dado oficial de transação (não anúncio, não estimativa) pesa mais
+       que o modelo estatístico baseado em índice agregado — mas ainda
+       assim não substitui 100%, porque pode ser uma amostra pequena ou
+       de um período diferente do atual. */
+    const itbiRef = buscarReferenciaItbi(cidadeKey, bairro);
+    const m2Itbi = itbiRef ? itbiRef.medianaM2 : null;
+    const pesoItbi = itbiRef ? 0.50 : 0;
+
+    let somaPesos = 1, somaValores = m2Modelo;
+    if(m2Comparavel){ somaValores += m2Comparavel*pesoComparavel; somaPesos += pesoComparavel; }
+    if(m2Itbi)      { somaValores += m2Itbi*pesoItbi;             somaPesos += pesoItbi; }
+    const m2    = Math.round(somaValores/somaPesos);
     const total = m2*area;
     finTotal = total; // expose for financing calculator
     const faixa = FAIXA[padrao]||.12;
@@ -2870,6 +3071,23 @@ function calcular(){
     const rAddrEl = document.getElementById('r-addr');
     if (rAddrEl) rAddrEl.textContent = (bairro?bairro+' · ':'')+cidadeKey+' · '+estadoKey;
     document.getElementById('r-m2').textContent   = fmt(m2);
+
+    /* Mostra ao usuário quando o resultado foi refinado com o comparável
+       informado e/ou com dado real de transação (ITBI aberto) — dá
+       transparência sobre por que o número pode diferir do que um
+       modelo puramente baseado em índice de cidade daria. */
+    const rAjustesEl = document.getElementById('r-ajustes');
+    if(rAjustesEl){
+      const partes = [];
+      if(m2Comparavel) partes.push('comparável informado por você'+(comparavelDivergente?' (peso reduzido — valor fora do padrão da região)':''));
+      if(m2Itbi) partes.push('dado real de transação ('+ (itbiRef.fonte||'ITBI aberto') + (itbiRef.periodo?', '+itbiRef.periodo:'') +')');
+      if(partes.length){
+        rAjustesEl.textContent = '✓ Ajustado com: ' + partes.join(' + ');
+        rAjustesEl.style.display = 'block';
+      } else {
+        rAjustesEl.style.display = 'none';
+      }
+    }
     const rValzEl = document.getElementById('r-valz');
     if (rValzEl) rValzEl.textContent = (valzBase>=0?'+':'')+valzBase.toFixed(1)+'%';
     const rAlugEl = document.getElementById('r-alug');
@@ -3036,6 +3254,27 @@ function calcular(){
       referencia_regional_m2: precoBase,
       mediana_bairro_m2: Math.round(precoBase * mTier),
       fator_atributos: +mAtributos.toFixed(4),
+
+      /* Ajustes opcionais — comparável do usuário e dado real de ITBI */
+      m2_modelo_antes_ajustes: m2Modelo,
+      comparavel_informado: m2Comparavel ? {
+        valor: compValorRaw,
+        area: (compAreaRaw > 0) ? compAreaRaw : area,
+        area_estimada: !(compAreaRaw > 0),
+        m2_implicito: Math.round(m2Comparavel),
+        m2_implicito_bruto: Math.round(m2ComparavelBruto),
+        capado_por_teto_de_sanidade: comparavelCapado,
+        peso_aplicado: pesoComparavel,
+        divergente_do_modelo: comparavelDivergente,
+        observacao: (document.getElementById('f-comp-obs')?.value || '').trim().slice(0, 140)
+      } : null,
+      itbi_referencia: itbiRef ? {
+        m2_mediana: itbiRef.medianaM2,
+        peso_aplicado: pesoItbi,
+        fonte: itbiRef.fonte || null,
+        periodo: itbiRef.periodo || null,
+        transacoes: itbiRef.transacoes || null
+      } : null,
       cenarios_preco: cenarios.map(c => ({
         rotulo: c.label,
         pct: c.pct,
@@ -3419,6 +3658,11 @@ function resetForm(){
   estadoKey=null;cidadeKey=null;
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   document.getElementById('form-err').style.display='none';
+  const compValorEl=document.getElementById('f-comp-valor'); if(compValorEl) compValorEl.value='';
+  const compAreaEl=document.getElementById('f-comp-area');   if(compAreaEl) compAreaEl.value='';
+  const compObsEl=document.getElementById('f-comp-obs');     if(compObsEl) compObsEl.value='';
+  const compErrEl=document.getElementById('comp-err');       if(compErrEl) compErrEl.style.display='none';
+  const rAjustesEl=document.getElementById('r-ajustes');     if(rAjustesEl) rAjustesEl.style.display='none';
   goTo('calc');
 }
 
@@ -3853,19 +4097,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   </div>
 </div>
 
-<!-- ══ MODAL POLÍTICA DE PRIVACIDADE (LGPD) ══ -->
-<style>
-  .lead-consent{display:flex;gap:.55rem;align-items:flex-start;margin:.4rem 0 .9rem;font-size:.74rem;line-height:1.35;color:var(--text2);cursor:pointer;text-align:left}
-  .lead-consent input[type=checkbox]{margin-top:.15rem;flex-shrink:0;width:1rem;height:1rem;accent-color:var(--gold1);cursor:pointer}
-  .lead-consent a{color:var(--gold1);text-decoration:underline}
-  #priv-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:10001;align-items:center;justify-content:center;padding:1rem}
-  #priv-modal{background:var(--bg2);border:1px solid var(--gborder);border-radius:var(--r);max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:2rem;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.5)}
-  #priv-modal h3{font-size:1.3rem;margin-bottom:1rem}
-  #priv-modal h4{font-size:.95rem;margin:1.1rem 0 .35rem;color:var(--text)}
-  #priv-modal p,#priv-modal li{font-size:.83rem;color:var(--text2);line-height:1.5}
-  #priv-modal ul{padding-left:1.2rem;margin:.3rem 0}
-  .priv-todo{background:rgba(184,144,42,.12);border:1px dashed var(--gold1);border-radius:var(--rsm);padding:.6rem .8rem;font-size:.78rem;color:var(--text);margin-bottom:1rem}
-</style>
+<!-- ══ MODAL POLÍTICA DE PRIVACIDADE (LGPD) ══
+     Estilos deste modal foram consolidados no <style> principal do
+     <head> (limpeza de código, 25/08/2026) — antes viviam num segundo
+     bloco <style> solto aqui, duplicando a convenção do resto do site. -->
 <div id="priv-overlay" onclick="if(event.target===this)fecharPrivacidade()">
   <div id="priv-modal" role="dialog" aria-modal="true" aria-label="Política de Privacidade">
     <button onclick="fecharPrivacidade()" aria-label="Fechar" style="position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;padding:.25rem">✕</button>
