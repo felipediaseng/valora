@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   new IntersectionObserver((es, o) => { if(es.some(e => e.isIntersecting)){ iniciarTurnstile(); o.disconnect(); } }, {rootMargin:'300px'}).observe(alvo);
 });
 
+let _quisCorretor = false;
 async function enviarLead(){
   /* Honeypot: campo invisível que só um bot preencheria. Se vier com
      conteúdo, finge sucesso (não dá pista pro bot de que foi bloqueado)
@@ -100,6 +101,21 @@ async function enviarLead(){
   if(!consentOk) valido = false;
 
   if(!intent) valido = false;
+
+  const perfilEl = document.querySelector('input[name="lead-perfil"]:checked');
+  const prazoEl  = document.querySelector('input[name="lead-prazo"]:checked');
+  const perfil = perfilEl ? perfilEl.value : null;
+  const prazo  = prazoEl  ? prazoEl.value  : null;
+  const marcaGrupo = (id, ok) => {
+    const w = document.getElementById(id);
+    if(w) w.classList.toggle('erro', !ok);
+    if(!ok) valido = false;
+  };
+  marcaGrupo('lead-perfil-wrap', !!perfil);
+  marcaGrupo('lead-prazo-wrap', !!prazo);
+  const corEl = document.querySelector('input[name="lead-corretor"]:checked');
+  const contatoCorretor = corEl ? corEl.value : null;
+  marcaGrupo('lead-corretor-wrap', !!contatoCorretor);
   if(!valido) return;
 
   const btn = document.querySelector('.lead-submit');
@@ -110,11 +126,15 @@ async function enviarLead(){
     btn.textContent = on ? 'Gerando sua avaliação…' : btnTxt;
   };
 
+  _quisCorretor = contatoCorretor === 'Sim';
   const solicitante = {
     nome: nome,
     email: email,
     whatsapp: tel,
     intencao: intent,
+    perfil: perfil,
+    prazo: prazo,
+    contato_corretor: contatoCorretor,
     consentimento_lgpd: true,
     data_hora: new Date().toISOString(),
     origem: document.referrer || 'direto'
@@ -131,12 +151,15 @@ async function enviarLead(){
     `👤 Nome: ${nome}\n`+
     `📱 WhatsApp: ${tel}\n`+
     `📧 E-mail: ${email}\n`+
-    `🎯 Interesse: ${intent}\n\n`+
+    `🎯 Interesse: ${intent}\n`+
+    `🧑 Perfil: ${perfil}\n`+
+    `⏱️ Prazo: ${prazo}\n`+
+    `🤝 Quer corretor da região: ${contatoCorretor}\n\n`+
     `🏠 *Imóvel avaliado*\n`+
     `📍 ${cidade}${estado?' / '+estado:''}\n`+
     `💰 Valor estimado: ${valor}\n`+
     `⭐ Score Valora: ${score}/100\n\n`+
-    `Aguardando contato de corretor parceiro.`
+    (contatoCorretor === 'Sim' ? `Aguardando contato de corretor parceiro.` : `Não deseja contato de corretor.`)
   );
 
   /* Sem endpoint configurado ou sem resultado calculado, mantém o
@@ -161,6 +184,8 @@ async function enviarLead(){
       const mapa = {nome:'lead-nome', email:'lead-email', whatsapp:'lead-tel'};
       const alvo = mapa[data.campo_faltante];
       if(alvo) setErr(alvo, false);
+      const grupo = {perfil:'lead-perfil-wrap', prazo:'lead-prazo-wrap', contato_corretor:'lead-corretor-wrap', intencao:'lead-intent-wrap'}[data.campo_faltante];
+      if(grupo) document.getElementById(grupo)?.classList.add('erro');
       alert(data.mensagem_usuario || 'Revise os dados e tente novamente.');
       return;
     }
@@ -212,7 +237,7 @@ function mostrarSucessoAvaliacao(data){
   ok.innerHTML = `
     <div class="ls-icon">📄</div>
     <h4>Avaliação gerada!</h4>
-    <p>Enviamos sua Avaliação Mercadológica Referencial em PDF para o e-mail informado. Um corretor parceiro entrará em contato pelo WhatsApp em até 2 horas.</p>
+    <p>Enviamos sua Avaliação Mercadológica Referencial em PDF para o e-mail informado.${_quisCorretor ? ' Um corretor parceiro da sua região entrará em contato pelo WhatsApp em até 2 horas.' : ''}</p>
     ${link}`;
   ok.style.display = 'block';
 }
@@ -1165,6 +1190,9 @@ footer strong{color:var(--text2)}
 .lead-form{display:flex;flex-direction:column;gap:.6rem}
 .lead-input{background:var(--bg3);border:1px solid var(--gborder2);border-radius:var(--rxs);padding:.7rem .95rem;font-family:var(--fn);font-size:.87rem;color:var(--text);outline:none;transition:border .2s}
 .lead-input:focus{border-color:var(--gold2)}
+.lead-sub{font-size:.82rem;opacity:.8;margin:.2rem 0 .8rem}
+.lead-intent-wrap.erro .lead-intent-label{color:var(--red)}
+.lead-intent-wrap.erro .intent-opt{border-color:var(--red)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .lead-turnstile{min-height:65px}
 .lead-submit{background:var(--gold-g);color:var(--btn-text);border:none;border-radius:var(--radius-full);padding:.85rem;font-family:var(--fn);font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:var(--shadow-gold)}
@@ -1987,8 +2015,9 @@ footer strong{color:var(--text2)}
   <!-- ══ LEAD CAPTURE ══ -->
   <h2 class="sr-only">Conectar com corretor</h2>
   <div class="lead-card" id="lead-card">
-    <div class="lead-eyebrow">Quer comprar ou vender um imóvel?</div>
-    <h3>Conecte com um corretor<br>parceiro Valora</h3>
+    <div class="lead-eyebrow">Receba a avaliação completa</div>
+    <h3>Cadastre-se para baixar<br>seu laudo em PDF</h3>
+    <p class="lead-sub">O cadastro é gratuito e libera o laudo em PDF, enviado também ao seu e-mail.</p>
     <div class="lead-form" id="lead-form">
       <!-- Honeypot anti-bot: invisível pra gente (aria-hidden + fora da
            ordem de tab), mas bots simples que preenchem todo input do
@@ -2024,14 +2053,39 @@ footer strong{color:var(--text2)}
         </div>
       </div>
 
+      <div class="lead-intent-wrap" id="lead-perfil-wrap">
+        <p class="lead-intent-label">Você é: *</p>
+        <div class="lead-intent-opts">
+          <label class="intent-opt"><input type="radio" name="lead-perfil" value="Pessoa interessada"><span>🙋 Pessoa interessada</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-perfil" value="Corretor"><span>💼 Corretor</span></label>
+        </div>
+      </div>
+
+      <div class="lead-intent-wrap" id="lead-prazo-wrap">
+        <p class="lead-intent-label">Em quanto tempo pretende concretizar? *</p>
+        <div class="lead-intent-opts">
+          <label class="intent-opt"><input type="radio" name="lead-prazo" value="3 meses"><span>3 meses</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-prazo" value="6 meses"><span>6 meses</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-prazo" value="1 ano"><span>1 ano</span></label>
+        </div>
+      </div>
+
+      <div class="lead-intent-wrap" id="lead-corretor-wrap">
+        <p class="lead-intent-label">Gostaria que um corretor da sua região entre em contato? *</p>
+        <div class="lead-intent-opts">
+          <label class="intent-opt"><input type="radio" name="lead-corretor" value="Sim"><span>✅ Sim</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-corretor" value="Não"><span>🚫 Não</span></label>
+        </div>
+      </div>
+
       <label class="lead-consent" for="lead-consent" id="lead-consent-label">
         <input type="checkbox" id="lead-consent">
-        <span>Li e concordo com a <a href="#" onclick="abrirPrivacidade();return false;">Política de Privacidade</a>, autorizo o envio da minha Avaliação Mercadológica Referencial por e-mail e o compartilhamento dos meus dados (nome, WhatsApp e e-mail) com um corretor parceiro para que entre em contato. *</span>
+        <span>Li e concordo com a <a href="#" onclick="abrirPrivacidade();return false;">Política de Privacidade</a>, e autorizo o envio da minha Avaliação Mercadológica Referencial por e-mail. Se eu marcar “Sim” acima, autorizo também o compartilhamento dos meus dados (nome, WhatsApp e e-mail) com um corretor parceiro da minha região para que entre em contato. *</span>
       </label>
 
       <div id="lead-turnstile" class="lead-turnstile" style="display:none"></div>
 
-      <button class="lead-submit" type="button" onclick="enviarLead()">Quero ser contatado por um corretor →</button>
+      <button class="lead-submit" type="button" onclick="enviarLead()">Cadastrar e baixar meu laudo →</button>
       <div class="lead-privacy">🔒 Seus dados são usados apenas para esta finalidade. Sem spam. Você pode solicitar a exclusão a qualquer momento.</div>
     </div>
     <div class="lead-success" id="lead-success">
@@ -4160,13 +4214,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
     <h4>2. Para que usamos</h4>
     <ul>
-      <li>Conectar você a um corretor parceiro que entrará em contato sobre compra/venda.</li>
+      <li>Se você pedir, conectar você a um corretor parceiro da sua região que entrará em contato sobre compra/venda.</li>
       <li>Gerar a estimativa de valor e o laudo do imóvel.</li>
       <li>Medir o uso do site (com seu consentimento).</li>
     </ul>
 
     <h4>3. Compartilhamento</h4>
-    <p>Ao marcar a caixa de consentimento, seus dados de contato são enviados a um corretor parceiro verificado, com a finalidade exclusiva de contatá-lo. Não vendemos seus dados.</p>
+    <p>Seus dados de contato só são enviados a um corretor parceiro verificado se você responder “Sim” à pergunta sobre contato de corretor, com a finalidade exclusiva de contatá-lo. Não vendemos seus dados.</p>
 
     <h4>4. Base legal</h4>
     <p>O tratamento se baseia no seu <strong>consentimento</strong> (art. 7º, I, da LGPD), que você pode revogar a qualquer momento.</p>
