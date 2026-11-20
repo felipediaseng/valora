@@ -842,6 +842,8 @@ footer strong{color:var(--text2)}
 .lead-form{display:flex;flex-direction:column;gap:.6rem}
 .lead-input{background:var(--bg3);border:1px solid var(--gborder2);border-radius:var(--rxs);padding:.7rem .95rem;font-family:var(--fn);font-size:.87rem;color:var(--text);outline:none;transition:border .2s}
 .lead-input:focus{border-color:var(--gold2)}
+/* Perguntas rápidas e "Por que começar" só fazem sentido na página inicial */
+body:not(:has(#pg-home.on)) #faq,body:not(:has(#pg-home.on)) #why-valora{display:none}
 .lead-grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem .8rem}
 .lead-grid .lead-intent-wrap{margin:0}
 .lead-grid .lead-intent-label{font-size:.72rem;margin-bottom:.25rem}
