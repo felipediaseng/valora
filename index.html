@@ -384,7 +384,7 @@ if('requestIdleCallback' in window){
 }
 
 /* ════════════════════════════════════════════════════════
-   CAPTAÇÃO DE LEADS — Social Proof, Exit Intent, Share
+   CAPTAÇÃO DE LEADS — Social Proof, Share
 ════════════════════════════════════════════════════════ */
 
 /* ── Contador animado social proof ── */
@@ -412,86 +412,6 @@ function animarContador(el){
     el.textContent = Math.round(current).toLocaleString('pt-BR');
     if(current>=target) clearInterval(timer);
   }, duration/60);
-}
-
-/* ── Exit Intent ── */
-let _exitShown = false;
-let _exitDelay = null;
-
-document.addEventListener('mouseleave', e=>{
-  if(e.clientY <= 5 && !_exitShown){
-    // Only show if user has interacted (started form or viewed result)
-    const hasInteracted = document.getElementById('pg-result')?.classList.contains('show')
-      || document.getElementById('pg-calc')?.classList.contains('on');
-    if(!hasInteracted) return;
-    if(_exitDelay) clearTimeout(_exitDelay);
-    _exitDelay = setTimeout(()=>{
-      _exitShown = true;
-      document.getElementById('exit-overlay').style.display = 'flex';
-    }, 200);
-  }
-});
-
-// Mobile: back button / scroll up fast as exit signal
-let _lastScrollY = 0, _exitScrollTries = 0, _scrollTick = false;
-window.addEventListener('scroll', ()=>{
-  if(_scrollTick) return;          // ignora enquanto um frame já está agendado
-  _scrollTick = true;
-  requestAnimationFrame(()=>{
-    const sy = window.scrollY;
-    if(sy < _lastScrollY - 80 && !_exitShown){
-      _exitScrollTries++;
-      if(_exitScrollTries >= 2){
-        const pg = document.getElementById('pg-result');
-        if(pg?.classList.contains('show')){
-          _exitShown = true;
-          document.getElementById('exit-overlay').style.display='flex';
-        }
-      }
-    }
-    _lastScrollY = sy;
-    _scrollTick = false;
-  });
-}, {passive:true});
-
-function fecharExitPopup(){
-  document.getElementById('exit-overlay').style.display='none';
-}
-
-function capturarEmailExit(){
-  const email = document.getElementById('exit-email').value.trim();
-  const _emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if(!email || !_emailRx.test(email)){
-    document.getElementById('exit-email').style.borderColor='var(--red)';
-    return;
-  }
-  // Consentimento LGPD: obrigatório marcar antes de enviar o e-mail
-  const consentEl = document.getElementById('exit-consent');
-  const consentLabel = document.getElementById('exit-consent-label');
-  if(!consentEl || !consentEl.checked){
-    if(consentLabel) consentLabel.style.color = 'var(--red)';
-    return;
-  }
-  if(consentLabel) consentLabel.style.color = '';
-  // Abre WhatsApp com e-mail do lead
-  const numWA = CONFIG.WA_LEADS;
-  const val  = document.getElementById('r-val')?.textContent||'não calculado';
-  const addr = document.getElementById('r-addr')?.textContent||'não informado';
-  const msg  = encodeURIComponent(
-    `*Lead Valora — Email Exit*\n\n`+
-    `📧 E-mail: ${email}\n`+
-    `🏠 Imóvel: ${addr}\n`+
-    `💰 Valor estimado: ${val}\n\n`+
-    `Solicita receber resumo da avaliação por e-mail.`
-  );
-  safeOpen(`https://wa.me/${numWA}?text=${msg}`);
-  fecharExitPopup();
-  // Toast
-  const t=document.createElement('div');
-  t.textContent='✅ Dados enviados! Entraremos em contato em breve.';
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--gold1);color:#fff;padding:.55rem 1.4rem;border-radius:99px;font-size:.82rem;font-weight:600;z-index:9999;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.3)';
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),3000);
 }
 
 /* ── Compartilhar Resultado ── */
@@ -554,274 +474,6 @@ function abrirPrivacidade(){
 function fecharPrivacidade(){
   const o=document.getElementById('priv-overlay');
   if(o) o.style.display='none';
-}
-
-/* ════════════════════════════════════════════════════════
-   PDF — Laudo em texto formatado (window.print fallback)
-════════════════════════════════════════════════════════ */
-function gerarPDFResultado(){
-  const get = id => (document.getElementById(id)||{}).textContent||'—';
-  const cidade  = cidadeKey||'não informada';
-  const estado  = estadoKey||'';
-  const now = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-
-  /* ── Captura dados do formulário ── */
-  const area    = document.getElementById('f-area')?.value||'—';
-  const quartos = document.getElementById('f-quartos')?.value||'—';
-  const suites  = document.getElementById('f-suites')?.value||'0';
-  const vagas   = document.getElementById('f-vagas')?.value||'0';
-  const banhos  = document.getElementById('f-banheiros')?.value||'—';
-  const andarEl = document.getElementById('f-andar');
-  const andar   = andarEl?.options[andarEl.selectedIndex]?.text||'—';
-  const conservEl = document.getElementById('f-conserv');
-  const conserv = conservEl?.options[conservEl.selectedIndex]?.text||'—';
-  const idadeEl = document.getElementById('f-idade');
-  const idade   = idadeEl?.options[idadeEl.selectedIndex]?.text||'—';
-  const bairro  = esc(document.getElementById('f-bairro')?.value||'não informado');
-  const tipoEl  = document.getElementById('f-tipo');
-  const tipoTxt = tipoEl?.options[tipoEl.selectedIndex]?.text||'Apartamento';
-  /* Padrão de acabamento */
-  const padraosIds = ['simples','medio','alto','luxo'];
-  const padraosLabel = {simples:'Simples',medio:'Médio',alto:'Alto',luxo:'Luxo'};
-  const padrao = padraosIds.find(p=>document.getElementById('pc-'+p)?.classList.contains('on'))||'médio';
-  const padraoLabel = padraosLabel[padrao]||'Médio';
-
-  /* Padrão do bairro (tier) */
-  const tiers = ['periferico','popular','medio','nobre','premium'];
-  const tierLabel = {'periferico':'Periférico','popular':'Popular','medio':'Médio','nobre':'Nobre','premium':'Premium'};
-  const tier = tiers.find(t=>document.getElementById('tc-'+t)?.classList.contains('on'))||'medio';
-  const tierStr = tierLabel[tier]||'Médio';
-
-  /* Diferenciais selecionados */
-  const chips = Array.from(document.querySelectorAll('#chips .chip.on')).map(c=>c.textContent.trim());
-  const chipsStr = chips.length ? chips.join(', ') : 'Nenhum selecionado';
-
-  const suitesTxt  = suites==='0'||suites===0 ? 'Sem suíte' : suites+' suíte(s)';
-  const vagasTxt   = vagas==='0'||vagas===0   ? 'Sem vaga'  : vagas+(parseInt(vagas)===1?' vaga':' vagas');
-
-  const conteudo = `
-    <html><head><title>Laudo Valora — ${cidade}</title>
-    <meta charset="utf-8">
-    <style>
-      *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:Georgia,serif;max-width:700px;margin:40px auto;color:#1a1a1a;line-height:1.6;padding:0 16px}
-      .header{border-bottom:3px solid #c8a032;padding-bottom:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-end}
-      .header-logo{font-size:1.6rem;font-style:italic;color:#c8a032;letter-spacing:-.02em}
-      .header-meta{font-size:.78rem;color:#888;text-align:right}
-      h2{font-size:1rem;color:#8a6e1e;margin:1.6rem 0 .6rem;border-bottom:1px solid #e0d0a0;padding-bottom:.3rem;text-transform:uppercase;letter-spacing:.06em}
-      .highlight{background:#fffbee;border:1px solid #e0c860;border-radius:8px;padding:1.2rem 1.4rem;margin:1rem 0;display:flex;align-items:center;gap:1.5rem}
-      .hl-val{font-size:2.2rem;font-weight:700;color:#1a1a1a;line-height:1}
-      .hl-range{font-size:.82rem;color:#666;margin-top:.3rem}
-      .hl-label{font-size:.72rem;color:#8a6e1e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.25rem}
-      .row{display:flex;justify-content:space-between;align-items:flex-start;padding:.45rem 0;border-bottom:1px solid #f0e8d0;gap:.5rem}
-      .row:last-child{border-bottom:none}
-      .label{color:#666;font-size:.83rem;flex-shrink:0}
-      .val{font-weight:700;font-size:.83rem;text-align:right}
-      .badge{display:inline-block;padding:.15rem .55rem;border-radius:99px;font-size:.72rem;font-weight:700;margin-left:.3rem}
-      .badge-blue{background:#dbeafe;color:#1e40af}
-      .imovel-card{background:#f8f5ef;border:1px solid #e0d5c0;border-radius:8px;padding:1rem 1.2rem;margin:.8rem 0}
-      .imovel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem}
-      .imovel-item{background:#fff;border:1px solid #e8e0d0;border-radius:6px;padding:.5rem .6rem;text-align:center}
-      .imovel-icon{font-size:1.1rem;display:block;margin-bottom:.2rem}
-      .imovel-val{font-size:.9rem;font-weight:700;color:#1a1a1a}
-      .imovel-lbl{font-size:.65rem;color:#888;margin-top:.1rem}
-      .chips-wrap{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
-      .chip-tag{background:#f3eedd;border:1px solid #d4b868;border-radius:99px;padding:.18rem .6rem;font-size:.72rem;color:#7a5c1e}
-      .score-desc{font-size:.82rem;color:#555}
-      .footer{margin-top:2.5rem;font-size:.72rem;color:#999;border-top:1px solid #ddd;padding-top:1rem;line-height:1.7}
-      .footer strong{color:#8a6e1e}
-      @media print{
-        body{margin:10px auto}
-        a[href]:after{content:" (" attr(href) ")"}
-      }
-    </style></head>
-    <body>
-
-    <div class="header">
-      <div>
-        <div class="header-logo">✦ valora</div>
-        <div style="font-size:.75rem;color:#888;margin-top:.2rem">Laudo de Avaliação Imobiliária</div>
-      </div>
-      <div class="header-meta">
-        Gerado em ${now}<br>
-        calculadoraimobiliaria.com
-      </div>
-    </div>
-
-    <!-- VALOR ESTIMADO -->
-    <div class="highlight">
-      <div style="flex:1">
-        <div class="hl-label">Valor estimado de venda</div>
-        <div class="hl-val">${get('r-val')}</div>
-        <div class="hl-range">Faixa: ${get('r-range')}</div>
-      </div>
-      <div style="text-align:right">
-        <div class="hl-label">Preço/m²</div>
-        <div style="font-size:1.2rem;font-weight:700">${get('r-m2')}</div>
-        <div style="font-size:.72rem;color:#888">mercado local</div>
-      </div>
-    </div>
-
-    <!-- IDENTIFICAÇÃO DO IMÓVEL -->
-    <h2>📍 Identificação do Imóvel</h2>
-    <div class="imovel-card">
-      <div class="row">
-        <span class="label">Tipo de imóvel</span>
-        <span class="val">${tipoTxt}</span>
-      </div>
-      <div class="row">
-        <span class="label">Cidade / Estado</span>
-        <span class="val">${cidade}${estado?' — '+estado:''}</span>
-      </div>
-      <div class="row">
-        <span class="label">Bairro</span>
-        <span class="val">${bairro||'não informado'} <span class="badge badge-blue">${tierStr}</span></span>
-      </div>
-      <div class="row">
-        <span class="label">Endereço / Referência</span>
-        <span class="val">${get('r-addr')}</span>
-      </div>
-
-      <!-- GRID DE CARACTERÍSTICAS -->
-      <div class="imovel-grid">
-        <div class="imovel-item">
-          <span class="imovel-icon">🛏️</span>
-          <div class="imovel-val">${quartos}</div>
-          <div class="imovel-lbl">Quarto${parseInt(quartos)!==1?'s':''}</div>
-        </div>
-        <div class="imovel-item">
-          <span class="imovel-icon">🛁</span>
-          <div class="imovel-val">${banhos}</div>
-          <div class="imovel-lbl">Banheiro${parseInt(banhos)!==1?'s':''}</div>
-        </div>
-        <div class="imovel-item">
-          <span class="imovel-icon">🏠</span>
-          <div class="imovel-val">${suitesTxt}</div>
-          <div class="imovel-lbl">Suíte(s)</div>
-        </div>
-        <div class="imovel-item">
-          <span class="imovel-icon">🚗</span>
-          <div class="imovel-val">${vagasTxt}</div>
-          <div class="imovel-lbl">Garagem</div>
-        </div>
-        <div class="imovel-item">
-          <span class="imovel-icon">📐</span>
-          <div class="imovel-val">${area}m²</div>
-          <div class="imovel-lbl">Área útil</div>
-        </div>
-        <div class="imovel-item">
-          <span class="imovel-icon">🏢</span>
-          <div class="imovel-val">${andar}</div>
-          <div class="imovel-lbl">Andar</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:1rem;margin-top:.75rem;flex-wrap:wrap">
-        <div><span style="font-size:.72rem;color:#888">Padrão de acabamento:</span> <strong>${padraoLabel}</strong></div>
-        <div><span style="font-size:.72rem;color:#888">Conservação:</span> <strong>${conserv}</strong></div>
-        <div><span style="font-size:.72rem;color:#888">Idade:</span> <strong>${idade}</strong></div>
-      </div>
-
-      ${chips.length?`
-      <div style="margin-top:.75rem">
-        <div style="font-size:.72rem;color:#888;margin-bottom:.35rem">Diferenciais / Infraestrutura:</div>
-        <div class="chips-wrap">
-          ${chips.map(c=>`<span class="chip-tag">${c}</span>`).join('')}
-        </div>
-      </div>`:''}
-    </div>
-
-    <!-- INDICADORES -->
-    <h2>📊 Indicadores de Valor</h2>
-    <div class="row"><span class="label">Score Valora</span>
-      <span class="val">${get('r-score')}<span style="color:#888">/100</span></span></div>
-    <div class="row"><span class="label">Preço estimado/m²</span>
-      <span class="val">${get('r-m2')}</span></div>
-    <div class="row"><span class="label">Variação registrada (12 meses)</span>
-      <span class="val">${get('r-valz')}</span></div>
-    <div class="row"><span class="label">Aluguel estimado/mês</span>
-      <span class="val">${get('r-alug')}</span></div>
-    <div class="row"><span class="label">Yield bruto anual</span>
-      <span class="val">${get('r-yield')}</span></div>
-
-    <!-- PREVISÃO DE VENDA -->
-    <h2>⏱️ Previsão de Venda</h2>
-    <div class="row"><span class="label">Liquidez de mercado</span>
-      <span class="val">${get('liq-label')}</span></div>
-    <div class="row"><span class="label">Tempo estimado</span>
-      <span class="val">${get('tempo-num')} ${get('tempo-unit')}</span></div>
-
-    ${(lastResult && (lastResult.comparavel_informado || lastResult.itbi_referencia)) ? `
-    <!-- AJUSTES APLICADOS -->
-    <h2>🔎 Ajustes aplicados a este resultado</h2>
-    <div style="font-size:.82rem;color:#555;line-height:1.75;padding:.25rem 0">
-      ${lastResult.comparavel_informado ? `
-      <p style="margin-bottom:.5rem">
-        <strong>Comparável informado pelo solicitante:</strong>
-        ${fmt(lastResult.comparavel_informado.valor)}${lastResult.comparavel_informado.area_estimada?' (área não informada — usamos a área do imóvel avaliado como referência)':' para '+lastResult.comparavel_informado.area+'m²'},
-        equivalente a ${fmt(lastResult.comparavel_informado.m2_implicito)}/m².
-        Peso aplicado no cálculo final: ${Math.round(lastResult.comparavel_informado.peso_aplicado*100)}%
-        ${lastResult.comparavel_informado.divergente_do_modelo?' (peso reduzido — valor bem distante da referência regional; trate como indício, não como confirmação).':'.'}
-        ${lastResult.comparavel_informado.observacao?' Observação do solicitante: “'+esc(lastResult.comparavel_informado.observacao)+'”.':''}
-      </p>` : ''}
-      ${lastResult.itbi_referencia ? `
-      <p>
-        <strong>Dado real de transação (ITBI aberto):</strong>
-        mediana de ${fmt(lastResult.itbi_referencia.m2_mediana)}/m²
-        ${lastResult.itbi_referencia.fonte?' — fonte: '+esc(lastResult.itbi_referencia.fonte):''}
-        ${lastResult.itbi_referencia.periodo?' ('+esc(lastResult.itbi_referencia.periodo)+')':''}.
-        Peso aplicado no cálculo final: ${Math.round(lastResult.itbi_referencia.peso_aplicado*100)}%.
-      </p>` : ''}
-    </div>` : ''}
-
-    <!-- NOTA DO AVALIADOR -->
-    <h2>📝 Observações</h2>
-    <div style="font-size:.82rem;color:#555;line-height:1.75;padding:.5rem 0">
-      Esta avaliação foi gerada automaticamente com base nos dados informados pelo
-      usuário e nos indicadores de mercado do período. O valor estimado representa
-      uma <strong>faixa de referência</strong> baseada em dados agregados do FipeZAP e Banco
-      Central, considerando localização, padrão do imóvel e condições econômicas.
-      Para fins de negociação, financiamento ou processo judicial, recomenda-se a
-      elaboração de laudo técnico por profissional habilitado (CRECI/COFECI),
-      conforme <strong>NBR 14653</strong>.
-    </div>
-
-    <div class="footer">
-      <strong>Fonte dos dados:</strong> FipeZAP ${CONFIG.FIPE_REF} · Banco Central do Brasil (SGS séries 432, 433, 189) ·
-      SECOVI/SP · Dados regionais de portais imobiliários (ZAP, Viva Real, Quinto Andar).<br>
-      <strong>Aviso legal:</strong> Estimativa com finalidade informativa. Não substitui laudo técnico (NBR 14653).
-      Yield exibido é <em>bruto</em> — o líquido pode ser 30–40% menor após IR, vacância e custos.<br>
-      calculadoraimobiliaria.com · ${now}
-    </div>
-
-    </body></html>`;
-
-  // Usar Blob URL em vez de document.write (mais seguro, evita XSS no popup)
-  try {
-    const blob = new Blob([conteudo], {type:'text/html;charset=utf-8'});
-    const blobUrl = URL.createObjectURL(blob);
-    const w = window.open(blobUrl,'_blank','width=820,height=960');
-    if(!w){ alert('Permita pop-ups para gerar o laudo.'); URL.revokeObjectURL(blobUrl); return; }
-    w.focus();
-
-    /* Blob URLs carregam quase instantaneamente: o 'load' pode já ter
-       disparado antes do listener. Daí a checagem de readyState. */
-    let jaImprimiu = false;
-    const imprimir = ()=>{
-      if(jaImprimiu) return;
-      jaImprimiu = true;
-      try{ w.focus(); w.print(); }catch(e){ console.warn('[Valora] print falhou', e); }
-      setTimeout(()=> URL.revokeObjectURL(blobUrl), 1000);
-    };
-    if(w.document && w.document.readyState === 'complete'){
-      setTimeout(imprimir, 300);
-    } else {
-      w.addEventListener('load', ()=> setTimeout(imprimir, 300));
-    }
-    setTimeout(()=>{ if(!jaImprimiu) URL.revokeObjectURL(blobUrl); }, 15000);
-  } catch(e) {
-    alert('Erro ao gerar PDF. Tente novamente.');
-  }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1439,8 +1091,6 @@ footer strong{color:var(--text2)}
 .share-btn:hover{background:var(--bg4,rgba(200,160,50,.1));border-color:var(--gold1)}
 
 /* ── Exit Popup ── */
-#exit-overlay.open{display:flex!important}
-#exit-modal{animation:slideUp .3s ease}
 @keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* ── Modal Política de Privacidade (LGPD) — consolidado aqui em
@@ -1851,12 +1501,6 @@ footer strong{color:var(--text2)}
     </div>
   </div>
 
-  <!-- PDF Download -->
-  <div style="text-align:center;margin:.5rem 0 1rem">
-    <button class="share-btn" onclick="gerarPDFResultado()" style="font-size:.82rem;padding:.55rem 1.1rem;border-color:var(--gold1);color:var(--gold1)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Baixar laudo em PDF
-    </button>
   </div>
 
   <div class="score-card">
@@ -4170,25 +3814,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   <div style="display:flex;gap:.6rem;flex-shrink:0">
     <button onclick="aceitarCookies()" class="hero-cta" style="font-size:.78rem;padding:.45rem 1rem">Aceitar</button>
     <button onclick="recusarCookies()" style="font-size:.78rem;padding:.45rem 1rem;background:none;border:1px solid var(--gborder);border-radius:var(--rsm);color:var(--text2);cursor:pointer">Só essenciais</button>
-  </div>
-</div>
-<!-- ══ EXIT INTENT POPUP ══ -->
-<div id="exit-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:10000;align-items:center;justify-content:center">
-  <div id="exit-modal" style="background:var(--bg2);border:1px solid var(--gborder);border-radius:var(--r);max-width:420px;width:90%;margin:auto;padding:2rem;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.5)">
-    <button onclick="fecharExitPopup()" style="position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;padding:.25rem">✕</button>
-    <div style="font-size:2rem;margin-bottom:.5rem">⚡</div>
-    <h3 style="font-size:1.25rem;margin-bottom:.5rem">Antes de sair — receba sua avaliação por e-mail</h3>
-    <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.25rem">Informe seu e-mail e enviamos um resumo com o valor estimado, score e dicas de valorização. Grátis.</p>
-    <input id="exit-email" type="email" placeholder="seu@email.com"
-      style="width:100%;box-sizing:border-box;padding:.65rem .9rem;border-radius:var(--rsm);border:1px solid var(--gborder);background:var(--bg3);color:var(--text);font-size:.9rem;margin-bottom:.75rem">
-    <label class="lead-consent" for="exit-consent" id="exit-consent-label">
-      <input type="checkbox" id="exit-consent">
-      <span>Concordo em receber minha avaliação por e-mail e com a <a href="#" onclick="abrirPrivacidade();return false;">Política de Privacidade</a>. *</span>
-    </label>
-    <button class="hero-cta" style="width:100%;font-size:.9rem;padding:.75rem" onclick="capturarEmailExit()">
-      Receber minha avaliação grátis →
-    </button>
-    <p style="font-size:.72rem;color:var(--text2);margin-top:.6rem;text-align:center">🔒 Sem spam. Você pode cancelar a qualquer momento.</p>
   </div>
 </div>
 
