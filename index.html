@@ -231,7 +231,7 @@ function mostrarSucessoAvaliacao(data){
   const linkPdfSeguro = (data && typeof data.link_pdf === 'string' && /^https:\/\//i.test(data.link_pdf))
     ? data.link_pdf : null;
   const link = linkPdfSeguro
-    ? `<p style="margin-top:.7rem"><a class="gold-txt" href="${esc(linkPdfSeguro)}" target="_blank" rel="noopener noreferrer"><strong>Baixar a avaliação em PDF →</strong></a></p>`
+    ? `<p style="margin-top:.8rem"><a class="btn-gold" style="display:inline-block;text-decoration:none;padding:.65rem 1.4rem" href="${esc(linkPdfSeguro)}" rel="noopener noreferrer"><strong>Baixar meu laudo em PDF ↓</strong></a></p><p style="font-size:.72rem">Se o download não começou sozinho, use o botão acima.</p>`
     : '';
 
   ok.innerHTML = `
@@ -240,6 +240,17 @@ function mostrarSucessoAvaliacao(data){
     <p>Enviamos sua Avaliação Mercadológica Referencial em PDF para o e-mail informado.${_quisCorretor ? ' Um corretor parceiro da sua região entrará em contato pelo WhatsApp em até 2 horas.' : ''}</p>
     ${link}`;
   ok.style.display = 'block';
+
+  /* Inicia o download sozinho. O servidor responde com Content-Disposition:
+     attachment, então a página não sai do lugar. O botão acima é o plano B
+     para navegadores que bloqueiem o início automático. */
+  if(linkPdfSeguro){
+    try{
+      const a = document.createElement('a');
+      a.href = linkPdfSeguro; a.rel = 'noopener noreferrer'; a.style.display = 'none';
+      document.body.appendChild(a); a.click(); a.remove();
+    }catch(e){}
+  }
 }
 
 
@@ -3511,8 +3522,8 @@ function mostrarPendenteEnvio(urlWa, idFormWrap, idSuccess){
   box.style.cssText='margin-top:1rem;padding:.9rem 1rem;border:1px solid var(--gborder);'+
     'border-radius:var(--rsm);background:var(--bg3);font-size:.82rem;line-height:1.55';
   box.innerHTML =
-    '<strong>Abrimos o WhatsApp com sua mensagem.</strong><br>'+
-    '<span style="color:var(--text2)">Toque em <b>enviar</b> lá para concluir o cadastro. '+
+    '<strong>Não conseguimos gerar o PDF agora.</strong><br>'+
+    '<span style="color:var(--text2)">Abrimos o WhatsApp com seus dados: toque em <b>enviar</b> lá para concluir o cadastro e receber o laudo. '+
     'Se a janela não abriu, use o botão abaixo.</span>'+
     '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem">'+
       '<button type="button" class="btn-gold" id="pe-reabrir">Reabrir WhatsApp</button>'+
