@@ -842,7 +842,12 @@ footer strong{color:var(--text2)}
 .lead-form{display:flex;flex-direction:column;gap:.6rem}
 .lead-input{background:var(--bg3);border:1px solid var(--gborder2);border-radius:var(--rxs);padding:.7rem .95rem;font-family:var(--fn);font-size:.87rem;color:var(--text);outline:none;transition:border .2s}
 .lead-input:focus{border-color:var(--gold2)}
-.lead-sub{font-size:.82rem;opacity:.8;margin:.2rem 0 .8rem}
+.lead-grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem .8rem}
+.lead-grid .lead-intent-wrap{margin:0}
+.lead-grid .lead-intent-label{font-size:.72rem;margin-bottom:.25rem}
+.lead-grid .lead-intent-opts{gap:.35rem;flex-wrap:nowrap}
+.lead-grid .intent-opt{min-width:0;padding:.38rem .5rem;font-size:.78rem;justify-content:center;text-align:center}
+@media(max-width:480px){.lead-grid{grid-template-columns:1fr}}
 .lead-intent-wrap.erro .lead-intent-label{color:var(--red)}
 .lead-intent-wrap.erro .intent-opt{border-color:var(--red)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -1661,7 +1666,6 @@ footer strong{color:var(--text2)}
   <div class="lead-card" id="lead-card">
     <div class="lead-eyebrow">Receba a avaliação completa</div>
     <h3>Cadastre-se para baixar<br>seu laudo em PDF</h3>
-    <p class="lead-sub">O cadastro é gratuito e libera o laudo em PDF, enviado também ao seu e-mail.</p>
     <div class="lead-form" id="lead-form">
       <!-- Honeypot anti-bot: invisível pra gente (aria-hidden + fora da
            ordem de tab), mas bots simples que preenchem todo input do
@@ -1683,16 +1687,17 @@ footer strong{color:var(--text2)}
       <label for="lead-tel" class="sr-only">WhatsApp com DDD *</label>
       <input class="lead-input" type="tel" id="lead-tel" placeholder="WhatsApp com DDD (ex: 48 99191-6097) *" inputmode="numeric" pattern="[\d\s\-\(\)]{10,15}" autocomplete="tel">
 
+      <div class="lead-grid">
       <div class="lead-intent-wrap">
         <p class="lead-intent-label">Você quer:</p>
         <div class="lead-intent-opts">
           <label class="intent-opt" id="intent-venda">
             <input type="radio" name="lead-intent" value="venda" checked>
-            <span>🏷️ Vender meu imóvel</span>
+            <span>Vender</span>
           </label>
           <label class="intent-opt" id="intent-compra">
             <input type="radio" name="lead-intent" value="compra">
-            <span>🔑 Comprar um imóvel</span>
+            <span>Comprar</span>
           </label>
         </div>
       </div>
@@ -1700,13 +1705,13 @@ footer strong{color:var(--text2)}
       <div class="lead-intent-wrap" id="lead-perfil-wrap">
         <p class="lead-intent-label">Você é: *</p>
         <div class="lead-intent-opts">
-          <label class="intent-opt"><input type="radio" name="lead-perfil" value="Pessoa interessada"><span>🙋 Pessoa interessada</span></label>
-          <label class="intent-opt"><input type="radio" name="lead-perfil" value="Corretor"><span>💼 Corretor</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-perfil" value="Pessoa interessada"><span>Interessado</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-perfil" value="Corretor"><span>Corretor</span></label>
         </div>
       </div>
 
       <div class="lead-intent-wrap" id="lead-prazo-wrap">
-        <p class="lead-intent-label">Em quanto tempo pretende concretizar? *</p>
+        <p class="lead-intent-label">Prazo: *</p>
         <div class="lead-intent-opts">
           <label class="intent-opt"><input type="radio" name="lead-prazo" value="3 meses"><span>3 meses</span></label>
           <label class="intent-opt"><input type="radio" name="lead-prazo" value="6 meses"><span>6 meses</span></label>
@@ -1717,9 +1722,11 @@ footer strong{color:var(--text2)}
       <div class="lead-intent-wrap" id="lead-corretor-wrap">
         <p class="lead-intent-label">Gostaria que um corretor da sua região entre em contato? *</p>
         <div class="lead-intent-opts">
-          <label class="intent-opt"><input type="radio" name="lead-corretor" value="Sim"><span>✅ Sim</span></label>
-          <label class="intent-opt"><input type="radio" name="lead-corretor" value="Não"><span>🚫 Não</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-corretor" value="Sim"><span>Sim</span></label>
+          <label class="intent-opt"><input type="radio" name="lead-corretor" value="Não"><span>Não</span></label>
         </div>
+      </div>
+
       </div>
 
       <label class="lead-consent" for="lead-consent" id="lead-consent-label">
